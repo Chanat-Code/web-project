@@ -20,7 +20,7 @@ body {
 
 /* กล่อง login */
 .login-box {
-  background: rgba(255, 255, 255, 0.8); /* สีพื้นหลังโปร่งใสเล็กน้อย */
+  background: rgba(230, 84, 84, 0.8); /* สีพื้นหลังโปร่งใสเล็กน้อย */
   padding: 100px 150px;                  /* ขยายพื้นที่ภายในกล่อง */
   border-radius: 20px;                 /* มุมโค้ง */
   backdrop-filter: blur(8px);          /* เอฟเฟกต์เบลอพื้นหลัง */
