@@ -99,10 +99,9 @@
     <header
       class="fixed inset-x-0 top-0 z-40 bg-slate-800/95 backdrop-blur supports-[backdrop-filter]:bg-slate-800/80 border-b border-white/10"
     >
-      <div class="mx-auto max-w-none px-3 sm:px-4 lg:px-6 h-[var(--header-h)] flex items-center gap-4">
-
+      <div class="mx-auto max-w-none px-4 sm:px-6 lg:px-8 h-[var(--header-h)] flex items-center gap-4 w-full">
         <!-- Brand -->
-        <div class="text-4xl md:text-5xl font-extrabold tracking-tight select-none">
+        <div class="text-3xl font-extrabold tracking-tight select-none">
           <span class="text-white">RLTG</span>
         </div>
 
@@ -144,7 +143,7 @@
         <!-- Profile icon -->
         <button
           class="shrink-0 h-12 w-12 rounded-full bg-slate-700 grid place-items-center ring-1 ring-white/10 hover:ring-indigo-400 transition"
-          aria-label="โปรไฟล์"
+          id="profileBtn" aria-label="โปรไฟล์"
         >
           <svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6a1 1 0 001 1h14a1 1 0 001-1c0-3.33-2.67-6-8-6z" />
@@ -219,11 +218,11 @@
 
   // Image pool — replace with your own URLs if needed
   const pool = [
-    'https://scontent.fbkk5-6.fna.fbcdn.net/v/t1.15752-9/541204099_1788416001789353_1943572426746784606_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=9f807c&_nc_ohc=wxhOVFx4Z5cQ7kNvwFyJoA-&_nc_oc=AdmiROp1KDNUAnYxMDOYloWIbqeC6wHY-WCXZo68uQbhtnRB4xfoOj4AtYj9-4jQ45Q&_nc_zt=23&_nc_ht=scontent.fbkk5-6.fna&oh=03_Q7cD3QH05ztuW_Ss2Oqeky7XspDp_MUskX92OmEgQrD2XCZZyg&oe=68E2A5B4',
-    'https://scontent.fbkk5-4.fna.fbcdn.net/v/t1.15752-9/532282448_4663423633885043_2059194210020484123_n.png?_nc_cat=110&ccb=1-7&_nc_sid=9f807c&_nc_ohc=3252WzV_tlsQ7kNvwFfQ5uj&_nc_oc=Adn4kVucVPlau3p2fVz2cPnOPy8VtBF15-4oJsdBCNYUwyWJfGzexb-5rsgPPFMm4zU&_nc_zt=23&_nc_ht=scontent.fbkk5-4.fna&oh=03_Q7cD3QEW7876FqRVTKpM-KU7v7Q223ZzGhtlYt1mrkCDE-lWLw&oe=68E2B65B',
-    'https://scontent.fbkk5-8.fna.fbcdn.net/v/t1.15752-9/519091647_1471659690688962_1574190038689979792_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=9f807c&_nc_ohc=duZdPMScPFMQ7kNvwExBmJU&_nc_oc=Adm6PjeS1Dk8c8I4dknCx1SRCcnaB8p0S6ByS3HFo8jTCdlhcmAKw8AUvJmfKiNIvHI&_nc_zt=23&_nc_ht=scontent.fbkk5-8.fna&oh=03_Q7cD3QH4EAUBnP0iJsXlwnjMznrKRKUNPNwqjKaNb-mGbQWyJA&oe=68E2B565',
-    'https://scontent.fbkk5-5.fna.fbcdn.net/v/t1.15752-9/524396974_1181053770725464_3585919528059644840_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=9f807c&_nc_ohc=GDEYQfACRb0Q7kNvwF3yTMV&_nc_oc=Adk9TsHxqO48jjVf2WtpCDk807Ffo8Zxe-cSvssC3oL8Qw59rAWD11NqlmKj7seYvfI&_nc_zt=23&_nc_ht=scontent.fbkk5-5.fna&oh=03_Q7cD3QGFkIymPtAPUYqvOFD-Q6LJY1MmSqk0OqzSckBpmI2zQA&oe=68E29070',
-    'https://scontent.fbkk5-4.fna.fbcdn.net/v/t1.15752-9/486754169_1636592500296886_4921011476016056147_n.png?stp=dst-png_s552x414&_nc_cat=110&ccb=1-7&_nc_sid=0024fc&_nc_ohc=npyryNaTRFsQ7kNvwEPMVIq&_nc_oc=AdnF2wlFxjkS47-SSfbEvyXTTFRFG3RfC9UVka7m4GKQb09xxq2e93WyvVxvm8crUjE&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-4.fna&oh=03_Q7cD3QEwDLTkEk3GGbqN9Gq9e8jYR0cqzOJu8T3QbB2Q-q_voQ&oe=68E2AE68'
+    'https://scontent.fbkk5-5.fna.fbcdn.net/v/t1.15752-9/541580581_1832297024361432_2434426195445033768_n.jpg?stp=dst-jpg_s480x480_tt6&_nc_cat=100&ccb=1-7&_nc_sid=0024fc&_nc_ohc=DqJJ_w2VfAgQ7kNvwH3lv4Z&_nc_oc=AdlWLk8VJvauP9i7KFtD__5uUgyNanQOemEeFEVsjJGRiJQUA8wQKsgx0FSB6EllBTM&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-5.fna&oh=03_Q7cD3QFcxHjA3vyOoqHJF1-mNKQFbdRrMrDlnjjlSGYObn2mow&oe=68E28D74',
+    'https://scontent.fbkk5-5.fna.fbcdn.net/v/t1.15752-9/524396974_1181053770725464_3585919528059644840_n.jpg?stp=dst-jpg_s480x480_tt6&_nc_cat=104&ccb=1-7&_nc_sid=0024fc&_nc_ohc=GDEYQfACRb0Q7kNvwF3yTMV&_nc_oc=Adk9TsHxqO48jjVf2WtpCDk807Ffo8Zxe-cSvssC3oL8Qw59rAWD11NqlmKj7seYvfI&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-5.fna&oh=03_Q7cD3QF-vphrnudQGhnC6PzNgBp_2xEpDildrYldSR5dLndF9Q&oe=68E29070',
+    'https://scontent.fbkk5-6.fna.fbcdn.net/v/t1.15752-9/522774291_1794230574833895_5143035480781800635_n.jpg?stp=dst-jpg_s640x640_tt6&_nc_cat=101&ccb=1-7&_nc_sid=0024fc&_nc_ohc=HXQWM6wK3esQ7kNvwH370us&_nc_oc=Adk6XZhvPmLTqa8XFeikINZGGFguI6SDlBDH3bauQRYS_4zQz9K3lwCOtjEBqCINmeE&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-6.fna&oh=03_Q7cD3QHu25WxZzLUMufIJnQ3F6-KWSyLcZd7l56rEaoYqHsJTg&oe=68E284B1',
+    'https://scontent.fbkk5-6.fna.fbcdn.net/v/t1.15752-9/541204099_1788416001789353_1943572426746784606_n.jpg?stp=dst-jpg_p526x395_tt6&_nc_cat=102&ccb=1-7&_nc_sid=0024fc&_nc_ohc=wxhOVFx4Z5cQ7kNvwFyJoA-&_nc_oc=AdmiROp1KDNUAnYxMDOYloWIbqeC6wHY-WCXZo68uQbhtnRB4xfoOj4AtYj9-4jQ45Q&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-6.fna&oh=03_Q7cD3QEDGNffMz-fFjUzFSzf3v-aa79C8ngL84UZyO5uLjuMLQ&oe=68E2A5B4',
+    'https://scontent.fbkk5-1.fna.fbcdn.net/v/t1.15752-9/518799968_629113920244652_5877296196147382941_n.png?_nc_cat=109&ccb=1-7&_nc_sid=9f807c&_nc_ohc=zmp3d8b8SMgQ7kNvwGLaLwi&_nc_oc=Adno2ZUJMvKe4ITeypMbJI5ZIiOYv5EsuFZ87qdZE83MxzH84Tp8i-WEIYeUwgTW5t8&_nc_zt=23&_nc_ht=scontent.fbkk5-1.fna&oh=03_Q7cD3QFVhJr5n2ZatdOGJcXs7n_w7oIaP1cRBNRn8Byr-0npyg&oe=68E29C97'
   ];
   const N = pool.length;
 
@@ -312,14 +311,104 @@
   applyScales();
 
   // Cycle every 3s; pause on hover & when tab hidden
-  let timer = setInterval(tick, 7000);
+  let timer = setInterval(tick, 3000);
   const root = document.getElementById('sliderViewport');
   root.addEventListener('mouseenter', () => { clearInterval(timer); });
-  root.addEventListener('mouseleave', () => { timer = setInterval(tick, 7000); });
+  root.addEventListener('mouseleave', () => { timer = setInterval(tick, 3000); });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) { clearInterval(timer); }
-    else { timer = setInterval(tick, 7000); }
+    else { timer = setInterval(tick, 3000); }
   });
 </script>
+      
+    <!-- Profile Modal (centered) -->
+    <div id="profileModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+      <div data-overlay class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+      <div class="relative z-10 min-h-full p-4">
+        <div id="profileCard" class="fixed w-80 sm:w-96 rounded-2xl bg-white text-slate-900 shadow-2xl border border-black/5">
+          <!-- Caret to connect with profile icon -->
+          <div class="absolute -top-2 right-10 w-4 h-4 bg-white rotate-45 shadow ring-1 ring-black/5"></div>
+          <!-- Close button -->
+          <button data-close class="absolute right-3 top-3 h-9 w-9 grid place-items-center rounded-full hover:bg-black/5 text-slate-900" aria-label="ปิด">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+
+          <!-- Content -->
+          <div class="p-6 space-y-6">
+            <!-- Avatar -->
+            <div class="mx-auto h-16 w-16 rounded-full bg-slate-200 grid place-items-center">
+              <svg class="h-10 w-10 text-slate-700" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6a1 1 0 001 1h14a1 1 0 001-1c0-3.33-2.67-6-8-6z"/></svg>
+            </div>
+
+            <!-- Fields -->
+            <div class="space-y-3 text-[15px]">
+              <div class="flex items-center gap-2"><span class="font-medium">Name :</span><span id="ppName" class="text-slate-600">—</span></div>
+              <div class="flex items-center gap-2"><span class="font-medium">ID :</span><span id="ppId" class="text-slate-600">—</span></div>
+              <div class="flex items-center gap-2"><span class="font-medium">E-mail :</span><span id="ppEmail" class="text-slate-600">—</span></div>
+              <div class="flex items-center gap-2"><span class="font-medium">Major :</span><span id="ppMajor" class="text-slate-600">—</span></div>
+              <div class="flex items-center gap-2"><span class="font-medium">Phone :</span><span id="ppPhone" class="text-slate-600">—</span></div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="space-y-3">
+              <button class="w-full rounded-2xl bg-indigo-900 text-white px-5 py-3 font-semibold tracking-wide hover:bg-indigo-800 active:scale-[.99] transition">Registration History</button>
+              <button class="w-full rounded-xl bg-slate-900 text-white px-5 py-2.5 font-medium hover:bg-slate-800 active:scale-[.99] transition">Log out</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Open/close + anchored placement to profile button
+      (function(){
+        const btn = document.getElementById('profileBtn');
+        const modal = document.getElementById('profileModal');
+        const card = document.getElementById('profileCard');
+        if(!btn || !modal || !card) return;
+        const overlay = modal.querySelector('[data-overlay]');
+        const closeBtn = modal.querySelector('[data-close]');
+        let lastActive = null;
+        let openState = false;
+
+        function place(){
+          const r = btn.getBoundingClientRect();
+          const gap = 10; // space between icon and card
+          const width = card.offsetWidth || 360; // w-80/96
+          const maxLeft = window.scrollX + window.innerWidth - width - 8;
+          const left = Math.max(8, Math.min(r.right + window.scrollX - width, maxLeft));
+          const top  = r.bottom + gap + window.scrollY;
+          card.style.left = left + 'px';
+          card.style.top  = top  + 'px';
+        }
+
+        function open(){
+          lastActive = document.activeElement;
+          modal.classList.remove('hidden');
+          document.body.classList.add('overflow-hidden');
+          // wait a frame so card has measurable width
+          requestAnimationFrame(() => { place(); });
+          openState = true;
+          window.addEventListener('resize', place);
+          window.addEventListener('scroll', place, { passive: true });
+        }
+        function close(){
+          modal.classList.add('hidden');
+          document.body.classList.remove('overflow-hidden');
+          openState = false;
+          if(lastActive) lastActive.focus();
+          window.removeEventListener('resize', place);
+          window.removeEventListener('scroll', place);
+        }
+
+        btn.addEventListener('click', open);
+        overlay.addEventListener('click', close);
+        closeBtn.addEventListener('click', close);
+        document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
+      })();
+    </script>
   </body>
+</html>
+</html>
+</html>
 </html>
