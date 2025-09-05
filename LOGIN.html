@@ -1,25 +1,62 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login</title>
-  <link href="./dist/styles.css" rel="stylesheet">
-  <link rel="stylesheet" href="login.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign in</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manjari:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    .font-manjari { font-family: 'Manjari', sans-serif; }
+  </style>
 </head>
-<body>
-  <div class="container">
-    <form class="login-box">
-      <h2 style="font-family: 'Lilita One', cursive;">LOGIN</h2>
-      <input type="text" placeholder="Username :" required />
-      <input type="password" placeholder="Password :" required />
-      <button type="submit">LOGIN</button>
-      <div class="links">
-        <a href="REGISTER.html">Register</a>  <!-- ลิงก์ไปหน้า register.html -->
-        <a href="#">Forgot</a>
+<body class="min-h-screen bg-gray-200 flex items-center justify-center p-6">
+  
+  <!-- กล่องหลัก -->
+  <main class="w-full max-w-2xl rounded-3xl bg-white shadow-lg p-10">
+    <div class="mx-auto w-full max-w-md">
+      
+      <!-- หัวข้อ -->
+      <h1 class="font-manjari text-8xl text-black text-center mb-8 font-semibold
+           [text-shadow:7px_7px_8px_rgba(0,0,0,0.5),11px_11px_8px_rgba(0,0,0,0.1)]">
+        Sign in
+      </h1>
+
+      <!-- Username -->
+      <input
+        type="text"
+        placeholder="Username :"
+        class="font-bold w-full h-12 rounded-xl bg-gray-200 px-4 mb-4 outline-none focus:ring-2 focus:ring-indigo-400"
+      />
+
+      <!-- Password -->
+      <input
+        type="password"
+        placeholder="Password  :"
+        class="font-bold w-full h-12 rounded-xl bg-gray-200 px-4 mb-2 outline-none focus:ring-2 focus:ring-indigo-400"
+      />
+
+      <!-- ลิงก์ Forgot -->
+      <div class="text-base mb-4">
+        <a href="#" class="font-bold font-manjari text-indigo-700 hover:underline">Forgot password?</a>
       </div>
-    </form>
-  </div>
+
+      <!-- ปุ่ม Login -->
+      <button
+         class="w-full h-12 rounded-xl 
+         bg-gradient-to-r from-indigo-950 via-indigo-800 to-indigo-700
+         text-white font-semibold text-lg 
+         hover:from-indigo-500 hover:via-indigo-700 hover:to-indigo-950
+         active:translate-y-[1px] transition">
+        LOGIN
+      </button>
+      
+      <!-- Sign up -->
+      <p class="text-center text-lg text-black mt-6">
+        Don’t have an account? 
+        <a href="#" class="text-indigo-700 hover:underline">Sign up</a>
+      </p>
+    </div>
+  </main>
 </body>
 </html>

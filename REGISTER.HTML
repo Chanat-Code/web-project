@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Create Account</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manjari:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root { color-scheme: light only; }
+    .font-manjari { font-family: 'Manjari', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#e5e5e6] flex items-center justify-center p-6">
+  <!-- Outer card -->
+  <main class="w-full max-w-[1120px] rounded-[36px] bg-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.25)] ring-1 ring-black/10 px-8 sm:px-12 md:px-16 py-12 md:py-14">
+    <div class="mx-auto w-full max-w-[900px]">
+      <!-- Title two rows to match reference -->
+      <h1 class="font-manjari text-[86px] md:text-[92px] leading-[0.9] text-black text-center select-none mb-10 [text-shadow:7px_7px_7px_rgba(0,0,0,0.5)]">
+        <span class="font-bold block">CREATE</span>
+        <span class="font-bold block">ACCOUNT</span>
+      </h1>
+
+      <!-- Form grid -->
+      <form class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+        <!-- Username -->
+        <input type="text" placeholder="Username :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400">
+        <!-- ID Number -->
+        <input type="text" placeholder="ID Number :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400">
+
+        <!-- Password -->
+        <input type="password" placeholder="Password :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400">
+        <!-- Email -->
+        <input type="email" placeholder="Email :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400">
+
+        <!-- Major -->
+        <input type="text" placeholder="Major :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-sky-400">
+        <!-- Phone Number -->
+        <input type="tel" placeholder="Phone Number :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400">
+
+        <!-- Button row (span 2) -->
+        <div class="md:col-span-2 flex items-center justify-center pt-2">
+          <button type="submit" class="w-[320px] h-12 rounded-2xl bg-gradient-to-r from-indigo-950 via-indigo-800 to-indigo-700 text-white text-[18px] font-semibold tracking-wide shadow-[0_4px_10px_rgba(0,0,0,0.25)] active:translate-y-[1px] transition">
+            REGISTER
+          </button>
+        </div>
+      </form>
+    </div>
+  </main>
+</body>
+</html>
