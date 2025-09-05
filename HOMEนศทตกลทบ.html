@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RLTG</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manjari:wght@700&family=Inter:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root { --header-h: 72px; }
+      body {
+        font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto,
+          'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif;
+      }
+
+      /* Spin animation for center slide */
+      @keyframes cardSpin {
+        from { transform: rotateY(0deg) scale(1.10); }
+        to   { transform: rotateY(360deg) scale(1.10); }
+      }
+      .slide.spin { animation: cardSpin 700ms ease; }
+      .perspective { perspective: 1200px; }
+                /* --- Fade/Zoom animations --- */
+      @keyframes fadeZoomCenter {
+        0%   { opacity: .2; transform: scale(.98); }
+        60%  { opacity: 1;  transform: scale(1.04); }
+        100% { opacity: 1;  transform: scale(1); }
+      }
+      @keyframes fadeOnly {
+        0%   { opacity: .2; }
+        100% { opacity: 1; }
+      }
+      .slide.swap-center { animation: fadeZoomCenter 1000ms cubic-bezier(0.2,0.6,0.2,1); animation-fill-mode: both; }
+      .slide.swap-side   { animation: fadeOnly 800ms cubic-bezier(0.2,0.6,0.2,1); animation-fill-mode: both; }
+      /* Performance hints for smoother frames */
+      .slide { flex: 0 0 auto; max-width: none; aspect-ratio: 16 / 9; width: calc((100vw - 9rem) / 5); }
+      /* Frame element inside each slide for independent animations */
+      .slide { position: relative; }
+      .slide .frame {
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        background-position: center;
+        background-size: cover;
+        backface-visibility: hidden;
+        transform: translateZ(0);
+        will-change: transform, opacity;
+        contain: paint;
+      }
+      /* Update animations to run on the inner frame (keeps outer scale intact) */
+      .slide .frame.swap-center { animation: fadeZoomCenter 1000ms cubic-bezier(0.2,0.6,0.2,1); animation-fill-mode: both; }
+      .slide .frame.swap-side   { animation: fadeOnly 800ms cubic-bezier(0.2,0.6,0.2,1);   animation-fill-mode: both; }
+      /* Frame element inside each slide for independent animations */
+      .slide { position: relative; }
+      .slide .frame { position: relative; width: 100%; height: 100%; border-radius: inherit; overflow: hidden; }
+      .slide .frame .layer {
+        position: absolute; inset: 0; border-radius: inherit;
+        background-position: center; background-size: cover;
+        opacity: 0; transition: opacity 900ms cubic-bezier(0.2,0.6,0.2,1);
+        will-change: opacity; backface-visibility: hidden; transform: translateZ(0);
+      }
+      .slide .frame .layer.show { opacity: 1; }
+
+      /* Animations */
+      @keyframes fadeZoomCenter {
+        0%   { opacity: .2; transform: scale(.98) rotateY(6deg); }
+        60%  { opacity: 1;  transform: scale(1.06) rotateY(0deg); }
+        100% { opacity: 1;  transform: scale(1); }
+      }
+      @keyframes enterRightSoft {
+        0%   { opacity: 0; transform: translateX(16px) scale(.98); filter: blur(2px); }
+        100% { opacity: 1; transform: translateX(0)    scale(1);   filter: blur(0); }
+      }
+      .frame.anim-center { animation: fadeZoomCenter 1000ms cubic-bezier(0.2,0.6,0.2,1); animation-fill-mode: both; }
+      .frame.anim-enter-right { animation: enterRightSoft 800ms cubic-bezier(0.2,0.6,0.2,1); animation-fill-mode: both; }
+
+      /* Performance & accessibility */
+      .slide { will-change: transform, opacity; contain: paint; }
+      @media (prefers-reduced-motion: reduce) {
+        .frame, .layer { animation: none !important; transition: none !important; }
+      }
+      /* Prevent flexbox from shrinking slides so widths are honored */
+      .slide { flex: 0 0 auto; max-width: none; aspect-ratio: 16 / 9; }
+</style>
+  </head>
+
+  <body class="bg-slate-900 text-slate-100">
+    <!-- Header -->
+    <header
+      class="fixed inset-x-0 top-0 z-40 bg-slate-800/95 backdrop-blur supports-[backdrop-filter]:bg-slate-800/80 border-b border-white/10"
+    >
+      <div class="mx-auto max-w-none px-3 sm:px-4 lg:px-6 h-[var(--header-h)] flex items-center gap-4">
+
+        <!-- Brand -->
+        <div class="text-4xl md:text-5xl font-extrabold tracking-tight select-none">
+          <span class="text-white">RLTG</span>
+        </div>
+
+        <!-- Search -->
+        <div class="flex-1 flex items-center">
+          <div class="relative w-full max-w-3xl mx-auto">
+            <input
+              type="text"
+              placeholder="ค้นหา..."
+              class="w-full rounded-full bg-slate-700/90 pl-14 pr-14 py-3 text-white placeholder:text-slate-300 outline-none ring-1 ring-white/10 focus:ring-2 focus:ring-indigo-400 shadow-inner"
+            />
+            <svg
+              class="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 opacity-80"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z"
+              />
+            </svg>
+            <button
+              class="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-full hover:bg-white/10 active:scale-95 transition"
+              aria-label="ค้นหา"
+            >
+              <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path
+                  d="M10.5 3a7.5 7.5 0 015.91 12.19l3.2 3.2a1 1 0 01-1.42 1.42l-3.2-3.2A7.5 7.5 0 1110.5 3zm0 2a5.5 5.5 0 100 11 5.5 5.5 0 000-11z"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Profile icon -->
+        <button
+          class="shrink-0 h-12 w-12 rounded-full bg-slate-700 grid place-items-center ring-1 ring-white/10 hover:ring-indigo-400 transition"
+          aria-label="โปรไฟล์"
+        >
+          <svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6a1 1 0 001 1h14a1 1 0 001-1c0-3.33-2.67-6-8-6z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Hero / Banner -->
+    <main class="pt-[var(--header-h)]">
+      <section class="relative min-h-[90vh] grid place-items-center overflow-y-hidden overflow-x-visible">
+        <!-- Background image -->
+        <div
+          class="absolute inset-0 -z-10 bg-cover bg-center"
+          style="background-image:url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=1600&auto=format&fit=crop');"
+        ></div>
+        <div class="absolute inset-0 -z-10 bg-black/35"></div>
+
+        <!-- Slider -->
+        <div class="relative w-full px-6 z-0 mt-10 sm:mt-12 md:mt-16 lg:mt-20">
+          <div id="sliderViewport" class="mx-auto w-full max-w-none perspective">
+            <!-- Track: slides only -->
+            <div
+              id="sliderTrack" class="flex items-center justify-center gap-6"
+            >
+              <!-- 5 slides: ใช้รูปพื้นหลัง + bg-cover -->
+              <div class="slide $1$2" style="background-image:url('');"></div>
+              <div class="slide $1$2" style="background-image:url('');"></div>
+              <div class="slide $1$2" style="background-image:url('');"></div>
+              <div class="slide $1$2" style="background-image:url('');"></div>
+              <div class="slide $1$2" style="background-image:url('');"></div>
+            </div>
+
+            <!-- Dots: sibling of track (not nested) -->
+            <!-- dots removed: no navigation needed for static 5 cards -->
+          </div>
+        </div>
+
+        <!-- Center content -->
+        <div class="relative z-10 w-full max-w-3xl px-4 mt-14 md:mt-20 lg:mt-28">
+          <!-- Glass panel with list -->
+          <div class="mx-auto rounded-2xl bg-white/30 backdrop-blur shadow-2xl ring-1 ring-white/40 p-6 sm:p-8">
+            <ul class="space-y-4">
+              <li><a href="#" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition"><span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span><span class="font-semibold tracking-wide">10/20/80 กิจกรรมไหว้พี่</span></a></li>
+              <li><a href="#" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition"><span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span><span class="font-semibold tracking-wide">11/20/80 กิจกรรมไหว้นอม</span></a></li>
+              <li><a href="#" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition"><span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span><span class="font-semibold tracking-wide">12/20/80 กิจกรรมไหว้ซัน</span></a></li>
+              <li><a href="#" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition"><span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span><span class="font-semibold tracking-wide">13/20/80 กิจกรรมไหว้ปัง</span></a></li>
+              <li><a href="#" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition"><span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span><span class="font-semibold tracking-wide">14/20/80 กิจกรรมไหว้ตามพ์</span></a></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-6 text-center text-sm text-white/70">© 2025 RLTG</footer>
+
+    <script>
+  // --- Static 5 cards with size emphasis (L2, L1, C, R1, R2). Queue shifts left; new image enters at R2 ---
+  const slides = Array.from(document.querySelectorAll('#sliderTrack .slide'));
+
+  // Ensure inner frame with double layers for crossfade
+  const frames = slides.map(el => {
+    let fr = el.querySelector('.frame');
+    if (!fr) { fr = document.createElement('div'); fr.className = 'frame'; el.appendChild(fr); }
+    let a = fr.querySelector('.layer.a');
+    let b = fr.querySelector('.layer.b');
+    if (!a) { a = document.createElement('div'); a.className = 'layer a'; fr.appendChild(a); }
+    if (!b) { b = document.createElement('div'); b.className = 'layer b'; fr.appendChild(b); }
+    return { fr, a, b };
+  });
+
+  // Image pool — replace with your own URLs if needed
+  const pool = [
+    'https://scontent.fbkk5-6.fna.fbcdn.net/v/t1.15752-9/541204099_1788416001789353_1943572426746784606_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=9f807c&_nc_ohc=wxhOVFx4Z5cQ7kNvwFyJoA-&_nc_oc=AdmiROp1KDNUAnYxMDOYloWIbqeC6wHY-WCXZo68uQbhtnRB4xfoOj4AtYj9-4jQ45Q&_nc_zt=23&_nc_ht=scontent.fbkk5-6.fna&oh=03_Q7cD3QH05ztuW_Ss2Oqeky7XspDp_MUskX92OmEgQrD2XCZZyg&oe=68E2A5B4',
+    'https://scontent.fbkk5-4.fna.fbcdn.net/v/t1.15752-9/532282448_4663423633885043_2059194210020484123_n.png?_nc_cat=110&ccb=1-7&_nc_sid=9f807c&_nc_ohc=3252WzV_tlsQ7kNvwFfQ5uj&_nc_oc=Adn4kVucVPlau3p2fVz2cPnOPy8VtBF15-4oJsdBCNYUwyWJfGzexb-5rsgPPFMm4zU&_nc_zt=23&_nc_ht=scontent.fbkk5-4.fna&oh=03_Q7cD3QEW7876FqRVTKpM-KU7v7Q223ZzGhtlYt1mrkCDE-lWLw&oe=68E2B65B',
+    'https://scontent.fbkk5-8.fna.fbcdn.net/v/t1.15752-9/519091647_1471659690688962_1574190038689979792_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=9f807c&_nc_ohc=duZdPMScPFMQ7kNvwExBmJU&_nc_oc=Adm6PjeS1Dk8c8I4dknCx1SRCcnaB8p0S6ByS3HFo8jTCdlhcmAKw8AUvJmfKiNIvHI&_nc_zt=23&_nc_ht=scontent.fbkk5-8.fna&oh=03_Q7cD3QH4EAUBnP0iJsXlwnjMznrKRKUNPNwqjKaNb-mGbQWyJA&oe=68E2B565',
+    'https://scontent.fbkk5-5.fna.fbcdn.net/v/t1.15752-9/524396974_1181053770725464_3585919528059644840_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=9f807c&_nc_ohc=GDEYQfACRb0Q7kNvwF3yTMV&_nc_oc=Adk9TsHxqO48jjVf2WtpCDk807Ffo8Zxe-cSvssC3oL8Qw59rAWD11NqlmKj7seYvfI&_nc_zt=23&_nc_ht=scontent.fbkk5-5.fna&oh=03_Q7cD3QGFkIymPtAPUYqvOFD-Q6LJY1MmSqk0OqzSckBpmI2zQA&oe=68E29070',
+    'https://scontent.fbkk5-4.fna.fbcdn.net/v/t1.15752-9/486754169_1636592500296886_4921011476016056147_n.png?stp=dst-png_s552x414&_nc_cat=110&ccb=1-7&_nc_sid=0024fc&_nc_ohc=npyryNaTRFsQ7kNvwEPMVIq&_nc_oc=AdnF2wlFxjkS47-SSfbEvyXTTFRFG3RfC9UVka7m4GKQb09xxq2e93WyvVxvm8crUjE&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-4.fna&oh=03_Q7cD3QEwDLTkEk3GGbqN9Gq9e8jYR0cqzOJu8T3QbB2Q-q_voQ&oe=68E2AE68'
+  ];
+  const N = pool.length;
+
+  // Preload images to avoid jank when swapping backgrounds
+  (function preloadAll(){ pool.forEach(src => { const img = new Image(); img.decoding = 'async'; img.loading = 'eager'; img.src = src; }); })();
+
+  // Current image indices mapped to visual roles [L2, L1, C, R1, R2]
+  let cur = [N-2, N-1, 0, 1, 2];
+  let nextImage = 3 % N; // next image that will appear at R2
+
+  // Track which layer is currently visible per card ('a' or 'b')
+  let vis = slides.map(() => 'a');
+
+  function applyImagesInitial() {
+    frames.forEach((o, i) => {
+      o.a.style.backgroundImage = `url('${pool[cur[i]]}')`;
+      o.b.style.backgroundImage = `url('${pool[cur[i]]}')`;
+      // show only 'a' initially
+      o.a.classList.add('show');
+      o.b.classList.remove('show');
+      vis[i] = 'a';
+    });
+  }
+
+  function crossfadeTo(i, url) {
+    const o = frames[i];
+    const incoming = vis[i] === 'a' ? o.b : o.a;
+    const outgoing = vis[i] === 'a' ? o.a : o.b;
+    incoming.style.backgroundImage = `url('${url}')`;
+    // reset animation classes on frame
+    o.fr.classList.remove('anim-center','anim-enter-right');
+    // crossfade
+    requestAnimationFrame(() => {
+      incoming.classList.add('show');
+      outgoing.classList.remove('show');
+    });
+    vis[i] = (vis[i] === 'a' ? 'b' : 'a');
+  }
+
+  function applyScales() {
+    slides.forEach((el, i) => {
+      el.style.transition = 'transform 700ms cubic-bezier(0.2,0.6,0.2,1), opacity 700ms cubic-bezier(0.2,0.6,0.2,1)';
+      if (i === 2) {          // Center largest
+        el.style.transform = 'scale(1.10)';
+        el.style.opacity = '0.95';
+        el.style.zIndex = 30;
+      } else if (i === 1 || i === 3) { // near center
+        el.style.transform = 'scale(0.90)';
+        el.style.opacity = '0.78';
+        el.style.zIndex = 20;
+      } else {                // far sides
+        el.style.transform = 'scale(0.80)';
+        el.style.opacity = '0.58';
+        el.style.zIndex = 10;
+      }
+    });
+  }
+
+  function tick() {
+    // Preload the upcoming image proactively
+    const pre = new Image(); pre.decoding = 'async'; pre.src = pool[nextImage];
+
+    // Shift queue left
+    cur[0] = cur[1];
+    cur[1] = cur[2];
+    cur[2] = cur[3];
+    cur[3] = cur[4];
+    cur[4] = nextImage;
+    nextImage = (nextImage + 1) % N;
+
+    // Update each card with crossfade
+    for (let i = 0; i < 5; i++) {
+      crossfadeTo(i, pool[cur[i]]);
+    }
+
+    // Add role-based entrance animations on frames
+    frames[2].fr.classList.add('anim-center');
+    frames[4].fr.classList.add('anim-enter-right');
+
+    // Maintain size emphasis
+    applyScales();
+  }
+
+  // Initial render
+  applyImagesInitial();
+  applyScales();
+
+  // Cycle every 3s; pause on hover & when tab hidden
+  let timer = setInterval(tick, 7000);
+  const root = document.getElementById('sliderViewport');
+  root.addEventListener('mouseenter', () => { clearInterval(timer); });
+  root.addEventListener('mouseleave', () => { timer = setInterval(tick, 7000); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { clearInterval(timer); }
+    else { timer = setInterval(tick, 7000); }
+  });
+</script>
+  </body>
+</html>
