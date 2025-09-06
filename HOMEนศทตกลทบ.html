@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>RLTG</title>
 
-    <!-- Tailwind -->
+    <!-- Tailwind (ใช้ได้ในโหมด dev) -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Fonts -->
@@ -23,75 +23,30 @@
           'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif;
       }
 
-      /* Spin animation for center slide */
-      @keyframes cardSpin {
-        from { transform: rotateY(0deg) scale(1.10); }
-        to   { transform: rotateY(360deg) scale(1.10); }
-      }
+      /* --- Animations & performance tweaks --- */
+      @keyframes cardSpin { from { transform: rotateY(0deg) scale(1.10);} to { transform: rotateY(360deg) scale(1.10);} }
       .slide.spin { animation: cardSpin 700ms ease; }
       .perspective { perspective: 1200px; }
-                /* --- Fade/Zoom animations --- */
-      @keyframes fadeZoomCenter {
-        0%   { opacity: .2; transform: scale(.98); }
-        60%  { opacity: 1;  transform: scale(1.04); }
-        100% { opacity: 1;  transform: scale(1); }
-      }
-      @keyframes fadeOnly {
-        0%   { opacity: .2; }
-        100% { opacity: 1; }
-      }
-      .slide.swap-center { animation: fadeZoomCenter 1000ms cubic-bezier(0.2,0.6,0.2,1); animation-fill-mode: both; }
-      .slide.swap-side   { animation: fadeOnly 800ms cubic-bezier(0.2,0.6,0.2,1); animation-fill-mode: both; }
-      /* Performance hints for smoother frames */
-      .slide { flex: 0 0 auto; max-width: none; aspect-ratio: 16 / 9; width: calc((100vw - 9rem) / 5); }
-      /* Frame element inside each slide for independent animations */
-      .slide { position: relative; }
-      .slide .frame {
-        width: 100%;
-        height: 100%;
-        border-radius: inherit;
-        background-position: center;
-        background-size: cover;
-        backface-visibility: hidden;
-        transform: translateZ(0);
-        will-change: transform, opacity;
-        contain: paint;
-      }
-      /* Update animations to run on the inner frame (keeps outer scale intact) */
-      .slide .frame.swap-center { animation: fadeZoomCenter 1000ms cubic-bezier(0.2,0.6,0.2,1); animation-fill-mode: both; }
-      .slide .frame.swap-side   { animation: fadeOnly 800ms cubic-bezier(0.2,0.6,0.2,1);   animation-fill-mode: both; }
-      /* Frame element inside each slide for independent animations */
-      .slide { position: relative; }
-      .slide .frame { position: relative; width: 100%; height: 100%; border-radius: inherit; overflow: hidden; }
-      .slide .frame .layer {
-        position: absolute; inset: 0; border-radius: inherit;
-        background-position: center; background-size: cover;
-        opacity: 0; transition: opacity 900ms cubic-bezier(0.2,0.6,0.2,1);
-        will-change: opacity; backface-visibility: hidden; transform: translateZ(0);
-      }
-      .slide .frame .layer.show { opacity: 1; }
 
-      /* Animations */
       @keyframes fadeZoomCenter {
         0%   { opacity: .2; transform: scale(.98) rotateY(6deg); }
         60%  { opacity: 1;  transform: scale(1.06) rotateY(0deg); }
         100% { opacity: 1;  transform: scale(1); }
       }
-      @keyframes enterRightSoft {
-        0%   { opacity: 0; transform: translateX(16px) scale(.98); filter: blur(2px); }
-        100% { opacity: 1; transform: translateX(0)    scale(1);   filter: blur(0); }
-      }
+      @keyframes fadeOnly { 0% { opacity:.2 } 100% { opacity:1 } }
+      @keyframes enterRightSoft { 0% { opacity:0; transform: translateX(16px) scale(.98); filter: blur(2px);} 100% { opacity:1; transform: translateX(0) scale(1); filter: blur(0);} }
+
+      .slide { flex: 0 0 auto; max-width: none; aspect-ratio: 16 / 9; width: calc((100vw - 9rem) / 5); position: relative; will-change: transform, opacity; contain: paint; }
+      .slide .frame { position: relative; width: 100%; height: 100%; border-radius: inherit; overflow: hidden; backface-visibility: hidden; transform: translateZ(0); will-change: transform, opacity; contain: paint; }
+      .slide .frame .layer { position: absolute; inset: 0; border-radius: inherit; background-position: center; background-size: cover; opacity: 0; transition: opacity 900ms cubic-bezier(0.2,0.6,0.2,1); will-change: opacity; backface-visibility: hidden; transform: translateZ(0); }
+      .slide .frame .layer.show { opacity: 1; }
       .frame.anim-center { animation: fadeZoomCenter 1000ms cubic-bezier(0.2,0.6,0.2,1); animation-fill-mode: both; }
       .frame.anim-enter-right { animation: enterRightSoft 800ms cubic-bezier(0.2,0.6,0.2,1); animation-fill-mode: both; }
 
-      /* Performance & accessibility */
-      .slide { will-change: transform, opacity; contain: paint; }
       @media (prefers-reduced-motion: reduce) {
         .frame, .layer { animation: none !important; transition: none !important; }
       }
-      /* Prevent flexbox from shrinking slides so widths are honored */
-      .slide { flex: 0 0 auto; max-width: none; aspect-ratio: 16 / 9; }
-</style>
+    </style>
   </head>
 
   <body class="bg-slate-900 text-slate-100">
@@ -115,26 +70,14 @@
             />
             <svg
               class="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 opacity-80"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z"
-              />
+              fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z"/>
             </svg>
             <button
               class="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-full hover:bg-white/10 active:scale-95 transition"
-              aria-label="ค้นหา"
-            >
+              aria-label="ค้นหา">
               <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path
-                  d="M10.5 3a7.5 7.5 0 015.91 12.19l3.2 3.2a1 1 0 01-1.42 1.42l-3.2-3.2A7.5 7.5 0 1110.5 3zm0 2a5.5 5.5 0 100 11 5.5 5.5 0 000-11z"
-                />
+                <path d="M10.5 3a7.5 7.5 0 015.91 12.19l3.2 3.2a1 1 0 01-1.42 1.42l-3.2-3.2A7.5 7.5 0 1110.5 3zm0 2a5.5 5.5 0 100 11 5.5 5.5 0 000-11z"/>
               </svg>
             </button>
           </div>
@@ -143,8 +86,7 @@
         <!-- Profile icon -->
         <button
           class="shrink-0 h-12 w-12 rounded-full bg-slate-700 grid place-items-center ring-1 ring-white/10 hover:ring-indigo-400 transition"
-          id="profileBtn" aria-label="โปรไฟล์"
-        >
+          id="profileBtn" aria-label="โปรไฟล์">
           <svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6a1 1 0 001 1h14a1 1 0 001-1c0-3.33-2.67-6-8-6z" />
           </svg>
@@ -165,26 +107,19 @@
         <!-- Slider -->
         <div class="relative w-full px-6 z-0 mt-10 sm:mt-12 md:mt-16 lg:mt-20">
           <div id="sliderViewport" class="mx-auto w-full max-w-none perspective">
-            <!-- Track: slides only -->
-            <div
-              id="sliderTrack" class="flex items-center justify-center gap-6"
-            >
-              <!-- 5 slides: ใช้รูปพื้นหลัง + bg-cover -->
-              <div class="slide $1$2" style="background-image:url('');"></div>
-              <div class="slide $1$2" style="background-image:url('');"></div>
-              <div class="slide $1$2" style="background-image:url('');"></div>
-              <div class="slide $1$2" style="background-image:url('');"></div>
-              <div class="slide $1$2" style="background-image:url('');"></div>
+            <div id="sliderTrack" class="flex items-center justify-center gap-6">
+              <!-- 5 slides -->
+              <div class="slide"></div>
+              <div class="slide"></div>
+              <div class="slide"></div>
+              <div class="slide"></div>
+              <div class="slide"></div>
             </div>
-
-            <!-- Dots: sibling of track (not nested) -->
-            <!-- dots removed: no navigation needed for static 5 cards -->
           </div>
         </div>
 
         <!-- Center content -->
         <div class="relative z-10 w-full max-w-3xl px-4 mt-14 md:mt-20 lg:mt-28">
-          <!-- Glass panel with list -->
           <div class="mx-auto rounded-2xl bg-white/30 backdrop-blur shadow-2xl ring-1 ring-white/40 p-6 sm:p-8">
             <ul class="space-y-4">
               <li><a href="#" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition"><span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span><span class="font-semibold tracking-wide">10/20/80 กิจกรรมไหว้พี่</span></a></li>
@@ -201,146 +136,100 @@
     <!-- Footer -->
     <footer class="py-6 text-center text-sm text-white/70">© 2025 RLTG</footer>
 
+    <!-- ===== Slider script ===== -->
     <script>
-  // --- Static 5 cards with size emphasis (L2, L1, C, R1, R2). Queue shifts left; new image enters at R2 ---
-  const slides = Array.from(document.querySelectorAll('#sliderTrack .slide'));
+      const slides = Array.from(document.querySelectorAll('#sliderTrack .slide'));
 
-  // Ensure inner frame with double layers for crossfade
-  const frames = slides.map(el => {
-    let fr = el.querySelector('.frame');
-    if (!fr) { fr = document.createElement('div'); fr.className = 'frame'; el.appendChild(fr); }
-    let a = fr.querySelector('.layer.a');
-    let b = fr.querySelector('.layer.b');
-    if (!a) { a = document.createElement('div'); a.className = 'layer a'; fr.appendChild(a); }
-    if (!b) { b = document.createElement('div'); b.className = 'layer b'; fr.appendChild(b); }
-    return { fr, a, b };
-  });
+      const frames = slides.map(el => {
+        let fr = el.querySelector('.frame');
+        if (!fr) { fr = document.createElement('div'); fr.className = 'frame'; el.appendChild(fr); }
+        let a = fr.querySelector('.layer a'); // not used (typo-proof)
+        let b = fr.querySelector('.layer b'); // not used
+        a = fr.querySelector('.layer.a'); if (!a) { a = document.createElement('div'); a.className = 'layer a'; fr.appendChild(a); }
+        b = fr.querySelector('.layer.b'); if (!b) { b = document.createElement('div'); b.className = 'layer b'; fr.appendChild(b); }
+        return { fr, a, b };
+      });
 
-  // Image pool — replace with your own URLs if needed
-  const pool = [
-    'https://scontent.fbkk5-5.fna.fbcdn.net/v/t1.15752-9/541580581_1832297024361432_2434426195445033768_n.jpg?stp=dst-jpg_s480x480_tt6&_nc_cat=100&ccb=1-7&_nc_sid=0024fc&_nc_ohc=DqJJ_w2VfAgQ7kNvwH3lv4Z&_nc_oc=AdlWLk8VJvauP9i7KFtD__5uUgyNanQOemEeFEVsjJGRiJQUA8wQKsgx0FSB6EllBTM&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-5.fna&oh=03_Q7cD3QFcxHjA3vyOoqHJF1-mNKQFbdRrMrDlnjjlSGYObn2mow&oe=68E28D74',
-    'https://scontent.fbkk5-5.fna.fbcdn.net/v/t1.15752-9/524396974_1181053770725464_3585919528059644840_n.jpg?stp=dst-jpg_s480x480_tt6&_nc_cat=104&ccb=1-7&_nc_sid=0024fc&_nc_ohc=GDEYQfACRb0Q7kNvwF3yTMV&_nc_oc=Adk9TsHxqO48jjVf2WtpCDk807Ffo8Zxe-cSvssC3oL8Qw59rAWD11NqlmKj7seYvfI&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-5.fna&oh=03_Q7cD3QF-vphrnudQGhnC6PzNgBp_2xEpDildrYldSR5dLndF9Q&oe=68E29070',
-    'https://scontent.fbkk5-6.fna.fbcdn.net/v/t1.15752-9/522774291_1794230574833895_5143035480781800635_n.jpg?stp=dst-jpg_s640x640_tt6&_nc_cat=101&ccb=1-7&_nc_sid=0024fc&_nc_ohc=HXQWM6wK3esQ7kNvwH370us&_nc_oc=Adk6XZhvPmLTqa8XFeikINZGGFguI6SDlBDH3bauQRYS_4zQz9K3lwCOtjEBqCINmeE&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-6.fna&oh=03_Q7cD3QHu25WxZzLUMufIJnQ3F6-KWSyLcZd7l56rEaoYqHsJTg&oe=68E284B1',
-    'https://scontent.fbkk5-6.fna.fbcdn.net/v/t1.15752-9/541204099_1788416001789353_1943572426746784606_n.jpg?stp=dst-jpg_p526x395_tt6&_nc_cat=102&ccb=1-7&_nc_sid=0024fc&_nc_ohc=wxhOVFx4Z5cQ7kNvwFyJoA-&_nc_oc=AdmiROp1KDNUAnYxMDOYloWIbqeC6wHY-WCXZo68uQbhtnRB4xfoOj4AtYj9-4jQ45Q&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-6.fna&oh=03_Q7cD3QEDGNffMz-fFjUzFSzf3v-aa79C8ngL84UZyO5uLjuMLQ&oe=68E2A5B4',
-    'https://scontent.fbkk5-1.fna.fbcdn.net/v/t1.15752-9/518799968_629113920244652_5877296196147382941_n.png?_nc_cat=109&ccb=1-7&_nc_sid=9f807c&_nc_ohc=zmp3d8b8SMgQ7kNvwGLaLwi&_nc_oc=Adno2ZUJMvKe4ITeypMbJI5ZIiOYv5EsuFZ87qdZE83MxzH84Tp8i-WEIYeUwgTW5t8&_nc_zt=23&_nc_ht=scontent.fbkk5-1.fna&oh=03_Q7cD3QFVhJr5n2ZatdOGJcXs7n_w7oIaP1cRBNRn8Byr-0npyg&oe=68E29C97'
-  ];
-  const N = pool.length;
+      const pool = [
+        'https://scontent.fbkk5-5.fna.fbcdn.net/v/t1.15752-9/541580581_1832297024361432_2434426195445033768_n.jpg?stp=dst-jpg_s480x480_tt6&_nc_cat=100&ccb=1-7&_nc_sid=0024fc&_nc_ohc=DqJJ_w2VfAgQ7kNvwH3lv4Z&_nc_oc=AdlWLk8VJvauP9i7KFtD__5uUgyNanQOemEeFEVsjJGRiJQUA8wQKsgx0FSB6EllBTM&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-5.fna&oh=03_Q7cD3QFcxHjA3vyOoqHJF1-mNKQFbdRrMrDlnjjlSGYObn2mow&oe=68E28D74',
+        'https://scontent.fbkk5-5.fna.fbcdn.net/v/t1.15752-9/524396974_1181053770725464_3585919528059644840_n.jpg?stp=dst-jpg_s480x480_tt6&_nc_cat=104&ccb=1-7&_nc_sid=0024fc&_nc_ohc=GDEYQfACRb0Q7kNvwF3yTMV&_nc_oc=Adk9TsHxqO48jjVf2WtpCDk807Ffo8Zxe-cSvssC3oL8Qw59rAWD11NqlmKj7seYvfI&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-5.fna&oh=03_Q7cD3QF-vphrnudQGhnC6PzNgBp_2xEpDildrYldSR5dLndF9Q&oe=68E29070',
+        'https://scontent.fbkk5-6.fna.fbcdn.net/v/t1.15752-9/522774291_1794230574833895_5143035480781800635_n.jpg?stp=dst-jpg_s640x640_tt6&_nc_cat=101&ccb=1-7&_nc_sid=0024fc&_nc_ohc=HXQWM6wK3esQ7kNvwH370us&_nc_oc=Adk6XZhvPmLTqa8XFeikINZGGFguI6SDlBDH3bauQRYS_4zQz9K3lwCOtjEBqCINmeE&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-6.fna&oh=03_Q7cD3QHu25WxZzLUMufIJnQ3F6-KWSyLcZd7l56rEaoYqHsJTg&oe=68E284B1',
+        'https://scontent.fbkk5-6.fna.fbcdn.net/v/t1.15752-9/541204099_1788416001789353_1943572426746784606_n.jpg?stp=dst-jpg_p526x395_tt6&_nc_cat=102&ccb=1-7&_nc_sid=0024fc&_nc_ohc=wxhOVFx4Z5cQ7kNvwFyJoA-&_nc_oc=AdmiROp1KDNUAnYxMDOYloWIbqeC6wHY-WCXZo68uQbhtnRB4xfoOj4AtYj9-4jQ45Q&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-6.fna&oh=03_Q7cD3QEDGNffMz-fFjUzFSzf3v-aa79C8ngL84UZyO5uLjuMLQ&oe=68E2A5B4',
+        'https://scontent.fbkk5-1.fna.fbcdn.net/v/t1.15752-9/518799968_629113920244652_5877296196147382941_n.png?_nc_cat=109&ccb=1-7&_nc_sid=9f807c&_nc_ohc=zmp3d8b8SMgQ7kNvwGLaLwi&_nc_oc=Adno2ZUJMvKe4ITeypMbJI5ZIiOYv5EsuFZ87qdZE83MxzH84Tp8i-WEIYeUwgTW5t8&_nc_zt=23&_nc_ht=scontent.fbkk5-1.fna&oh=03_Q7cD3QFVhJr5n2ZatdOGJcXs7n_w7oIaP1cRBNRn8Byr-0npyg&oe=68E29C97'
+      ];
+      const N = pool.length;
 
-  // Preload images to avoid jank when swapping backgrounds
-  (function preloadAll(){ pool.forEach(src => { const img = new Image(); img.decoding = 'async'; img.loading = 'eager'; img.src = src; }); })();
+      (function preloadAll(){ pool.forEach(src => { const img = new Image(); img.decoding = 'async'; img.loading = 'eager'; img.src = src; }); })();
 
-  // Current image indices mapped to visual roles [L2, L1, C, R1, R2]
-  let cur = [N-2, N-1, 0, 1, 2];
-  let nextImage = 3 % N; // next image that will appear at R2
+      let cur = [N-2, N-1, 0, 1, 2];
+      let nextImage = 3 % N;
+      let vis = slides.map(() => 'a');
 
-  // Track which layer is currently visible per card ('a' or 'b')
-  let vis = slides.map(() => 'a');
-
-  function applyImagesInitial() {
-    frames.forEach((o, i) => {
-      o.a.style.backgroundImage = `url('${pool[cur[i]]}')`;
-      o.b.style.backgroundImage = `url('${pool[cur[i]]}')`;
-      // show only 'a' initially
-      o.a.classList.add('show');
-      o.b.classList.remove('show');
-      vis[i] = 'a';
-    });
-  }
-
-  function crossfadeTo(i, url) {
-    const o = frames[i];
-    const incoming = vis[i] === 'a' ? o.b : o.a;
-    const outgoing = vis[i] === 'a' ? o.a : o.b;
-    incoming.style.backgroundImage = `url('${url}')`;
-    // reset animation classes on frame
-    o.fr.classList.remove('anim-center','anim-enter-right');
-    // crossfade
-    requestAnimationFrame(() => {
-      incoming.classList.add('show');
-      outgoing.classList.remove('show');
-    });
-    vis[i] = (vis[i] === 'a' ? 'b' : 'a');
-  }
-
-  function applyScales() {
-    slides.forEach((el, i) => {
-      el.style.transition = 'transform 700ms cubic-bezier(0.2,0.6,0.2,1), opacity 700ms cubic-bezier(0.2,0.6,0.2,1)';
-      if (i === 2) {          // Center largest
-        el.style.transform = 'scale(1.10)';
-        el.style.opacity = '0.95';
-        el.style.zIndex = 30;
-      } else if (i === 1 || i === 3) { // near center
-        el.style.transform = 'scale(0.90)';
-        el.style.opacity = '0.78';
-        el.style.zIndex = 20;
-      } else {                // far sides
-        el.style.transform = 'scale(0.80)';
-        el.style.opacity = '0.58';
-        el.style.zIndex = 10;
+      function applyImagesInitial() {
+        frames.forEach((o, i) => {
+          o.a.style.backgroundImage = `url('${pool[cur[i]]}')`;
+          o.b.style.backgroundImage = `url('${pool[cur[i]]}')`;
+          o.a.classList.add('show'); o.b.classList.remove('show'); vis[i] = 'a';
+        });
       }
-    });
-  }
 
-  function tick() {
-    // Preload the upcoming image proactively
-    const pre = new Image(); pre.decoding = 'async'; pre.src = pool[nextImage];
+      function crossfadeTo(i, url) {
+        const o = frames[i];
+        const incoming = vis[i] === 'a' ? o.b : o.a;
+        const outgoing = vis[i] === 'a' ? o.a : o.b;
+        incoming.style.backgroundImage = `url('${url}')`;
+        o.fr.classList.remove('anim-center','anim-enter-right');
+        requestAnimationFrame(() => { incoming.classList.add('show'); outgoing.classList.remove('show'); });
+        vis[i] = (vis[i] === 'a' ? 'b' : 'a');
+      }
 
-    // Shift queue left
-    cur[0] = cur[1];
-    cur[1] = cur[2];
-    cur[2] = cur[3];
-    cur[3] = cur[4];
-    cur[4] = nextImage;
-    nextImage = (nextImage + 1) % N;
+      function applyScales() {
+        slides.forEach((el, i) => {
+          el.style.transition = 'transform 700ms cubic-bezier(0.2,0.6,0.2,1), opacity 700ms cubic-bezier(0.2,0.6,0.2,1)';
+          if (i === 2) { el.style.transform = 'scale(1.10)'; el.style.opacity = '0.95'; el.style.zIndex = 30; }
+          else if (i === 1 || i === 3) { el.style.transform = 'scale(0.90)'; el.style.opacity = '0.78'; el.style.zIndex = 20; }
+          else { el.style.transform = 'scale(0.80)'; el.style.opacity = '0.58'; el.style.zIndex = 10; }
+        });
+      }
 
-    // Update each card with crossfade
-    for (let i = 0; i < 5; i++) {
-      crossfadeTo(i, pool[cur[i]]);
-    }
+      function tick() {
+        const pre = new Image(); pre.decoding = 'async'; pre.src = pool[nextImage];
 
-    // Add role-based entrance animations on frames
-    frames[2].fr.classList.add('anim-center');
-    frames[4].fr.classList.add('anim-enter-right');
+        cur[0] = cur[1]; cur[1] = cur[2]; cur[2] = cur[3]; cur[3] = cur[4]; cur[4] = nextImage;
+        nextImage = (nextImage + 1) % N;
 
-    // Maintain size emphasis
-    applyScales();
-  }
+        for (let i = 0; i < 5; i++) crossfadeTo(i, pool[cur[i]]);
+        frames[2].fr.classList.add('anim-center');
+        frames[4].fr.classList.add('anim-enter-right');
+        applyScales();
+      }
 
-  // Initial render
-  applyImagesInitial();
-  applyScales();
+      applyImagesInitial(); applyScales();
+      let timer = setInterval(tick, 3000);
+      const root = document.getElementById('sliderViewport');
+      root.addEventListener('mouseenter', () => { clearInterval(timer); });
+      root.addEventListener('mouseleave', () => { timer = setInterval(tick, 3000); });
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) { clearInterval(timer); }
+        else { timer = setInterval(tick, 3000); }
+      });
+    </script>
 
-  // Cycle every 3s; pause on hover & when tab hidden
-  let timer = setInterval(tick, 3000);
-  const root = document.getElementById('sliderViewport');
-  root.addEventListener('mouseenter', () => { clearInterval(timer); });
-  root.addEventListener('mouseleave', () => { timer = setInterval(tick, 3000); });
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { clearInterval(timer); }
-    else { timer = setInterval(tick, 3000); }
-  });
-</script>
-      
-    <!-- Profile Modal (centered) -->
+    <!-- Profile Modal -->
     <div id="profileModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
       <div data-overlay class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
       <div class="relative z-10 min-h-full p-4">
         <div id="profileCard" class="fixed w-80 sm:w-96 rounded-2xl bg-white text-slate-900 shadow-2xl border border-black/5">
-          <!-- Caret to connect with profile icon -->
           <div class="absolute -top-2 right-10 w-4 h-4 bg-white rotate-45 shadow ring-1 ring-black/5"></div>
-          <!-- Close button -->
           <button data-close class="absolute right-3 top-3 h-9 w-9 grid place-items-center rounded-full hover:bg-black/5 text-slate-900" aria-label="ปิด">
             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
 
-          <!-- Content -->
           <div class="p-6 space-y-6">
-            <!-- Avatar -->
             <div class="mx-auto h-16 w-16 rounded-full bg-slate-200 grid place-items-center">
               <svg class="h-10 w-10 text-slate-700" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6a1 1 0 001 1h14a1 1 0 001-1c0-3.33-2.67-6-8-6z"/></svg>
             </div>
 
-            <!-- Fields -->
             <div class="space-y-3 text-[15px]">
               <div class="flex items-center gap-2"><span class="font-medium">Name :</span><span id="ppName" class="text-slate-600">—</span></div>
               <div class="flex items-center gap-2"><span class="font-medium">ID :</span><span id="ppId" class="text-slate-600">—</span></div>
@@ -349,18 +238,19 @@
               <div class="flex items-center gap-2"><span class="font-medium">Phone :</span><span id="ppPhone" class="text-slate-600">—</span></div>
             </div>
 
-            <!-- Buttons -->
             <div class="space-y-3">
               <button class="w-full rounded-2xl bg-indigo-900 text-white px-5 py-3 font-semibold tracking-wide hover:bg-indigo-800 active:scale-[.99] transition">Registration History</button>
-              <button class="w-full rounded-xl bg-slate-900 text-white px-5 py-2.5 font-medium hover:bg-slate-800 active:scale-[.99] transition">Log out</button>
+              <!-- เพิ่ม id ให้ปุ่ม Logout -->
+              <button id="logoutBtn" class="w-full rounded-xl bg-slate-900 text-white px-5 py-2.5 font-medium hover:bg-slate-800 active:scale-[.99] transition">Log out</button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Profile modal logic + Auth guard + /me + logout -->
     <script>
-      // Open/close + anchored placement to profile button
+      // Open/close + anchored placement
       (function(){
         const btn = document.getElementById('profileBtn');
         const modal = document.getElementById('profileModal');
@@ -369,46 +259,89 @@
         const overlay = modal.querySelector('[data-overlay]');
         const closeBtn = modal.querySelector('[data-close]');
         let lastActive = null;
-        let openState = false;
 
         function place(){
           const r = btn.getBoundingClientRect();
-          const gap = 10; // space between icon and card
-          const width = card.offsetWidth || 360; // w-80/96
+          const gap = 10, width = card.offsetWidth || 360;
           const maxLeft = window.scrollX + window.innerWidth - width - 8;
           const left = Math.max(8, Math.min(r.right + window.scrollX - width, maxLeft));
           const top  = r.bottom + gap + window.scrollY;
           card.style.left = left + 'px';
           card.style.top  = top  + 'px';
         }
-
         function open(){
           lastActive = document.activeElement;
           modal.classList.remove('hidden');
           document.body.classList.add('overflow-hidden');
-          // wait a frame so card has measurable width
-          requestAnimationFrame(() => { place(); });
-          openState = true;
+          requestAnimationFrame(place);
           window.addEventListener('resize', place);
           window.addEventListener('scroll', place, { passive: true });
         }
         function close(){
           modal.classList.add('hidden');
           document.body.classList.remove('overflow-hidden');
-          openState = false;
           if(lastActive) lastActive.focus();
           window.removeEventListener('resize', place);
           window.removeEventListener('scroll', place);
         }
-
         btn.addEventListener('click', open);
         overlay.addEventListener('click', close);
         closeBtn.addEventListener('click', close);
         document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
       })();
+
+      // ===== Auth + Me loader + Logout =====
+      (function () {
+        const API_BASE = `${location.protocol}//${location.hostname}:4000`;
+        const token = localStorage.getItem("token");
+
+        // ถ้าไม่มี token → เด้งกลับหน้า Login
+        if (!token) {
+          location.href = "./LOGIN.html";
+          return;
+        }
+
+        async function loadMe() {
+          try {
+            const res = await fetch(`${API_BASE}/api/auth/me`, {
+              headers: { Authorization: "Bearer " + token },
+              credentials: "include",
+            });
+            if (!res.ok) throw new Error("unauthorized");
+            const me = await res.json();
+
+            const $ = (id) => document.getElementById(id);
+            if ($("ppName"))  $("ppName").textContent  = me.username ?? "—";
+            if ($("ppId"))    $("ppId").textContent    = me.idNumber ?? "—";
+            if ($("ppEmail")) $("ppEmail").textContent = me.email ?? "—";
+            if ($("ppMajor")) $("ppMajor").textContent = me.major ?? "—";
+            if ($("ppPhone")) $("ppPhone").textContent = me.phone ?? "—";
+          } catch (e) {
+            localStorage.removeItem("token");
+            location.href = "./LOGIN.html";
+          }
+        }
+
+        function wireLogout() {
+          const btn = document.getElementById("logoutBtn");
+          if (!btn) return;
+          btn.addEventListener("click", async () => {
+            try {
+              await fetch(`${API_BASE}/api/auth/logout`, {
+                method: "POST",
+                credentials: "include",
+              });
+            } catch (e) {}
+            localStorage.removeItem("token");
+            location.href = "./LOGIN.html";
+          });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+          loadMe();
+          wireLogout();
+        });
+      })();
     </script>
   </body>
-</html>
-</html>
-</html>
 </html>
