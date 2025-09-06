@@ -33,6 +33,10 @@ const origins = (process.env.CORS_ORIGINS ||
   .map(s => s.trim())
   .filter(Boolean);
 
+  if (process.env.VERCEL_URL) {
+  origins.push(`https://${process.env.VERCEL_URL}`);
+}
+
 const corsOptions = {
   origin: (origin, cb) => {
     // อนุญาตกรณีไม่มี Origin (curl/Postman) หรืออยู่ใน whitelist
