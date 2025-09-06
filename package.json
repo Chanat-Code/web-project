@@ -1,34 +1,36 @@
 {
+  "name": "web-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "type": "module",
   "scripts": {
-    "dev": "tailwindcss -i ./src/input.css -o ./dist/styles.css --watch"
+    "dev": "nodemon server.js",
+    "dev:css": "tailwindcss -i ./src/input.css -o ./dist/styles.css --watch"
   },
-  "devDependencies": {
-    "@tailwindcss/cli": "^4.1.12",
-    "dotenv": "^17.2.2",
-    "nodemon": "^3.1.10",
-    "tailwindcss": "^4.1.12"
-  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.0"
   },
-  "name": "web-project",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.12",
+    "nodemon": "^3.1.10",
+    "tailwindcss": "^4.1.12"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Chanat-Code/web-project.git"
   },
-  "author": "",
-  "license": "ISC",
   "bugs": {
     "url": "https://github.com/Chanat-Code/web-project/issues"
   },
-  "homepage": "https://github.com/Chanat-Code/web-project#readme",
-  "keywords": []
+  "homepage": "https://github.com/Chanat-Code/web-project#readme"
 }
