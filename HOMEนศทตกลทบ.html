@@ -88,7 +88,7 @@
           class="shrink-0 h-12 w-12 rounded-full bg-slate-700 grid place-items-center ring-1 ring-white/10 hover:ring-indigo-400 transition"
           id="profileBtn" aria-label="โปรไฟล์">
           <svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6a1 1 0 001 1h14a1 1 0 001-1c0-3.33-2.67-6-8-6z" />
+            <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6a1 1 0 001 1h14a 1 1 0 001-1c0-3.33-2.67-6-8-6z" />
           </svg>
         </button>
       </div>
@@ -121,17 +121,44 @@
         <!-- Center content -->
         <div class="relative z-10 w-full max-w-3xl px-4 mt-14 md:mt-20 lg:mt-28">
           <div class="mx-auto rounded-2xl bg-white/30 backdrop-blur shadow-2xl ring-1 ring-white/40 p-6 sm:p-8">
-            <ul class="space-y-4">
-              <li><a href="#" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition"><span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span><span class="font-semibold tracking-wide">10/20/80 กิจกรรมไหว้พี่</span></a></li>
-              <li><a href="#" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition"><span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span><span class="font-semibold tracking-wide">11/20/80 กิจกรรมไหว้นอม</span></a></li>
-              <li><a href="#" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition"><span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span><span class="font-semibold tracking-wide">12/20/80 กิจกรรมไหว้ซัน</span></a></li>
-              <li><a href="#" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition"><span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span><span class="font-semibold tracking-wide">13/20/80 กิจกรรมไหว้ปัง</span></a></li>
-              <li><a href="#" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition"><span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span><span class="font-semibold tracking-wide">14/20/80 กิจกรรมไหว้ตามพ์</span></a></li>
-            </ul>
+            <!-- รายการกิจกรรมจาก Mongo -->
+            <ul id="eventList" class="space-y-4"><!-- เติมด้วย JS --></ul>
           </div>
         </div>
       </section>
     </main>
+
+    <!-- FAB: โชว์เฉพาะ admin -->
+    <button id="fabAdd"
+      class="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-indigo-600 shadow-xl text-white text-3xl leading-none grid place-items-center hover:bg-indigo-500 active:scale-95 transition hidden"
+      title="เพิ่มกิจกรรม">+</button>
+
+    <!-- Modal เพิ่มกิจกรรม -->
+    <div id="addModal" class="fixed inset-0 z-50 hidden">
+      <div data-overlay class="absolute inset-0 bg-black/50"></div>
+      <div class="relative z-10 min-h-full p-4 grid place-items-center">
+        <form id="addForm" class="w-full max-w-xl rounded-2xl bg-white text-slate-900 p-6 space-y-4 shadow-2xl">
+          <h2 class="text-xl font-bold">เพิ่มกิจกรรม</h2>
+          <input name="title" required placeholder="ชื่อกิจกรรม"
+                 class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400">
+          <input name="dateText" placeholder="วันที่ (เช่น 10/20/80)"
+                 class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400">
+          <input name="location" placeholder="สถานที่"
+                 class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400">
+          <input name="imageUrl" placeholder="รูปปก (URL)"
+                 class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400">
+          <textarea name="description" rows="4" placeholder="รายละเอียด"
+                 class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400"></textarea>
+
+          <div class="flex justify-end gap-3 pt-2">
+            <button type="button" id="addCancel"
+                    class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300">ยกเลิก</button>
+            <button type="submit"
+                    class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500">บันทึก</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <!-- Footer -->
     <footer class="py-6 text-center text-sm text-white/70">© 2025 RLTG</footer>
@@ -240,7 +267,6 @@
 
             <div class="space-y-3">
               <button class="w-full rounded-2xl bg-indigo-900 text-white px-5 py-3 font-semibold tracking-wide hover:bg-indigo-800 active:scale-[.99] transition">Registration History</button>
-              <!-- เพิ่ม id ให้ปุ่ม Logout -->
               <button id="logoutBtn" class="w-full rounded-xl bg-slate-900 text-white px-5 py-2.5 font-medium hover:bg-slate-800 active:scale-[.99] transition">Log out</button>
             </div>
           </div>
@@ -248,9 +274,8 @@
       </div>
     </div>
 
-    <!-- Profile modal logic + Auth guard + /me + logout -->
+    <!-- Profile modal logic -->
     <script>
-      // Open/close + anchored placement
       (function(){
         const btn = document.getElementById('profileBtn');
         const modal = document.getElementById('profileModal');
@@ -289,57 +314,118 @@
         closeBtn.addEventListener('click', close);
         document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
       })();
+    </script>
 
-      // ===== Auth + Me loader + Logout =====
+    <!-- ===== Auth + /me + Logout + Events (list + admin add) ===== -->
+    <script>
       (function () {
         const API_BASE = `${location.protocol}//${location.hostname}:4000`;
         const token = localStorage.getItem("token");
+        if (!token) { location.href = "./LOGIN.html"; return; }
 
-        // ถ้าไม่มี token → เด้งกลับหน้า Login
-        if (!token) {
-          location.href = "./LOGIN.html";
-          return;
-        }
+        const $  = (sel) => document.querySelector(sel);
+        const eventList = $("#eventList");
+        const fab       = $("#fabAdd");
+        const addModal  = $("#addModal");
+        const addForm   = $("#addForm");
+        const addCancel = $("#addCancel");
 
+        // เติมข้อมูลผู้ใช้ในโมดัล + แสดง FAB เฉพาะ admin
         async function loadMe() {
-          try {
-            const res = await fetch(`${API_BASE}/api/auth/me`, {
-              headers: { Authorization: "Bearer " + token },
-              credentials: "include",
-            });
-            if (!res.ok) throw new Error("unauthorized");
-            const me = await res.json();
+          const res = await fetch(`${API_BASE}/api/auth/me`, {
+            headers: { Authorization: "Bearer " + token },
+            credentials: "include",
+          });
+          if (!res.ok) throw new Error("unauthorized");
+          const me = await res.json();
 
-            const $ = (id) => document.getElementById(id);
-            if ($("ppName"))  $("ppName").textContent  = me.username ?? "—";
-            if ($("ppId"))    $("ppId").textContent    = me.idNumber ?? "—";
-            if ($("ppEmail")) $("ppEmail").textContent = me.email ?? "—";
-            if ($("ppMajor")) $("ppMajor").textContent = me.major ?? "—";
-            if ($("ppPhone")) $("ppPhone").textContent = me.phone ?? "—";
-          } catch (e) {
-            localStorage.removeItem("token");
-            location.href = "./LOGIN.html";
-          }
+          const byId = (id) => document.getElementById(id);
+          byId("ppName")  && (byId("ppName").textContent  = me.username ?? "—");
+          byId("ppId")    && (byId("ppId").textContent    = me.idNumber ?? "—");
+          byId("ppEmail") && (byId("ppEmail").textContent = me.email ?? "—");
+          byId("ppMajor") && (byId("ppMajor").textContent = me.major ?? "—");
+          byId("ppPhone") && (byId("ppPhone").textContent = me.phone ?? "—");
+
+          if (me.role === "admin" && fab) fab.classList.remove("hidden");
         }
 
-        function wireLogout() {
+        // Logout
+        (function wireLogout(){
           const btn = document.getElementById("logoutBtn");
           if (!btn) return;
           btn.addEventListener("click", async () => {
             try {
-              await fetch(`${API_BASE}/api/auth/logout`, {
-                method: "POST",
-                credentials: "include",
-              });
+              await fetch(`${API_BASE}/api/auth/logout`, { method: "POST", credentials: "include" });
             } catch (e) {}
             localStorage.removeItem("token");
             location.href = "./LOGIN.html";
           });
+        })();
+
+        // โหลดรายการกิจกรรม
+        async function loadEvents() {
+          const res = await fetch(`${API_BASE}/api/events`);
+          const items = await res.json();
+
+          if (!Array.isArray(items) || items.length === 0) {
+            eventList.innerHTML = `
+              <li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">
+                ยังไม่มีกิจกรรม
+              </li>`;
+            return;
+          }
+
+          eventList.innerHTML = items.map(ev => {
+            const dateTxt = ev.dateText ? `${ev.dateText} ` : "";
+            return `
+              <li>
+                <a href="./event.html?id=${ev._id}"
+                   class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition">
+                  <span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span>
+                  <span class="font-semibold tracking-wide">${dateTxt}${ev.title}</span>
+                </a>
+              </li>
+            `;
+          }).join("");
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-          loadMe();
-          wireLogout();
+        // Modal helpers
+        function openAdd()  { addModal?.classList.remove("hidden"); }
+        function closeAdd() { addModal?.classList.add("hidden"); addForm?.reset(); }
+
+        // บันทึกกิจกรรม (เฉพาะ admin)
+        addForm?.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const fd = new FormData(addForm);
+          const payload = Object.fromEntries(fd.entries());
+
+          const res = await fetch(`${API_BASE}/api/events`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token
+            },
+            credentials: "include",
+            body: JSON.stringify(payload)
+          });
+
+          if (!res.ok) {
+            const data = await res.json().catch(()=> ({}));
+            alert(`เพิ่มกิจกรรมไม่สำเร็จ: ${data.message || res.status}`);
+            return;
+          }
+          closeAdd();
+          loadEvents();
+        });
+
+        addCancel?.addEventListener("click", closeAdd);
+        fab?.addEventListener("click", openAdd);
+        addModal?.querySelector("[data-overlay]")?.addEventListener("click", closeAdd);
+
+        // start
+        loadMe().then(loadEvents).catch(() => {
+          localStorage.removeItem("token");
+          location.href = "./LOGIN.html";
         });
       })();
     </script>
