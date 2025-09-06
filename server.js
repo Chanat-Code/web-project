@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRouter from "./src/routes/auth.js";
+import eventsRouter from "./src/routes/events.js";
 
 dotenv.config();
 
@@ -27,14 +28,13 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// ❌ อย่าใช้ app.options("*", ...) กับ Express v5 → จะ error
-// ✅ ถ้าจำเป็นจริง ๆ ใช้เฉพาะพาธ: app.options('/api/*', cors(corsOptions));
 
 app.use(express.json());
 app.use(cookieParser());
 
 // routes
 app.use("/api/auth", authRouter);
+app.use("/api/events", eventsRouter);   
 
 // health
 app.get("/", (_req, res) => res.send("OK"));
