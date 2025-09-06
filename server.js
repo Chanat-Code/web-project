@@ -11,6 +11,17 @@ dotenv.config();
 
 const app = express();
 
+// Connect to Mongo once per runtime
+async function connectDB() {
+  if (mongoose.connection.readyState === 0) {
+    await mongoose.connect(process.env.MONGO_URI, { dbName: "auth_db" });
+    console.log("MongoDB connected");
+  }
+}
+connectDB().catch(err => {
+  console.error("Startup error:", err);
+});
+
 // CORS whitelist สำหรับ dev: localhost + 127.0.0.1
 const origins = (process.env.CORS_ORIGINS ||
   "http://localhost:5500,http://127.0.0.1:5500")
@@ -39,16 +50,10 @@ app.use("/api/events", eventsRouter);
 // health
 app.get("/", (_req, res) => res.send("OK"));
 
-const start = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI, { dbName: "auth_db" });
-    console.log("MongoDB connected");
-    const port = process.env.PORT || 4000;
-    app.listen(port, () => console.log("Server running on", port));
-  } catch (err) {
-    console.error("Startup error:", err);
-    process.exit(1);
-  }
-};
+export default app;
 
-start();
+// Run local server when not on Vercel
+if (!process.env.VERCEL) {
+  const port = process.env.PORT || 4000;
+  app.listen(port, () => console.log("Server running on", port));
+}

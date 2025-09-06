@@ -381,7 +381,7 @@
       (function () {
         const API_BASE = `${location.protocol}//${location.hostname}:4000`;
         const token = localStorage.getItem("token");
-        if (!token) { location.href = "./LOGIN.html"; return; }
+        if (!token) { location.href = "./index.html"; return; }
 
         const $  = (sel) => document.querySelector(sel);
         const eventList = $("#eventList");
@@ -433,7 +433,7 @@
               await fetch(`${API_BASE}/api/auth/logout`, { method: "POST", credentials: "include" });
             } catch (e) {}
             localStorage.removeItem("token");
-            location.href = "./LOGIN.html";
+            location.href = "./index.html";
           });
         })();
 
@@ -500,7 +500,7 @@
         // start
         loadMe().then(loadEvents).catch(() => {
           localStorage.removeItem("token");
-          location.href = "./LOGIN.html";
+          location.href = "./index.html";
         });
       })();
     </script>

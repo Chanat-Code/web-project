@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon server.js",
-    "dev:css": "tailwindcss -i ./src/input.css -o ./dist/styles.css --watch"
+    "dev:css": "npx tailwindcss -i ./src/input.css -o ./dist/styles.css --watch",
+    "build": "npx tailwindcss -i ./src/input.css -o ./dist/styles.css",
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
