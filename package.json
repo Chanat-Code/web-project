@@ -2,9 +2,28 @@
   "scripts": {
     "dev": "tailwindcss -i ./src/input.css -o ./dist/styles.css --watch"
   },
-  
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.12",
+    "dotenv": "^17.2.2",
+    "nodemon": "^3.1.10",
     "tailwindcss": "^4.1.12"
-  }
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "mongoose": "^8.18.0"
+  },
+  "name": "web-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Chanat-Code/web-project.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Chanat-Code/web-project/issues"
+  },
+  "homepage": "https://github.com/Chanat-Code/web-project#readme"
 }
