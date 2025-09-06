@@ -22,18 +22,10 @@
       </h1>
 
       <!-- Username -->
-      <input
-        type="text"
-        placeholder="Username :"
-        class="font-bold w-full h-12 rounded-xl bg-gray-200 px-4 mb-4 outline-none focus:ring-2 focus:ring-indigo-400"
-      />
+      <input id="usernameOrEmail" type="text" placeholder="Username :" class="font-bold w-full h-12 rounded-xl bg-gray-200 px-4 mb-4 outline-none focus:ring-2 focus:ring-indigo-400" required>
 
       <!-- Password -->
-      <input
-        type="password"
-        placeholder="Password  :"
-        class="font-bold w-full h-12 rounded-xl bg-gray-200 px-4 mb-2 outline-none focus:ring-2 focus:ring-indigo-400"
-      />
+      <input id="loginPassword" type="password" placeholder="Password  :" class="font-bold w-full h-12 rounded-xl bg-gray-200 px-4 mb-2 outline-none focus:ring-2 focus:ring-indigo-400" required>
 
       <!-- ลิงก์ Forgot -->
       <div class="text-base mb-4">
@@ -41,12 +33,7 @@
       </div>
 
       <!-- ปุ่ม Login -->
-      <button
-         class="w-full h-12 rounded-xl 
-         bg-gradient-to-r from-indigo-950 via-indigo-800 to-indigo-700
-         text-white font-semibold text-lg 
-         hover:from-indigo-500 hover:via-indigo-700 hover:to-indigo-950
-         active:translate-y-[1px] transition">
+      <button id="loginBtn" class="w-full h-12 rounded-xl bg-gradient-to-r from-indigo-950 via-indigo-800 to-indigo-700 text-white font-semibold text-lg hover:from-indigo-500 hover:via-indigo-700 hover:to-indigo-950 active:translate-y-[1px] transition">
         LOGIN
       </button>
       
@@ -55,6 +42,39 @@
         Don’t have an account? 
         <a href="/REGISTER.HTML" class="text-indigo-700 hover:underline">Sign up</a>
       </p>
+      
+<script>
+  const API_BASE = `${location.protocol}//${location.hostname}:4000`;
+  const LOGIN_API = `${API_BASE}/api/auth/login`;
+
+  document.getElementById("loginBtn").addEventListener("click", async () => {
+    const usernameOrEmail = document.getElementById("usernameOrEmail").value.trim();
+    const password = document.getElementById("loginPassword").value;
+
+    try {
+      const res = await fetch(LOGIN_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ usernameOrEmail, password })
+      });
+
+      const data = await res.json().catch(()=> ({}));
+      if (!res.ok) {
+        alert(`Login failed (${res.status}): ${data.message || 'unknown error'}`);
+        return;
+      }
+
+      if (data.token) localStorage.setItem("token", data.token);
+      alert("Login success!");
+      // window.location.href = "./dashboard.html";
+    } catch (err) {
+      console.error(err);
+      alert("Network error");
+    }
+  });
+</script>
+
     </div>
   </main>
 </body>

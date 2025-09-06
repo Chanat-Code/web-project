@@ -22,23 +22,19 @@
       </h1>
 
       <!-- Form grid -->
-      <form class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-        <!-- Username -->
-        <input type="text" placeholder="Username :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400">
-        <!-- ID Number -->
-        <input type="text" placeholder="ID Number :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400">
+     <form id="registerForm" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+       <input id="username" name="username" type="text" placeholder="Username :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400" required>
 
-        <!-- Password -->
-        <input type="password" placeholder="Password :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400">
-        <!-- Email -->
-        <input type="email" placeholder="Email :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400">
+        <input id="idNumber" name="idNumber" type="text" placeholder="ID Number :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400" required>
 
-        <!-- Major -->
-        <input type="text" placeholder="Major :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-sky-400">
-        <!-- Phone Number -->
-        <input type="tel" placeholder="Phone Number :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400">
+        <input id="password" name="password" type="password" placeholder="Password :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400" required>
 
-        <!-- Button row (span 2) -->
+        <input id="email" name="email" type="email" placeholder="Email :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400" required>
+
+        <input id="major" name="major" type="text" placeholder="Major :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-sky-400">
+
+        <input id="phone" name="phone" type="tel" placeholder="Phone Number :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400">
+
         <div class="md:col-span-2 flex items-center justify-center pt-2">
           <button type="submit" class="w-[320px] h-12 rounded-2xl bg-gradient-to-r from-indigo-950 via-indigo-800 to-indigo-700 text-white text-[18px] font-semibold tracking-wide shadow-[0_4px_10px_rgba(0,0,0,0.25)] active:translate-y-[1px] transition">
             REGISTER
@@ -47,5 +43,45 @@
       </form>
     </div>
   </main>
+
+<script>
+  const API_BASE = `${location.protocol}//${location.hostname}:4000`;
+  const API = `${API_BASE}/api/auth/register`;
+
+  document.getElementById("registerForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const payload = {
+      username: document.getElementById("username").value.trim(),
+      idNumber: document.getElementById("idNumber").value.trim(),
+      password: document.getElementById("password").value,
+      email: document.getElementById("email").value.trim(),
+      major: document.getElementById("major").value.trim(),
+      phone: document.getElementById("phone").value.trim(),
+    };
+
+    try {
+      const res = await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json().catch(()=> ({}));
+      if (!res.ok) {
+        alert(`Register failed (${res.status}): ${data.message || 'unknown error'}`);
+        return;
+      }
+      alert("Register success!");
+      window.location.href = "./LOGIN.html"; // ให้ตรงชื่อไฟล์จริงของคุณ
+    } catch (err) {
+      console.error(err);
+      alert("Network error");
+    }
+  });
+</script>
+
+
 </body>
 </html>
