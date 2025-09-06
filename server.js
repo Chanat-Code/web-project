@@ -4,14 +4,18 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import path from "path";
+import { fileURLToPath } from "url";
 import authRouter from "./src/routes/auth.js";
 import eventsRouter from "./src/routes/events.js";
 
 dotenv.config();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 
-// Connect to Mongo once per runtime
 async function connectDB() {
   if (mongoose.connection.readyState === 0) {
     await mongoose.connect(process.env.MONGO_URI, { dbName: "auth_db" });
@@ -45,10 +49,13 @@ app.use(cookieParser());
 
 // routes
 app.use("/api/auth", authRouter);
-app.use("/api/events", eventsRouter);   
+app.use("/api/events", eventsRouter);
 
-// health
-app.get("/", (_req, res) => res.send("OK"));
+
+app.get("/api/health", (_req, res) => res.send("OK"));
+
+// serve static files
+app.use(express.static(__dirname));
 
 export default app;
 

@@ -6,8 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon server.js",
-    "dev:css": "npx tailwindcss -i ./src/input.css -o ./dist/styles.css --watch",
-    "build": "npx tailwindcss -i ./src/input.css -o ./dist/styles.css",
+    "dev:css": "node node_modules/@tailwindcss/cli/dist/index.mjs -i ./src/input.css -o ./dist/styles.css --watch",
+    "build": "node node_modules/@tailwindcss/cli/dist/index.mjs -i ./src/input.css -o ./dist/styles.css",
     "start": "node server.js"
   },
   "keywords": [],
