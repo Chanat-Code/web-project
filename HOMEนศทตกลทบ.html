@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RLTG</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manjari:wght@700&family=Inter:wght@400;600;800&display=swap"
+    rel="stylesheet" />
+
+  <style>
+    :root {
+      --header-h: 72px;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif;
+    }
+
+    /* ===== Apple TV+ Hero ===== */
+    #tvStage {
+      --H: clamp(320px, 58vh, 660px);
+      height: var(--H);
+      position: relative;
+    }
+
+    .tv-slide {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(1100px, 76vw, calc(var(--H) * 16 / 9));
+      aspect-ratio: 16/9;
+      border-radius: 22px;
+      overflow: hidden;
+      background: #000;
+      box-shadow: 0 40px 90px rgba(0, 0, 0, .45);
+      transition: transform 800ms cubic-bezier(.2, .6, .2, 1),
+        opacity 800ms cubic-bezier(.2, .6, .2, 1),
+        filter 800ms cubic-bezier(.2, .6, .2, 1);
+      will-change: transform, opacity, filter;
+      z-index: 10;
+    }
+
+    .tv-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+
+    .tv-slide .fade {
+      position: absolute;
+      inset-inline: 0;
+      bottom: 0;
+      height: 5.5rem;
+      background: linear-gradient(to top, rgba(0, 0, 0, .45), transparent);
+      pointer-events: none;
+    }
+
+    .tv-slide.is-center {
+      z-index: 30;
+      transform: translate(-50%, -50%) scale(1) rotateY(0);
+      opacity: 1;
+      filter: none;
+    }
+
+    .tv-slide.is-left {
+      z-index: 20;
+      transform: translate(calc(-50% - 18vw), -50%) scale(.9) rotateY(14deg);
+      opacity: .9;
+      filter: grayscale(.25) brightness(.85);
+    }
+
+    .tv-slide.is-right {
+      z-index: 20;
+      transform: translate(calc(-50% + 18vw), -50%) scale(.9) rotateY(-14deg);
+      opacity: .9;
+      filter: grayscale(.25) brightness(.85);
+    }
+
+    .tv-slide.is-hidden {
+      z-index: 10;
+      transform: translate(-50%, -50%) scale(.86);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    @keyframes kb {
+      from {
+        transform: scale(1)
+      }
+
+      to {
+        transform: scale(1.06)
+      }
+    }
+
+    .tv-slide.is-center img {
+      animation: kb 3000ms ease-in-out both;
+    }
+
+    #tvDots .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, .7);
+      opacity: .6;
+      transition: width .25s ease, opacity .25s ease;
+    }
+
+    #tvDots .dot.active {
+      width: 26px;
+      opacity: 1;
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+
+      .tv-slide,
+      .tv-slide img {
+        transition: none !important;
+        animation: none !important;
+      }
+    }
+
+    .tv-slide[data-loading]::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.14) 50%, rgba(255, 255, 255, 0.06) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s linear infinite;
+      border-radius: inherit;
+    }
+
+    @keyframes shimmer {
+      to {
+        background-position: -200% 0;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-slate-900 text-slate-100">
+
+  <!-- Header (z-50 สูงกว่า hero) -->
+  <header
+    class="fixed inset-x-0 top-0 z-50 bg-slate-800/95 backdrop-blur supports-[backdrop-filter]:bg-slate-800/80 border-b border-white/10">
+    <div class="mx-auto max-w-none px-4 sm:px-6 lg:px-8 h-[var(--header-h)] flex items-center gap-4 w-full">
+      <div class="text-3xl font-extrabold tracking-tight select-none"><span class="text-white">RLTG</span></div>
+      <div class="flex-1 flex items-center">
+        <div class="relative w-full max-w-3xl mx-auto">
+          <input type="text" placeholder="ค้นหา..."
+            class="w-full rounded-full bg-slate-700/90 pl-14 pr-14 py-3 text-white placeholder:text-slate-300 outline-none ring-1 ring-white/10 focus:ring-2 focus:ring-indigo-400 shadow-inner" />
+          <svg class="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 opacity-80" fill="none" stroke="currentColor"
+            stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z" />
+          </svg>
+          <button
+            class="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-full hover:bg-white/10 active:scale-95 transition"
+            aria-label="ค้นหา">
+            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path
+                d="M10.5 3a7.5 7.5 0 015.91 12.19l3.2 3.2a1 1 0 01-1.42 1.42l-3.2-3.2A7.5 7.5 0 1110.5 3zm0 2a5.5 5.5 0 100 11 5.5 5.5 0 000-11z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button
+        class="shrink-0 h-12 w-12 rounded-full bg-slate-700 grid place-items-center ring-1 ring-white/10 hover:ring-indigo-400 transition"
+        id="profileBtn" aria-label="โปรไฟล์">
+        <svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path
+            d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6a1 1 0 001 1h14a1 1 0 001-1c0-3.33-2.67-6-8-6z" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== MAIN ===== -->
+  <main class="pt-[var(--header-h)]">
+
+    <!-- Hero (Full-bleed) -->
+    <section class="relative mx-[calc(50%-50vw)] w-screen">
+      <div id="tvStage" class="relative">
+        <!-- Edge fades -->
+        <div
+          class="pointer-events-none absolute inset-y-0 left-0 w-[7vw] max-w-32 bg-gradient-to-r from-black/30 to-transparent z-20">
+        </div>
+        <div
+          class="pointer-events-none absolute inset-y-0 right-0 w-[7vw] max-w-32 bg-gradient-to-l from-black/30 to-transparent z-20">
+        </div>
+
+        <!-- Arrows -->
+        <button id="tvPrev"
+          class="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-30 h-10 w-10 grid place-items-center rounded-full bg-black/45 text-white ring-1 ring-white/30 hover:bg-black/60">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+          </svg>
+        </button>
+        <button id="tvNext"
+          class="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 z-30 h-10 w-10 grid place-items-center rounded-full bg-black/45 text-white ring-1 ring-white/30 hover:bg-black/60">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="m10 6-1.41 1.41L13.17 12l-4.58 4.59L10 18l6-6z" />
+          </svg>
+        </button>
+
+        <!-- Dots + Pause -->
+        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3">
+          <div id="tvDots" class="flex items-center gap-2"></div>
+        </div>
+        <button id="tvToggle"
+          class="absolute bottom-2 right-3 md:right-6 z-30 h-8 w-8 grid place-items-center rounded-full bg-white/90 text-slate-900 hover:bg-white">⏸</button>
+      </div> <!-- ✅ ปิด tvStage -->
+    </section>
+
+    <!-- รายการกิจกรรม -->
+    <section class="relative z-10 w-full max-w-3xl px-4 mx-auto mt-14 md:mt-20">
+      <div class="rounded-2xl bg-white/30 backdrop-blur shadow-2xl ring-1 ring-white/40 p-6 sm:p-8">
+        <ul id="eventList" class="space-y-4"><!-- เติมด้วย JS --></ul>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FAB: admin only -->
+  <button id="fabAdd"
+    class="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-indigo-600 shadow-xl text-white text-3xl leading-none grid place-items-center hover:bg-indigo-500 active:scale-95 transition hidden"
+    title="เพิ่มกิจกรรม">+</button>
+
+  <button id="fabReg"
+    class="fixed bottom-24 right-6 h-14 w-14 rounded-full bg-emerald-600 text-white grid place-items-center shadow-xl hover:bg-emerald-500 active:scale-95 transition hidden"
+    title="รายชื่อผู้ลงทะเบียน">
+    <!-- ไอคอนรูปคนหลายคน -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor">
+      <path
+        d="M16 11a4 4 0 10-3.999-4A3.999 3.999 0 0016 11zm-8 0a4 4 0 10-4-3.999A3.999 3.999 0 008 11zm0 2c-4 0-6 2-6 4v1a1 1 0 001 1h10a1 1 0 001-1v-1c0-2-2-4-6-4zm8 0c-.445 0-.86.03-1.246.08A5.96 5.96 0 0120 18v1a1 1 0 001 1h3a1 1 0 001-1v-1c0-2-2-4-6-4z" />
+    </svg>
+  </button>
+
+  <!-- ปุ่มไปหน้า Calendar (เฉพาะ user) -->
+  <a id="calendarFab" href="./calendar.html"
+    class="hidden fixed bottom-6 right-6 h-14 w-14 rounded-full bg-indigo-600 text-white grid place-items-center shadow-xl hover:bg-indigo-500 active:scale-95 transition"
+    title="Calendar" aria-label="Calendar">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor">
+      <path
+        d="M7 2a1 1 0 011 1v1h8V3a1 1 0 112 0v1h1a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h1V3a1 1 0 112 0v1zm13 6H4v10h16V8z" />
+    </svg>
+  </a>
+
+  <!-- Modal เพิ่มกิจกรรม -->
+  <div id="addModal" class="fixed inset-0 z-[70] hidden">
+    <div data-overlay class="absolute inset-0 bg-black/50 z-10"></div>
+    <div class="relative z-20 min-h-full p-4 grid place-items-center">
+      <form id="addForm"
+        class="w-full max-w-xl rounded-2xl bg-white text-slate-900 p-6 space-y-4 shadow-2xl border border-black/5">
+        <h2 class="text-xl font-bold">เพิ่มกิจกรรม</h2>
+        <input name="title" required placeholder="ชื่อกิจกรรม"
+          class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400">
+        <input name="dateText" id="addDate" type="date"
+          class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400"
+          required>
+        <input name="location" placeholder="สถานที่"
+          class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400">
+        <input name="imageUrl" placeholder="รูปปก (URL)"
+          class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400">
+        <textarea name="description" rows="4" placeholder="รายละเอียด"
+          class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400"></textarea>
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" id="addCancel"
+            class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300">ยกเลิก</button>
+          <button type="submit"
+            class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500">บันทึก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="regModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+    <div data-overlay class="absolute inset-0 bg-black/50"></div>
+    <div class="relative z-10 min-h-full p-4 grid place-items-center">
+      <div class="modal-enter w-[900px] max-w-[calc(100vw-2rem)] max-h-[85vh] overflow-hidden
+            rounded-2xl bg-white text-slate-900 shadow-2xl border border-slate-200
+            flex flex-col">
+        <div class="flex items-start justify-between px-6 py-5 border-b">
+          <h3 class="text-xl font-bold">รายชื่อผู้ลงทะเบียน (Admin)</h3>
+          <button id="regClose" class="h-9 w-9 grid place-items-center rounded-full hover:bg-black/5"
+            aria-label="ปิด">✕</button>
+        </div>
+
+        <!-- สรุปต่อกิจกรรม -->
+        <div id="regSummary" class="p-6 flex-1 min-h-0">
+          <div id="regLoading" class="h-10 rounded-lg bg-slate-100 animate-pulse"></div>
+          <div id="regEmpty" class="hidden text-slate-500">ยังไม่มีกิจกรรมหรือไม่พบข้อมูลผู้ลงทะเบียน</div>
+
+          <!-- ✅ กล่องเลื่อนแนวตั้ง -->
+          <div id="regScroll" class="overflow-auto max-h-[60vh]">
+            <table id="regTable" class="hidden w-full text-sm">
+              <thead class="sticky top-0 z-10 bg-white">
+                <tr class="text-left text-slate-500">
+                  <th class="py-2 pr-3">กิจกรรม</th>
+                  <th class="py-2 pr-3">วันที่</th>
+                  <th class="py-2 pr-3 w-24">จำนวน</th>
+                  <th class="py-2">การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="regTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- รายชื่อภายในกิจกรรม -->
+        <div id="regDetail" class="hidden p-6 border-t flex-1 min-h-0">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <div id="rdTitle" class="font-semibold text-lg">—</div>
+              <div id="rdDate" class="text-sm text-slate-500">—</div>
+            </div>
+            <button id="rdBack" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50">←
+              ย้อนกลับ</button>
+          </div>
+
+          <div id="rdLoading" class="h-10 rounded-lg bg-slate-100 animate-pulse"></div>
+          <div id="rdEmpty" class="hidden text-slate-500">ไม่พบผู้ลงทะเบียนในกิจกรรมนี้</div>
+
+          <!-- ✅ กล่องเลื่อนแนวตั้ง -->
+          <div id="rdScroll" class="overflow-auto max-h-[60vh]">
+            <table id="rdTable" class="hidden w-full text-sm">
+              <thead class="sticky top-0 z-10 bg-white">
+                <tr class="text-left text-slate-500">
+                  <th class="py-2 pr-3">ชื่อ</th>
+                  <th class="py-2 pr-3">รหัส</th>
+                  <th class="py-2 pr-3">E-mail</th>
+                  <th class="py-2 pr-3">โทร</th>
+                  <th class="py-2 pr-3">ที่อยู่ (ตอนลงทะเบียน)</th>
+                </tr>
+              </thead>
+              <tbody id="rdTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="px-6 pb-6 pt-2 flex items-center justify-end gap-3">
+          <button id="regClose2" class="px-4 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800">ปิด</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Profile modal (z สูงสุด) ===== -->
+  <div id="profileModal" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true">
+    <div data-overlay class="absolute inset-0 bg-black/50 backdrop-blur-sm z-10"></div>
+    <div class="relative z-20 min-h-full p-4">
+      <!-- การ์ดต้องอยู่เหนือ overlay เสมอ -->
+      <div id="profileCard"
+        class="fixed z-20 w-80 sm:w-96 rounded-2xl bg-white text-slate-900 shadow-2xl border border-black/5">
+        <div class="absolute -top-2 right-10 w-4 h-4 bg-white rotate-45 shadow ring-1 ring-black/5"></div>
+        <button data-close
+          class="absolute right-3 top-3 h-9 w-9 grid place-items-center rounded-full hover:bg-black/5 text-slate-900"
+          aria-label="ปิด">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <div class="p-6 space-y-6">
+          <div class="mx-auto h-16 w-16 rounded-full bg-slate-200 grid place-items-center">
+            <svg class="h-10 w-10 text-slate-700" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path
+                d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6a1 1 0 001 1h14a1 1 0 001-1c0-3.33-2.67-6-8-6z" />
+            </svg>
+          </div>
+
+          <div class="space-y-3 text-[15px]">
+            <div class="flex items-center gap-2"><span class="font-medium">Name :</span><span id="ppName"
+                class="text-slate-600">—</span></div>
+            <div class="flex items-center gap-2"><span class="font-medium">ID :</span><span id="ppId"
+                class="text-slate-600">—</span></div>
+            <div class="flex items-center gap-2"><span class="font-medium">E-mail :</span><span id="ppEmail"
+                class="text-slate-600">—</span></div>
+            <div class="flex items-center gap-2"><span class="font-medium">Major :</span><span id="ppMajor"
+                class="text-slate-600">—</span></div>
+            <div class="flex items-center gap-2"><span class="font-medium">Phone :</span><span id="ppPhone"
+                class="text-slate-600">—</span></div>
+          </div>
+
+          <div class="space-y-3">
+            <button id="historyBtn"
+              class="w-full rounded-2xl bg-indigo-900 text-white px-5 py-3 font-semibold tracking-wide hover:bg-indigo-800 active:scale-[.99] transition">Registration
+              History</button>
+            <button id="logoutBtn"
+              class="w-full rounded-xl bg-slate-900 text-white px-5 py-2.5 font-medium hover:bg-slate-800 active:scale-[.99] transition">Log
+              out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== History modal ===== -->
+  <div id="historyModal" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true">
+    <div data-overlay class="absolute inset-0 bg-black/60 backdrop-blur-sm z-10"></div>
+    <div class="relative z-20 min-h-full p-4 grid place-items-center">
+      <div
+        class="relative w-[720px] max-w-[calc(100vw-2rem)] max-h-[85vh] rounded-2xl bg-white text-slate-900 shadow-2xl flex flex-col">
+        <div class="flex items-center justify-between px-6 py-4 border-b">
+          <h3 class="text-xl font-bold">ประวัติการลงทะเบียน</h3>
+          <button id="historyClose" class="h-9 w-9 grid place-items-center rounded-full hover:bg-black/5"
+            aria-label="ปิด">✕</button>
+        </div>
+        <div id="historyScroll" class="p-6 overflow-y-auto overscroll-contain">
+          <div id="historyLoading" class="text-slate-500">กำลังโหลด...</div>
+          <div id="historyEmpty" class="hidden text-slate-500">ยังไม่มีรายการลงทะเบียน</div>
+          <ul id="historyList" class="hidden space-y-3"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="py-6 text-center text-sm text-white/70">© 2025 RLTG</footer>
+
+  <!-- ===== Globals / Utils ===== -->
+  <script>
+    window.API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+      ? 'http://localhost:4000/api' : '/api';
+
+    window.formatDateLabel = function (s) {
+      if (!s) return '—';
+      const d = new Date(s); if (isNaN(d)) return s;
+      const day = d.getDate(), month = d.getMonth() + 1, yearBE = d.getFullYear() + 543;
+      return `${day}/${month}/${yearBE.toString().slice(-2)}`;
+    };
+    window.escapeHtml = (t = '') => t.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+  </script>
+
+  <!-- ===== Hero slider script ===== -->
+  <script>
+    (function () {
+      const IMAGES = [
+        'assets/hero/IMG_20250807_143556.jpg',
+        'assets/hero/IMG_20240213_184348.jpg',
+        'assets/hero/IMG_20231002_141026.jpg',
+        'assets/hero/62403.jpg',
+        'assets/hero/LINE_ALBUM_24768_250907_1.jpg',
+        'assets/hero/IMG_20250206_135727.jpg'
+      ];
+      const FALLBACKS = [
+        'https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=1600&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1600&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1600&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1522199755839-a2bacb67c546?q=80&w=1600&auto=format&fit=crop'
+      ];
+
+      const stage = document.getElementById('tvStage');
+      const dotsWrap = document.getElementById('tvDots');
+      const btnPrev = document.getElementById('tvPrev');
+      const btnNext = document.getElementById('tvNext');
+      const btnToggle = document.getElementById('tvToggle');
+
+      function makeSlide(src, i) {
+        const el = document.createElement('div');
+        el.className = 'tv-slide';
+        el.innerHTML = `
+        <img src="${src}" alt="" loading="eager" decoding="async" referrerpolicy="no-referrer" crossorigin="anonymous">
+        <div class="fade"></div>`;
+        const img = el.querySelector('img');
+
+        el.dataset.loading = '1';
+        img.addEventListener('load', () => { delete el.dataset.loading; });
+        img.addEventListener('error', () => { img.src = FALLBACKS[i % FALLBACKS.length]; });
+
+        stage.appendChild(el);
+        return el;
+      }
+
+      const slides = IMAGES.map((src, i) => makeSlide(src, i));
+      const dots = IMAGES.map((_, i) => {
+        const b = document.createElement('button');
+        b.className = 'dot'; b.addEventListener('click', () => goTo(i));
+        dotsWrap.appendChild(b); return b;
+      });
+
+      let index = 0, timer = null, playing = true;
+      const INTERVAL = 6000;
+
+      function apply() {
+        const n = slides.length, L = (index - 1 + n) % n, R = (index + 1) % n;
+        slides.forEach((sl, i) => {
+          sl.classList.remove('is-center', 'is-left', 'is-right', 'is-hidden');
+          if (i === index) sl.classList.add('is-center');
+          else if (i === L) sl.classList.add('is-left');
+          else if (i === R) sl.classList.add('is-right');
+          else sl.classList.add('is-hidden');
+
+          const img = sl.querySelector('img');
+          if (i === index) { img.style.animation = 'none'; img.offsetHeight; img.style.animation = ''; }
+        });
+        dots.forEach((d, i) => d.classList.toggle('active', i === index));
+      }
+      function goTo(i) { index = (i + slides.length) % slides.length; apply(); restart(); }
+      const next = () => goTo(index + 1), prev = () => goTo(index - 1);
+      function start() { if (playing && !timer) timer = setInterval(next, INTERVAL); }
+      function stop() { clearInterval(timer); timer = null; }
+      function restart() { stop(); start(); }
+
+      btnNext.addEventListener('click', next);
+      btnPrev.addEventListener('click', prev);
+      btnToggle.addEventListener('click', () => { playing = !playing; btnToggle.textContent = playing ? '⏸' : '▶︎'; playing ? start() : stop(); });
+
+      stage.tabIndex = 0;
+      stage.addEventListener('keydown', e => { if (e.key === 'ArrowRight') next(); if (e.key === 'ArrowLeft') prev(); });
+      let sx = 0, dx = 0;
+      stage.addEventListener('touchstart', e => { sx = e.touches[0].clientX; dx = 0; stop(); }, { passive: true });
+      stage.addEventListener('touchmove', e => { dx = e.touches[0].clientX - sx; }, { passive: true });
+      stage.addEventListener('touchend', () => { if (Math.abs(dx) > 40) (dx < 0 ? next() : prev()); if (playing) start(); });
+
+      document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
+
+      apply(); start();
+    })();
+  </script>
+
+  <!-- ===== Profile/History logic + Events loader ===== -->
+  <script>
+    let currentUser = null;
+
+    (function () {
+      const btn = document.getElementById('profileBtn');
+      const modal = document.getElementById('profileModal');
+      const card = document.getElementById('profileCard');
+      if (!btn || !modal || !card) return;
+
+      const overlay = modal.querySelector('[data-overlay]');
+      const closeBtn = modal.querySelector('[data-close]');
+      let lastActive = null;
+
+      function place() {
+        const r = btn.getBoundingClientRect(), gap = 10, width = card.offsetWidth || 360;
+        const maxLeft = window.innerWidth - width - 8;
+        const left = Math.max(8, Math.min(r.right - width, maxLeft));
+        const top = Math.min(r.bottom + gap, window.innerHeight - card.offsetHeight - 8);
+        card.style.left = left + 'px'; card.style.top = top + 'px';
+      }
+      function lockScroll(lock) {
+        const el = document.scrollingElement || document.documentElement;
+        if (lock) { el.dataset.prevOverflow = el.style.overflow || ''; el.style.overflow = 'hidden'; document.body.classList.add('overflow-hidden'); }
+        else { el.style.overflow = el.dataset.prevOverflow || ''; document.body.classList.remove('overflow-hidden'); delete el.dataset.prevOverflow; }
+      }
+      function open() { lastActive = document.activeElement; modal.classList.remove('hidden'); lockScroll(true); requestAnimationFrame(place); window.addEventListener('resize', place, { passive: true }); }
+      function close() { modal.classList.add('hidden'); lockScroll(false); if (lastActive) lastActive.focus(); window.removeEventListener('resize', place); }
+
+      btn.addEventListener('click', open);
+      overlay.addEventListener('click', close);
+      closeBtn.addEventListener('click', close);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
+    })();
+
+    (function () {
+      const API_BASE = window.API_BASE;
+      const token = localStorage.getItem("token");
+      if (!token) { location.href = "./index.html"; return; }
+
+      const $ = (s) => document.querySelector(s);
+      const eventList = $("#eventList");
+      const fab = $("#fabAdd"), addModal = $("#addModal"), addForm = $("#addForm");
+      const dateInput = document.getElementById('addDate');
+      if (dateInput) { const offset = new Date().getTimezoneOffset() * 60000; dateInput.value = new Date(Date.now() - offset).toISOString().slice(0, 10); }
+      const addCancel = $("#addCancel");
+
+      async function loadMe() {
+        const res = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: "Bearer " + token }, credentials: "include" });
+        if (!res.ok) throw new Error("unauthorized");
+        const json = await res.json().catch(() => ({}));
+        const me = json.user || json;
+        currentUser = me;
+
+        const id = (x) => document.getElementById(x);
+        id("ppName") && (id("ppName").textContent = me.username ?? "—");
+        id("ppId") && (id("ppId").textContent = me.idNumber ?? "—");
+        id("ppEmail") && (id("ppEmail").textContent = me.email ?? "—");
+        id("ppMajor") && (id("ppMajor").textContent = me.major ?? "—");
+        id("ppPhone") && (id("ppPhone").textContent = me.phone ?? "—");
+
+        const calFab = document.getElementById('calendarFab');
+        if (me.role === "admin") {
+          fab?.classList.remove("hidden"); // admin เห็นปุ่ม +
+          calFab?.remove();                // ไม่ให้ปุ่ม calendar
+        } else {
+          calFab?.classList.remove('hidden'); // user เห็นปุ่ม calendar
+        }
+      }
+
+      (function wireLogout() {
+        const btn = document.getElementById("logoutBtn"); if (!btn) return;
+        btn.addEventListener("click", async () => {
+          try { await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" }); } catch { }
+          localStorage.removeItem("token"); location.href = "./index.html";
+        });
+      })();
+
+      async function loadEvents() {
+        const res = await fetch(`${API_BASE}/events`);
+        const items = await res.json();
+        if (!Array.isArray(items) || items.length === 0) {
+          eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">ยังไม่มีกิจกรรม</li>`;
+          return;
+        }
+        eventList.innerHTML = items.map(ev => {
+          const dateTxt = ev.dateText ? `${window.formatDateLabel(ev.dateText)} ` : "";
+          return `<li>
+          <a href="./event.html?id=${ev._id}" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition">
+            <span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span>
+            <span class="font-semibold tracking-wide">${dateTxt}${window.escapeHtml(ev.title || '')}</span>
+          </a>
+        </li>`;
+        }).join("");
+      }
+
+      function openAdd() { addModal?.classList.remove("hidden"); }
+      function closeAdd() { addModal?.classList.add("hidden"); addForm?.reset(); }
+
+      addForm?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fd = new FormData(addForm); const payload = Object.fromEntries(fd.entries());
+        const res = await fetch(`${API_BASE}/events`, {
+          method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          credentials: "include", body: JSON.stringify(payload)
+        });
+        if (!res.ok) { const data = await res.json().catch(() => ({})); alert(`เพิ่มกิจกรรมไม่สำเร็จ: ${data.message || res.status}`); return; }
+        closeAdd(); loadEvents();
+      });
+      addCancel?.addEventListener("click", closeAdd);
+      fab?.addEventListener("click", openAdd);
+      addModal?.querySelector("[data-overlay]")?.addEventListener("click", closeAdd);
+
+      loadMe().then(loadEvents).catch(() => { localStorage.removeItem("token"); location.href = "./index.html"; });
+    })();
+
+    (function historyModal() {
+      const API_BASE = window.API_BASE;
+      const btnOpen = document.getElementById('historyBtn');
+      const modal = document.getElementById('historyModal');
+      const btnClose = document.getElementById('historyClose');
+      const overlay = modal?.querySelector('[data-overlay]');
+      const ul = document.getElementById('historyList');
+      const empty = document.getElementById('historyEmpty');
+      const loading = document.getElementById('historyLoading');
+      if (!btnOpen || !modal) return;
+
+      const open = () => modal.classList.remove('hidden');
+      const close = () => modal.classList.add('hidden');
+
+      async function fetchMyRegistrations() {
+        const token = localStorage.getItem('token');
+        const opt = { headers: { Authorization: 'Bearer ' + token }, credentials: 'include' };
+        let res = await fetch(`${API_BASE}/registrations/me`, opt);
+        if (res.ok) { const j = await res.json().catch(() => ({})); return j.items || []; }
+        if (res.status === 404) {
+          res = await fetch(`${API_BASE}/auth/my-registrations`, opt);
+          if (res.ok) { const j = await res.json().catch(() => ({})); return j.items || []; }
+        }
+        const t = await res.text().catch(() => ''); throw new Error(`GET failed ${res.status}: ${t || 'unknown error'}`);
+      }
+
+      async function loadHistory() {
+        ul.classList.add('hidden'); ul.innerHTML = ''; empty.classList.add('hidden'); loading.classList.remove('hidden');
+        try {
+          const items = await fetchMyRegistrations();
+          loading.classList.add('hidden');
+          if (!items.length) { empty.classList.remove('hidden'); return; }
+          ul.innerHTML = items.map(it => {
+            const ev = it.event || {}; const title = ev.title || '(ไม่ระบุชื่อกิจกรรม)';
+            const dateTxt = window.formatDateLabel(ev.dateText); const loc = ev.location || '—';
+            const orphan = !ev._id;
+            return `<li class="rounded-xl border border-slate-200 bg-white/60 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="font-semibold text-slate-900">
+                  ${window.escapeHtml(title)}
+                  ${orphan ? '<span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-rose-100 text-rose-600">ถูกลบแล้ว</span>' : ''}
+                </div>
+                <div class="text-sm text-slate-500">${dateTxt} • ${window.escapeHtml(loc)}</div>
+                ${it.address ? `<div class="mt-1 text-xs text-slate-500">address: ${window.escapeHtml(it.address)}</div>` : ''}
+              </div>
+              <div class="shrink-0 flex gap-2">
+                ${orphan
+                ? `<button data-remove="${it._id}" class="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300">ลบออก</button>`
+                : `<a href="./event.html?id=${ev._id}" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-700">ดูรายละเอียด</a>`}
+              </div>
+            </div>
+          </li>`;
+          }).join('');
+          ul.classList.remove('hidden');
+
+          ul.querySelectorAll('[data-remove]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = btn.getAttribute('data-remove');
+              try {
+                await fetch(`${API_BASE}/registrations/${id}`, {
+                  method: 'DELETE', headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+                });
+                loadHistory();
+              } catch { }
+            });
+          });
+        } catch (err) { loading.textContent = 'โหลดไม่สำเร็จ: ' + err.message; }
+      }
+
+      btnOpen.addEventListener('click', () => { open(); loadHistory(); });
+      btnClose?.addEventListener('click', close);
+      overlay?.addEventListener('click', close);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
+    })();
+  </script>
+
+  <script>
+    /* ===== Admin Registrations Modal (Fixed v2) ===== */
+    (function () {
+      const API_BASE = window.API_BASE;
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      // ---------- DOM ----------
+      const $ = (s) => document.querySelector(s);
+      const eventList = $("#eventList");
+      const fabAdd = $("#fabAdd");
+      const fabReg = $("#fabReg");
+
+      const regUI = {
+        wrap: document.getElementById('regModal'),
+        overlay: document.querySelector('#regModal [data-overlay]'),
+        close: document.getElementById('regClose'),
+        close2: document.getElementById('regClose2'),
+        sumWrap: document.getElementById('regSummary'),
+        sumScroll: document.getElementById('regScroll'),
+        // summary
+        sumLoading: document.getElementById('regLoading'),
+        sumEmpty: document.getElementById('regEmpty'),
+        table: document.getElementById('regTable'),
+        tbody: document.getElementById('regTbody'),
+        // detail
+        detailWrap: document.getElementById('regDetail'),
+        dScroll: document.getElementById('rdScroll'),
+        dTitle: document.getElementById('rdTitle'),
+        dDate: document.getElementById('rdDate'),
+        dLoading: document.getElementById('rdLoading'),
+        dEmpty: document.getElementById('rdEmpty'),
+        dTable: document.getElementById('rdTable'),
+        dTbody: document.getElementById('rdTbody'),
+        dBack: document.getElementById('rdBack'),
+      };
+
+      // ---------- Utils ----------
+      const esc = window.escapeHtml ?? (s => s);
+      const fmt = window.formatDateLabel ?? (s => s);
+
+      function toDisplayDate(s) {
+        if (!s) return '—';
+        const d = /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(s + 'T00:00:00') : new Date(s);
+        if (isNaN(d)) return '—';
+        const day = d.getDate(), month = d.getMonth() + 1, year = d.getFullYear() + 543;
+        return `${day}/${month}/${String(year).slice(-2)}`;
+      }
+      function showModal(el) {
+        el.classList.remove('hidden');
+        document.documentElement.classList.add('overflow-hidden');
+        const p = el.querySelector('.modal-enter');
+        if (p) requestAnimationFrame(() => p.classList.add('modal-enter-active'));
+      }
+      function hideModal(el) {
+        const p = el.querySelector('.modal-enter');
+        if (p) p.classList.remove('modal-enter-active');
+        setTimeout(() => { el.classList.add('hidden'); document.documentElement.classList.remove('overflow-hidden'); }, 180);
+      }
+
+      // รูปแบบ response → array
+      function listify(j) {
+        if (!j) return [];
+        if (Array.isArray(j)) return j;
+        if (Array.isArray(j.items)) return j.items;
+        if (Array.isArray(j.data)) return j.data;
+        if (Array.isArray(j.results)) return j.results;
+        return [];
+      }
+      async function tryJson(url) {
+        try {
+          const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token }, credentials: 'include' });
+          if (!res.ok) return null;
+          return await res.json().catch(() => null);
+        } catch { return null; }
+      }
+      // ดึง id ของ event จาก registration ให้ครอบจักรวาล
+      function getRegEventId(reg) {
+        if (!reg) return null;
+        if (typeof reg.event === 'string') return reg.event;
+        if (reg.event && typeof reg.event === 'object') return reg.event._id || null;
+        return reg.eventId || reg.eventID || reg.event_id || null;
+      }
+
+      // ---------- State ----------
+      let CURRENT_USER = null;
+      let EVENTS_CACHE = [];
+
+      async function loadMe() {
+        const res = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: 'Bearer ' + token }, credentials: 'include' });
+        const j = await res.json().catch(() => ({}));
+        CURRENT_USER = j.user || j;
+        if (CURRENT_USER?.role === 'admin') {
+          fabAdd?.classList.remove('hidden');
+          fabReg?.classList.remove('hidden');
+          document.getElementById('calendarFab')?.remove?.();
+        }
+      }
+      async function loadEvents() {
+        const res = await fetch(`${API_BASE}/events`, { credentials: 'include' });
+        const items = await res.json().catch(() => []);
+        EVENTS_CACHE = Array.isArray(items) ? items : [];
+        if (!EVENTS_CACHE.length) {
+          eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">ยังไม่มีกิจกรรม</li>`;
+          return;
+        }
+        eventList.innerHTML = EVENTS_CACHE.map(ev => {
+          const d = ev.dateText ? `${fmt(ev.dateText)} ` : '';
+          return `<li>
+            <a href="./event.html?id=${ev._id}" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 ring-1 ring-white/10 hover:bg-slate-700 transition">
+              <span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span>
+              <span class="font-semibold tracking-wide">${d}${esc(ev.title || '')}</span>
+            </a>
+          </li>`;
+        }).join('');
+      }
+
+      // ---------- Fetch registrations ----------
+      async function fetchAllRegistrations() {
+        const urls = [
+          `${API_BASE}/registrations`,
+          `${API_BASE}/admin/registrations`,
+          `${API_BASE}/registration`,
+        ];
+        for (const u of urls) {
+          const j = await tryJson(u);
+          if (j !== null) return listify(j); // อาจเป็น [] ได้
+        }
+        return undefined; // ไม่มี endpoint รวม
+      }
+      async function fetchRegistrationsByEvent(eventId) {
+        const urls = [
+          `${API_BASE}/events/${eventId}/registrations`,
+          `${API_BASE}/events/${eventId}/registration`,
+          `${API_BASE}/events/${eventId}/participants`,
+          `${API_BASE}/events/${eventId}/attendees`,
+          `${API_BASE}/registrations?eventId=${encodeURIComponent(eventId)}`,
+          `${API_BASE}/registrations?event=${encodeURIComponent(eventId)}`,
+          `${API_BASE}/registrations/by-event/${eventId}`,
+          `${API_BASE}/registrations/event/${eventId}`,
+        ];
+        for (const u of urls) {
+          const j = await tryJson(u);
+          if (j !== null) return listify(j);
+        }
+        return [];
+      }
+      function countFromEvent(ev) {
+        if (ev == null) return null;
+        if (typeof ev.registrationsCount === 'number') return ev.registrationsCount;
+        if (typeof ev.registrationCount === 'number') return ev.registrationCount;
+        if (typeof ev.attendeesCount === 'number') return ev.attendeesCount;
+        if (typeof ev.participantsCount === 'number') return ev.participantsCount;
+        if (Array.isArray(ev.registrations)) return ev.registrations.length;
+        if (Array.isArray(ev.attendees)) return ev.attendees.length;
+        return null;
+      }
+
+      // ---------- Summary ----------
+      async function openRegModal() {
+        if (CURRENT_USER?.role !== 'admin') return;
+
+        // reset
+        regUI.sumLoading.classList.remove('hidden');
+        regUI.sumWrap.classList.remove('hidden');
+        regUI.detailWrap.classList.add('hidden');
+        regUI.sumEmpty.classList.add('hidden');
+        regUI.table.classList.add('hidden');
+        regUI.tbody.innerHTML = '';
+        regUI.detailWrap.classList.add('hidden');
+        regUI.sumScroll?.scrollTo?.(0, 0);
+        showModal(regUI.wrap);
+
+        // events
+        let events = EVENTS_CACHE;
+        if (!events.length) {
+          const r = await fetch(`${API_BASE}/events`, { credentials: 'include' });
+          events = await r.json().catch(() => []);
+          events = Array.isArray(events) ? events : [];
+        }
+
+        // ลองดึงทั้งหมด
+        const allListMaybe = await fetchAllRegistrations(); // undefined = ไม่มี endpoint รวม
+        const allList = Array.isArray(allListMaybe) ? allListMaybe : (allListMaybe === undefined ? undefined : listify(allListMaybe));
+
+        let rows = [];
+        if (allList === undefined || allList.length === 0) {
+          // ❗ ถ้าไม่มี/ว่าง → ใช้ fallback ต่อกิจกรรม (จะไปนับทีหลัง)
+          rows = events.map(ev => ({ ev, count: countFromEvent(ev) }));
+        } else {
+          // มีข้อมูลรวม → group
+          const map = new Map();
+          allList.forEach(reg => {
+            const id = getRegEventId(reg);
+            if (!id) return;
+            map.set(id, (map.get(id) || 0) + 1);
+          });
+          rows = events.map(ev => {
+            const fromEv = countFromEvent(ev);
+            const grouped = map.get(ev._id) ?? 0;
+            return { ev, count: (fromEv ?? grouped) };
+          });
+        }
+
+        // render
+        regUI.tbody.innerHTML = rows.map(r => {
+          const c = (r.count == null)
+            ? '<span class="inline-block w-10 h-4 rounded bg-slate-100 animate-pulse align-middle"></span>'
+            : r.count;
+          return `<tr class="border-t">
+            <td class="py-2 pr-3">${esc(r.ev?.title || '(ไม่ระบุชื่อกิจกรรม)')}</td>
+            <td class="py-2 pr-3">${toDisplayDate(r.ev?.dateText)}</td>
+            <td class="py-2 pr-3 js-count">${c}</td>
+            <td class="py-2">
+              <button data-view="${r.ev?._id || ''}" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800">ดูรายชื่อ</button>
+            </td>
+          </tr>`;
+        }).join('');
+
+        regUI.sumLoading.classList.add('hidden');
+        if (!rows.length) regUI.sumEmpty.classList.remove('hidden'); else regUI.table.classList.remove('hidden');
+
+        // เติมจำนวนแบบ per-event สำหรับแถวที่ยังไม่มีค่า
+        const needFill = [...regUI.tbody.querySelectorAll('tr')].filter(tr => {
+          const c = tr.querySelector('.js-count');
+          return c && c.textContent.trim() === ''; // skeleton ไม่มีข้อความ
+        });
+        for (const tr of needFill) {
+          const id = tr.querySelector('button[data-view]')?.getAttribute('data-view');
+          if (!id) continue;
+          const regs = await fetchRegistrationsByEvent(id);
+          tr.querySelector('.js-count').textContent = regs.length;
+        }
+
+        // bind
+        regUI.tbody.querySelectorAll('button[data-view]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const id = btn.getAttribute('data-view');
+            const ev = events.find(e => e._id === id) || {};
+            await openRegDetail(ev);
+          });
+        });
+      }
+
+      // ---------- Detail ----------
+      async function openRegDetail(ev) {
+        regUI.detailWrap.classList.remove('hidden');
+        regUI.sumWrap.classList.add('hidden');
+        regUI.detailWrap.classList.remove('hidden');
+        regUI.dScroll?.scrollTo?.(0, 0);
+        regUI.dTitle.textContent = ev.title || '(ไม่ระบุชื่อกิจกรรม)';
+        regUI.dDate.textContent = toDisplayDate(ev.dateText);
+        regUI.dLoading.classList.remove('hidden');
+        regUI.dEmpty.classList.add('hidden');
+        regUI.dTable.classList.add('hidden');
+        regUI.dTbody.innerHTML = '';
+
+        // 1) ลอง per-event ก่อน
+        let regs = await fetchRegistrationsByEvent(ev._id);
+
+        // 2) ถ้ายังว่าง → ลองดึงรวมแล้วกรองเอง
+        if (!regs.length) {
+          const all = await fetchAllRegistrations();
+          if (Array.isArray(all)) {
+            regs = all.filter(r => getRegEventId(r) === ev._id);
+          }
+        }
+
+        regUI.dLoading.classList.add('hidden');
+        if (!regs.length) {
+          regUI.dEmpty.classList.remove('hidden');
+          return;
+        }
+
+        regUI.dTbody.innerHTML = regs.map(r => {
+          const u = r.user || r.profile || r.account || {};
+          const name = u.username || u.fullName || u.name || r.name || r.username || '—';
+          const idnum = u.idNumber || u.studentId || r.idNumber || r.studentId || r.sid || '—';
+          const email = u.email || r.email || '—';
+          const phone = u.phone || u.tel || r.phone || r.tel || '—';
+          const addr = r.address || r.addr || r.registrationAddress || r.contactAddress || '—';
+          return `<tr class="border-t">
+            <td class="py-2 pr-3">${esc(String(name))}</td>
+            <td class="py-2 pr-3">${esc(String(idnum))}</td>
+            <td class="py-2 pr-3">${esc(String(email))}</td>
+            <td class="py-2 pr-3">${esc(String(phone))}</td>
+            <td class="py-2 pr-3">${esc(String(addr))}</td>
+          </tr>`;
+        }).join('');
+        regUI.dTable.classList.remove('hidden');
+      }
+
+      // ---------- wire ----------
+      fabReg?.addEventListener('click', openRegModal);
+      regUI.overlay?.addEventListener('click', () => hideModal(regUI.wrap));
+      regUI.close?.addEventListener('click', () => hideModal(regUI.wrap));
+      regUI.close2?.addEventListener('click', () => hideModal(regUI.wrap));
+      regUI.dBack?.addEventListener('click', () => {
+        regUI.detailWrap.classList.add('hidden');
+        regUI.sumWrap.classList.remove('hidden');
+        regUI.sumScroll?.scrollTo?.(0, 0);
+      });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !regUI.wrap.classList.contains('hidden')) hideModal(regUI.wrap); });
+
+      // ---------- start ----------
+      loadMe().then(loadEvents).catch(() => { });
+    })();
+  </script>
+
+  <script>
+    
+    // Realtime search
+    (function realtimeSearch() {
+      const searchInput = document.querySelector('input[placeholder="ค้นหา..."]');
+      const eventList = document.getElementById('eventList');
+      let allItems = [];
+
+      // ดึงข้อมูลกิจกรรมทั้งหมด (ใช้ซ้ำกับ loadEvents)
+      async function fetchEvents() {
+        const res = await fetch(window.API_BASE + '/events');
+        const items = await res.json();
+        return Array.isArray(items) ? items : [];
+      }
+
+      // แสดงผลลัพธ์ที่กรอง
+      function render(items) {
+        if (!items.length) {
+          eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">ไม่พบกิจกรรมที่ค้นหา</li>`;
+          return;
+        }
+        eventList.innerHTML = items.map(ev => {
+          const dateTxt = ev.dateText ? `${window.formatDateLabel(ev.dateText)} ` : "";
+          return `<li>
+        <a href="./event.html?id=${ev._id}" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition">
+          <span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span>
+          <span class="font-semibold tracking-wide">${dateTxt}${window.escapeHtml(ev.title || '')}</span>
+        </a>
+      </li>`;
+        }).join("");
+      }
+
+      // โหลดกิจกรรมครั้งแรก
+      fetchEvents().then(items => {
+        allItems = items;
+      });
+
+      // ฟังค์ชันกรอง
+      searchInput?.addEventListener('input', e => {
+        const q = e.target.value.trim().toLowerCase();
+        if (!q) { render(allItems); return; }
+        const filtered = allItems.filter(ev =>
+          (ev.title || '').toLowerCase().includes(q) ||
+          (ev.location || '').toLowerCase().includes(q) ||
+          (window.formatDateLabel(ev.dateText) || '').includes(q)
+        );
+        render(filtered);
+      });
+    })();
+
+
+  </script>
+</body>
+
+</html>
