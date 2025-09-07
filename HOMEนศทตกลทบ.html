@@ -69,11 +69,11 @@
       <div class="text-3xl font-extrabold tracking-tight select-none"><span class="text-white">RLTG</span></div>
       <div class="flex-1 flex items-center">
         <div class="relative w-full max-w-3xl mx-auto">
-          <input type="text" placeholder="ค้นหา..." class="w-full rounded-full bg-slate-700/90 pl-14 pr-14 py-3 text-white placeholder:text-slate-300 outline-none ring-1 ring-white/10 focus:ring-2 focus:ring-indigo-400 shadow-inner"/>
+          <input id="searchInput" type="text" placeholder="ค้นหา..." class="w-full rounded-full bg-slate-700/90 pl-14 pr-14 py-3 text-white placeholder:text-slate-300 outline-none ring-1 ring-white/10 focus:ring-2 focus:ring-indigo-400 shadow-inner"/>
           <svg class="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 opacity-80" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z"/>
           </svg>
-          <button class="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-full hover:bg-white/10 active:scale-95 transition" aria-label="ค้นหา">
+          <button id="searchBtn" class="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-full hover:bg-white/10 active:scale-95 transition" aria-label="ค้นหา">
             <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 015.91 12.19l3.2 3.2a1 1 0 01-1.42 1.42l-3.2-3.2A7.5 7.5 0 1110.5 3zm0 2a5.5 5.5 0 100 11 5.5 5.5 0 000-11z"/></svg>
           </button>
         </div>
@@ -460,10 +460,58 @@
 
     const $ = (s)=>document.querySelector(s);
     const eventList = $("#eventList");
+    const searchInput = $("#searchInput");
+    const searchBtn   = $("#searchBtn");
     const fab=$("#fabAdd"), addModal=$("#addModal"), addForm=$("#addForm");
     const dateInput=document.getElementById('addDate');
     if(dateInput){ const offset=new Date().getTimezoneOffset()*60000; dateInput.value=new Date(Date.now()-offset).toISOString().slice(0,10); }
     const addCancel=$("#addCancel");
+    let currentUser = null;
+
+    // เก็บรายการทั้งหมดไว้สำหรับกรอง
+    let ALL_EVENTS = [];
+  
+    // แสดงรายการ (รองรับข้อความเมื่อไม่พบผลลัพธ์)
+    function renderEvents(items, q=""){
+      if(!Array.isArray(items) || items.length===0){
+        eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">
+          ${q ? `ไม่พบกิจกรรมที่ตรงกับ “${window.escapeHtml(q)}”` : 'ยังไม่มีกิจกรรม'}
+        </li>`;
+        return;
+      }
+      eventList.innerHTML = items.map(ev=>{
+        const dateTxt = ev.dateText ? `${window.formatDateLabel(ev.dateText)} ` : "";
+        return `<li>
+          <a href="./event.html?id=${ev._id}" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 ring-1 ring-white/10 hover:bg-slate-700 transition">
+            <span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span>
+            <span class="font-semibold tracking-wide">${dateTxt}${window.escapeHtml(ev.title||'')}</span>
+          </a>
+        </li>`;
+      }).join("");
+    }
+  
+    // ฟังก์ชันกรอง
+    function applySearch(){
+      const q = (searchInput?.value || "").trim().toLowerCase();
+      if(!q){ renderEvents(ALL_EVENTS); return; }
+      const filtered = ALL_EVENTS.filter(ev=>{
+        const f = (v)=>String(v||"").toLowerCase();
+        return [ev.title, ev.location, ev.dateText].some(v=> f(v).includes(q));
+      });
+      renderEvents(filtered, q);
+    }
+  
+    // debounce เล็กน้อยให้พิมพ์ลื่น
+    const debounce = (fn,ms)=>{ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
+    const applySearchDebounced = debounce(applySearch, 150);
+  
+    // ผูกอีเวนต์ค้นหา
+    searchBtn?.addEventListener('click', applySearch);
+    searchInput?.addEventListener('input', applySearchDebounced);
+    searchInput?.addEventListener('keydown', (e)=>{
+      if(e.key==='Enter'){ e.preventDefault(); applySearch(); }
+      if(e.key==='Escape'){ searchInput.value=''; applySearch(); }
+    });
 
     async function loadMe(){
       const res=await fetch(`${API_BASE}/auth/me`,{ headers:{Authorization:"Bearer "+token}, credentials:"include" });
@@ -512,7 +560,22 @@
           </a>
         </li>`;
       }).join("");
+      ALL_EVENTS = Array.isArray(items) ? items : [];
+      renderEvents(ALL_EVENTS);
     }
+    async function loadEvents(){
+      try{
+        const res = await fetch(`${API_BASE}/events`);
+        const items = await res.json();
+        ALL_EVENTS = Array.isArray(items) ? items : [];
+        renderEvents(ALL_EVENTS); // ใช้ renderer เดียวกับตอนค้นหา
+        }catch(e){
+          eventList.innerHTML =
+          `<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">
+            โหลดข้อมูลไม่สำเร็จ
+            </li>`;
+           }
+          }
 
     function openAdd(){ addModal?.classList.remove("hidden"); }
     function closeAdd(){ addModal?.classList.add("hidden"); addForm?.reset(); }
