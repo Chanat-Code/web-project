@@ -132,6 +132,39 @@
   </svg>
   </button>
 
+  <!-- ปุ่มลอย: ลบกิจกรรม (เฉพาะ admin) -->
+<button id="fabDel"
+  class="fixed bottom-40 right-6 h-14 w-14 rounded-full bg-rose-600 text-white grid place-items-center shadow-xl hover:bg-rose-500 active:scale-95 transition hidden"
+  title="ลบกิจกรรม">
+  <!-- ไอคอนถังขยะ -->
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M9 3h6a1 1 0 011 1v1h4a1 1 0 010 2h-1v12a2 2 0 01-2 2H7a2 2 0 01-2-2V7H4a1 1 0 010-2h4V4a1 1 0 011-1zm2 0v1h2V3h-2zm-1 6a1 1 0 10-2 0v8a1 1 0 102 0V9zm6 0a1 1 0 10-2 0v8a1 1 0 102 0V9z"/>
+  </svg>
+</button>
+
+<!-- Modal จัดการลบ -->
+<div id="delModal" class="fixed inset-0 z-[75] hidden" role="dialog" aria-modal="true">
+  <div data-overlay class="absolute inset-0 bg-black/50"></div>
+  <div class="relative z-10 min-h-full p-4 grid place-items-center">
+    <div class="modal-enter w-[720px] max-w-[calc(100vw-2rem)] rounded-2xl bg-white text-slate-900 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between px-6 py-5 border-b">
+        <h3 class="text-xl font-bold">ลบกิจกรรม</h3>
+        <button id="delClose" class="h-9 w-9 grid place-items-center rounded-full hover:bg-black/5">✕</button>
+      </div>
+      <div class="p-6">
+        <div id="delLoading" class="h-10 rounded-lg bg-slate-100 animate-pulse"></div>
+        <div id="delEmpty" class="hidden text-slate-500">ยังไม่มีกิจกรรม</div>
+        <div id="delScroll" class="hidden max-h-[60vh] overflow-y-auto">
+          <ul id="delList" class="space-y-2"></ul>
+        </div>
+      </div>
+      <div class="px-6 pb-6 flex items-center justify-end">
+        <button id="delClose2" class="px-4 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800">ปิด</button>
+      </div>
+    </div>
+  </div>
+</div>
+
   <!-- ปุ่มไปหน้า Calendar (เฉพาะ user) -->
   <a id="calendarFab" href="./calendar.html"
      class="hidden fixed bottom-6 right-6 h-14 w-14 rounded-full bg-indigo-600 text-white grid place-items-center shadow-xl hover:bg-indigo-500 active:scale-95 transition"
@@ -590,6 +623,18 @@
       const eventList = $("#eventList");
       const fabAdd = $("#fabAdd");
       const fabReg = $("#fabReg");
+      const fabDel = $("#fabDel");
+      
+      const delUI = {
+        wrap: document.getElementById('delModal'),
+        overlay: document.querySelector('#delModal [data-overlay]'),
+        close: document.getElementById('delClose'),
+        close2: document.getElementById('delClose2'),
+        loading: document.getElementById('delLoading'),
+        empty: document.getElementById('delEmpty'),
+        scroll: document.getElementById('delScroll'),
+        list: document.getElementById('delList'),
+        };
 
       const regUI = {
         wrap: document.getElementById('regModal'),
@@ -673,6 +718,7 @@
         if (CURRENT_USER?.role === 'admin'){
           fabAdd?.classList.remove('hidden');
           fabReg?.classList.remove('hidden');
+          fabDel?.classList.remove('hidden');
           document.getElementById('calendarFab')?.remove?.();
         }
       }
@@ -694,6 +740,69 @@
           </li>`;
         }).join('');
       }
+      // ---------- ลบกิจกรรม (Admin) ----------
+      function openDelModal(){
+        delUI.loading.classList.remove('hidden');
+        delUI.empty.classList.add('hidden');
+        delUI.scroll.classList.add('hidden');
+        delUI.list.innerHTML = '';
+        showModal(delUI.wrap);
+    
+        const items = EVENTS_CACHE || [];
+        delUI.loading.classList.add('hidden');
+        if (!items.length){ delUI.empty.classList.remove('hidden'); return; }
+    
+        delUI.list.innerHTML = items.map(ev => `
+          <li class="rounded-xl border border-slate-200 bg-white/60 p-4 flex items-center justify-between gap-3">
+            <div>
+              <div class="font-semibold">${esc(ev.title || '(ไม่ระบุชื่อกิจกรรม)')}</div>
+              <div class="text-sm text-slate-500">${fmt(ev.dateText)} • ${esc(ev.location||'—')}</div>
+            </div>
+            <button data-del="${ev._id}" class="px-3 py-1.5 rounded-lg bg-rose-600 text-white hover:bg-rose-500">ลบ</button>
+          </li>`).join('');
+        delUI.scroll.classList.remove('hidden');
+    
+        delUI.list.querySelectorAll('button[data-del]').forEach(btn=>{
+          btn.addEventListener('click', async ()=>{
+            const id = btn.getAttribute('data-del');
+            const ev = EVENTS_CACHE.find(e=>e._id===id);
+            const name = ev?.title || '';
+            if (!confirm(`ยืนยันลบกิจกรรมนี้?\n\n${name}`)) return;
+            btn.disabled = true;
+            try{
+              const r = await fetch(`${API_BASE}/events/${id}`, {
+                method: 'DELETE',
+                headers: { Authorization: 'Bearer ' + token },
+                credentials: 'include'
+              });
+              if (!r.ok){
+                const j = await r.json().catch(()=>({}));
+                throw new Error(j.message || r.status);
+              }
+              // อัปเดตรายการในหน้า
+              EVENTS_CACHE = EVENTS_CACHE.filter(e=>e._id!==id);
+              // รีเฟรชลิสต์ใหญ่
+              await loadEvents();
+              // ลบแถวใน modal
+              btn.closest('li')?.remove();
+              if (!delUI.list.children.length){
+                delUI.scroll.classList.add('hidden');
+                delUI.empty.classList.remove('hidden');
+              }
+              alert('ลบสำเร็จ');
+            }catch(e){
+              alert('ลบไม่สำเร็จ: ' + e.message);
+            }finally{
+              btn.disabled = false;
+            }
+          });
+        });
+      }
+    
+      fabDel?.addEventListener('click', openDelModal);
+      delUI.overlay?.addEventListener('click', ()=> hideModal(delUI.wrap));
+      delUI.close?.addEventListener('click', ()=> hideModal(delUI.wrap));
+      delUI.close2?.addEventListener('click', ()=> hideModal(delUI.wrap));
 
       // ---------- Fetch registrations ----------
       async function fetchAllRegistrations(){
