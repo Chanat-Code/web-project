@@ -1,8 +1,8 @@
 // src/routes/events.js
 import { Router } from "express";
 import Event from "../models/Event.js";
+import Registration from "../models/Registration.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
-import Registration from "../models/Registration.js";   // ⬅️ เพิ่มบรรทัดนี้
 
 const router = Router();
 
@@ -59,6 +59,36 @@ router.post("/", requireAuth, requireAdmin, async (req, res) => {
 
     res.status(201).json(ev);
   } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "server error" });
+  }
+});
+
+// ----- (ใหม่) เช็คลงทะเบียนแล้วหรือยัง -----
+router.get("/:id/registered", requireAuth, async (req, res) => {
+  const exists = await Registration.exists({
+    user: req.user.sub,
+    event: req.params.id
+  });
+  res.json({ registered: !!exists });
+});
+
+// ----- (ใหม่) ลงทะเบียนกิจกรรม -----
+router.post("/:id/register", requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const { address = "" } = req.body || {};
+  const ev = await Event.findById(id).lean();
+  if (!ev) return res.status(404).json({ message: "event not found" });
+
+  try {
+    const doc = await Registration.create({
+      user: req.user.sub,
+      event: id,
+      address
+    });
+    res.status(201).json({ message: "registered", id: doc._id });
+  } catch (e) {
+    if (e.code === 11000) return res.status(409).json({ message: "already registered" });
     console.error(e);
     res.status(500).json({ message: "server error" });
   }

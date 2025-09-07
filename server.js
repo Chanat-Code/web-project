@@ -5,6 +5,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRouter from "./src/routes/auth.js";
 import eventsRouter from "./src/routes/events.js";
+import registrationsRouter from "./src/routes/registrations.js";
 import { connectDB } from "./src/db.js"; // ✅ ต่อ DB เมื่อรัน local
 
 dotenv.config();
@@ -37,6 +38,7 @@ app.use(cookieParser());
 // ===== routes =====
 app.use("/api/auth", authRouter);
 app.use("/api/events", eventsRouter);
+app.use("/api/registrations", registrationsRouter);
 
 // health
 app.get("/", (_req, res) => res.send("OK"));

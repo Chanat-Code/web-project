@@ -216,6 +216,29 @@
 
     <!-- Footer -->
     <footer class="py-6 text-center text-sm text-white/70">© 2025 RLTG</footer>
+      
+      <script>
+      // ใช้ฐาน API เดียวกันทุกหน้า
+      window.API_BASE =
+        (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+          ? 'http://localhost:4000/api'
+          : '/api';
+
+      // แปลงวันที่ (รองรับค่าสตริงว่าง/ไม่ใช่วันที่)
+      window.formatDateLabel = function (s) {
+        if (!s) return '—';
+        const d = new Date(s);
+        if (isNaN(d)) return s;
+        const day = d.getDate();
+        const month = d.getMonth() + 1;
+        const yearBE = d.getFullYear() + 543;
+        return `${day}/${month}/${yearBE.toString().slice(-2)}`;
+      };
+
+      // กัน XSS เวลาวางข้อความจากฐานข้อมูล
+      window.escapeHtml = (t='') => t.replace(/[&<>"']/g, m =>
+        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    </script>
 
     <script>
     (function () {
@@ -304,31 +327,6 @@
 
     <!-- Profile Modal -->
     <div id="profileModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
-      <!-- History Modal (scrollable) -->
-    <div id="historyModal" class="fixed inset-0 z-50 hidden">
-      <div data-overlay class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-      <div class="relative z-10 min-h-full p-4 grid place-items-center">
-        <!-- กล่องโมดัล: จำกัดสูงสุด 85vh และจัดเป็นคอลัมน์ -->
-        <div class="relative w-[720px] max-w-[calc(100vw-2rem)]
-                    max-h-[85vh] rounded-2xl bg-white text-slate-900
-                    shadow-2xl flex flex-col">
-          <!-- หัวโมดัล -->
-          <div class="flex items-center justify-between px-6 py-4 border-b">
-            <h3 class="text-xl font-bold">ประวัติการลงทะเบียน</h3>
-            <button id="historyClose"
-              class="h-9 w-9 grid place-items-center rounded-full hover:bg-black/5"
-              aria-label="ปิด">✕</button>
-          </div>
-
-          <!-- พื้นที่สกรอลล์ -->
-          <div id="historyScroll" class="p-6 overflow-y-auto overscroll-contain">
-            <div id="historyLoading" class="text-slate-500">กำลังโหลด...</div>
-            <div id="historyEmpty" class="hidden text-slate-500">ยังไม่มีรายการลงทะเบียน</div>
-            <ul id="historyList" class="hidden space-y-3"></ul>
-          </div>
-        </div>
-      </div>
-    </div>
       <div data-overlay class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
       <div class="relative z-10 min-h-full p-4">
         <div id="profileCard" class="fixed w-80 sm:w-96 rounded-2xl bg-white text-slate-900 shadow-2xl border border-black/5">
@@ -357,6 +355,30 @@
               </button>
               <button id="logoutBtn" class="w-full rounded-xl bg-slate-900 text-white px-5 py-2.5 font-medium hover:bg-slate-800 active:scale-[.99] transition">Log out</button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== History Modal (แยกจาก profileModal) ===== -->
+    <div id="historyModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+      <div data-overlay class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+      <div class="relative z-10 min-h-full p-4 grid place-items-center">
+        <div class="relative w-[720px] max-w-[calc(100vw-2rem)]
+                    max-h-[85vh] rounded-2xl bg-white text-slate-900
+                    shadow-2xl flex flex-col">
+          <div class="flex items-center justify-between px-6 py-4 border-b">
+            <h3 class="text-xl font-bold">ประวัติการลงทะเบียน</h3>
+            <button id="historyClose"
+              class="h-9 w-9 grid place-items-center rounded-full hover:bg-black/5"
+              aria-label="ปิด">✕</button>
+          </div>
+
+          <!-- พื้นที่สกรอลล์ -->
+          <div id="historyScroll" class="p-6 overflow-y-auto overscroll-contain">
+            <div id="historyLoading" class="text-slate-500">กำลังโหลด...</div>
+            <div id="historyEmpty" class="hidden text-slate-500">ยังไม่มีรายการลงทะเบียน</div>
+            <ul id="historyList" class="hidden space-y-3"></ul>
           </div>
         </div>
       </div>
@@ -404,242 +426,228 @@
       })();
     </script>
 
-    <script>
-      (function () {
-        // ใช้ฐานเดียวกันทุกหน้า: local -> http://localhost:4000/api, prod -> /api
-        const API_BASE =
-          (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-            ? 'http://localhost:4000/api'
-            : '/api';
+      <script>
+        (function () {
+          const API_BASE = window.API_BASE;                 // ← ใช้ global
+          const token = localStorage.getItem("token");
+          if (!token) { location.href = "./index.html"; return; }
 
-        const token = localStorage.getItem("token");
-        if (!token) { location.href = "./index.html"; return; }
+          const $  = (sel) => document.querySelector(sel);
+          const eventList = $("#eventList");
+          const fab       = $("#fabAdd");
+          const addModal  = $("#addModal");
+          const addForm   = $("#addForm");
+          const dateInput = document.getElementById('addDate');
+          if (dateInput) {
+            const offset = new Date().getTimezoneOffset() * 60000;
+            dateInput.value = new Date(Date.now() - offset).toISOString().slice(0, 10);
+          }
+          const addCancel = $("#addCancel");
 
-        const $  = (sel) => document.querySelector(sel);
-        const eventList = $("#eventList");
-        const fab       = $("#fabAdd");
-        const addModal  = $("#addModal");
-        const addForm   = $("#addForm");
-        const dateInput = document.getElementById('addDate');
-        if (dateInput) {
-          const offset = new Date().getTimezoneOffset() * 60000;
-          dateInput.value = new Date(Date.now() - offset).toISOString().slice(0, 10); // yyyy-mm-dd
-        }
-        const addCancel = $("#addCancel");
+          // เติมข้อมูลผู้ใช้ + แสดง FAB เมื่อเป็น admin
+          async function loadMe() {
+            const res = await fetch(`${API_BASE}/auth/me`, {
+              headers: { Authorization: "Bearer " + token },
+              credentials: "include",
+            });
+            if (!res.ok) throw new Error("unauthorized");
+            const json = await res.json().catch(() => ({}));
+            const me = json.user || json;
 
-        function formatDateLabel(s) {
-          const d = new Date(s);
-          if (isNaN(d)) return s;
-          const day = d.getDate();
-          const month = d.getMonth() + 1;
-          const yearBE = d.getFullYear() + 543;
-          const yy = yearBE.toString().slice(-2);
-          return `${day}/${month}/${yy}`;  // เช่น 10/1/68
-        }
+            const byId = (id) => document.getElementById(id);
+            byId("ppName")  && (byId("ppName").textContent  = me.username ?? "—");
+            byId("ppId")    && (byId("ppId").textContent    = me.idNumber ?? "—");
+            byId("ppEmail") && (byId("ppEmail").textContent = me.email ?? "—");
+            byId("ppMajor") && (byId("ppMajor").textContent = me.major ?? "—");
+            byId("ppPhone") && (byId("ppPhone").textContent = me.phone ?? "—");
 
-        // เติมข้อมูลผู้ใช้ในโมดัล + แสดง FAB เฉพาะ admin
-        async function loadMe() {
-          const res = await fetch(`${API_BASE}/auth/me`, {
-            headers: { Authorization: "Bearer " + token },
-            credentials: "include",
+            if (me.role === "admin" && fab) fab.classList.remove("hidden");
+          }
+
+          // Logout
+          (function wireLogout(){
+            const btn = document.getElementById("logoutBtn");
+            if (!btn) return;
+            btn.addEventListener("click", async () => {
+              try { await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" }); }
+              catch (e) {}
+              localStorage.removeItem("token");
+              location.href = "./index.html";
+            });
+          })();
+
+          // โหลดกิจกรรม
+          async function loadEvents() {
+            const res = await fetch(`${API_BASE}/events`);
+            const items = await res.json();
+
+            if (!Array.isArray(items) || items.length === 0) {
+              eventList.innerHTML = `
+                <li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">
+                  ยังไม่มีกิจกรรม
+                </li>`;
+              return;
+            }
+
+            eventList.innerHTML = items.map(ev => {
+              const dateTxt = ev.dateText ? `${window.formatDateLabel(ev.dateText)} ` : "";
+              return `
+                <li>
+                  <a href="./event.html?id=${ev._id}"
+                    class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition">
+                    <span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span>
+                    <span class="font-semibold tracking-wide">${dateTxt}${ev.title}</span>
+                  </a>
+                </li>`;
+            }).join("");
+          }
+
+          // Modal helpers
+          function openAdd()  { addModal?.classList.remove("hidden"); }
+          function closeAdd() { addModal?.classList.add("hidden"); addForm?.reset(); }
+
+          // เพิ่มกิจกรรม (admin)
+          addForm?.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const fd = new FormData(addForm);
+            const payload = Object.fromEntries(fd.entries());
+
+            const res = await fetch(`${API_BASE}/events`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token
+              },
+              credentials: "include",
+              body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+              const data = await res.json().catch(()=> ({}));
+              alert(`เพิ่มกิจกรรมไม่สำเร็จ: ${data.message || res.status}`);
+              return;
+            }
+            closeAdd();
+            loadEvents();
           });
-          if (!res.ok) throw new Error("unauthorized");
 
-          // route /auth/me ของเราอาจคืน {user: {...}} หรือ {...}
-          const json = await res.json().catch(() => ({}));
-          const me = json.user || json;
+          addCancel?.addEventListener("click", closeAdd);
+          fab?.addEventListener("click", openAdd);
+          addModal?.querySelector("[data-overlay]")?.addEventListener("click", closeAdd);
 
-          const byId = (id) => document.getElementById(id);
-          byId("ppName")  && (byId("ppName").textContent  = me.username ?? "—");
-          byId("ppId")    && (byId("ppId").textContent    = me.idNumber ?? "—");
-          byId("ppEmail") && (byId("ppEmail").textContent = me.email ?? "—");
-          byId("ppMajor") && (byId("ppMajor").textContent = me.major ?? "—");
-          byId("ppPhone") && (byId("ppPhone").textContent = me.phone ?? "—");
-
-          if (me.role === "admin" && fab) fab.classList.remove("hidden");
-        }
-
-        // Logout
-        (function wireLogout(){
-          const btn = document.getElementById("logoutBtn");
-          if (!btn) return;
-          btn.addEventListener("click", async () => {
-            try {
-              await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" });
-            } catch (e) {}
+          // start
+          loadMe().then(loadEvents).catch(() => {
             localStorage.removeItem("token");
             location.href = "./index.html";
           });
         })();
-
-        // โหลดรายการกิจกรรม
-        async function loadEvents() {
-          const res = await fetch(`${API_BASE}/events`);
-          const items = await res.json();
-
-          if (!Array.isArray(items) || items.length === 0) {
-            eventList.innerHTML = `
-              <li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">
-                ยังไม่มีกิจกรรม
-              </li>`;
-            return;
-          }
-
-          eventList.innerHTML = items.map(ev => {
-            const dateTxt = ev.dateText ? `${formatDateLabel(ev.dateText)} ` : "";
-            return `
-              <li>
-                <a href="./event.html?id=${ev._id}"
-                  class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition">
-                  <span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span>
-                  <span class="font-semibold tracking-wide">${dateTxt}${ev.title}</span>
-                </a>
-              </li>
-            `;
-          }).join("");
-        }
-
-        // Modal helpers
-        function openAdd()  { addModal?.classList.remove("hidden"); }
-        function closeAdd() { addModal?.classList.add("hidden"); addForm?.reset(); }
-
-        // บันทึกกิจกรรม (เฉพาะ admin)
-        addForm?.addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const fd = new FormData(addForm);
-          const payload = Object.fromEntries(fd.entries());
-
-          const res = await fetch(`${API_BASE}/events`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + token
-            },
-            credentials: "include",
-            body: JSON.stringify(payload)
-          });
-
-          if (!res.ok) {
-            const data = await res.json().catch(()=> ({}));
-            alert(`เพิ่มกิจกรรมไม่สำเร็จ: ${data.message || res.status}`);
-            return;
-          }
-          closeAdd();
-          loadEvents();
-        });
-
-        addCancel?.addEventListener("click", closeAdd);
-        fab?.addEventListener("click", openAdd);
-        addModal?.querySelector("[data-overlay]")?.addEventListener("click", closeAdd);
-
-        // start
-        loadMe().then(loadEvents).catch(() => {
-          localStorage.removeItem("token");
-          location.href = "./index.html";
-        });
-      })();
-    </script>
+      </script>
 
     <script>
-      // ====== ใช้ BASE เดียวกับทุกหน้า ======
-      const API_BASE =
-        (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-          ? 'http://localhost:4000/api'
-          : '/api';
+    (function historyModal() {
+      const API_BASE = window.API_BASE;
+      const btnOpen   = document.getElementById('historyBtn');
+      const modal     = document.getElementById('historyModal');
+      const btnClose  = document.getElementById('historyClose');
+      const overlay   = modal?.querySelector('[data-overlay]');
+      const ul        = document.getElementById('historyList');
+      const empty     = document.getElementById('historyEmpty');
+      const loading   = document.getElementById('historyLoading');
 
-      // ถ้าฟังก์ชันนี้มีอยู่แล้วในสคริปต์เดิม ให้ข้ามได้
-      function formatDateLabel(s) {
-        if (!s) return '—';
-        const d = new Date(s);
-        if (isNaN(d)) return s;
-        const day = d.getDate();
-        const month = d.getMonth() + 1;
-        const yearBE = d.getFullYear() + 543;
-        return `${day}/${month}/${yearBE.toString().slice(-2)}`;
+      if (!btnOpen || !modal) return;
+
+      const open  = () => modal.classList.remove('hidden');
+      const close = () => modal.classList.add('hidden');
+
+      async function fetchMyRegistrations() {
+        const token = localStorage.getItem('token');
+        const opt = { headers: { Authorization: 'Bearer ' + token }, credentials: 'include' };
+
+        // route ใหม่
+        let res = await fetch(`${API_BASE}/registrations/me`, opt);
+        if (res.ok) { const j = await res.json().catch(()=>({})); return j.items || []; }
+
+        // เผื่อ backend เก่ายังใช้ /auth/my-registrations
+        if (res.status === 404) {
+          res = await fetch(`${API_BASE}/auth/my-registrations`, opt);
+          if (res.ok) { const j = await res.json().catch(()=>({})); return j.items || []; }
+        }
+
+        const t = await res.text().catch(()=> '');
+        throw new Error(`GET failed ${res.status}: ${t || 'unknown error'}`);
       }
 
-      // เล็กน้อยกัน XSS เวลาแสดง address
-      const escapeHtml = (t='') => t.replace(/[&<>"']/g, m =>
-        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+      async function loadHistory() {
+        ul.classList.add('hidden'); ul.innerHTML = '';
+        empty.classList.add('hidden');
+        loading.classList.remove('hidden');
 
-      // ====== History modal wiring ======
-      (function historyModal() {
-        const btnOpen   = document.getElementById('historyBtn');
-        const modal     = document.getElementById('historyModal');
-        const btnClose  = document.getElementById('historyClose');
-        const overlay   = modal?.querySelector('[data-overlay]');
-        const ul        = document.getElementById('historyList');
-        const empty     = document.getElementById('historyEmpty');
-        const loading   = document.getElementById('historyLoading');
+        try {
+          const items = await fetchMyRegistrations();
+          loading.classList.add('hidden');
 
-        if (!btnOpen || !modal) return;
-
-        function open()  { modal.classList.remove('hidden'); }
-        function close() { modal.classList.add('hidden'); }
-
-        btnOpen.addEventListener('click', async () => {
-          // reset state
-          ul.classList.add('hidden'); ul.innerHTML = '';
-          empty.classList.add('hidden');
-          loading.classList.remove('hidden');
-          open();
-
-          const token = localStorage.getItem('token');
-          if (!token) { loading.textContent = 'กรุณาเข้าสู่ระบบ'; return; }
-
-          try {
-            const res = await fetch(`${API_BASE}/auth/my-registrations`, {
-              headers: { Authorization: 'Bearer ' + token },
-              credentials: 'include'
-            });
-
-            const data = await res.json().catch(()=> ({}));
-            if (!res.ok) {
-              loading.textContent = `โหลดไม่สำเร็จ (${res.status})`;
-              return;
-            }
-
-            const items = Array.isArray(data.items) ? data.items : [];
-            loading.classList.add('hidden');
-
-            if (items.length === 0) {
-              empty.classList.remove('hidden');
-              return;
-            }
-
-            ul.innerHTML = items.map(it => {
-              const ev = it.event || {};
-              const href = ev._id ? `./event.html?id=${ev._id}` : '#';
-              return `
-                <li class="rounded-xl border border-slate-200 bg-white/60 p-4">
-                  <div class="flex items-start justify-between gap-3">
-                    <div>
-                      <div class="font-semibold text-slate-900">${escapeHtml(ev.title || '(ไม่ระบุชื่อกิจกรรม)')}</div>
-                      <div class="text-sm text-slate-500">
-                        ${formatDateLabel(ev.dateText)} • ${escapeHtml(ev.location || '-')}
-                      </div>
-                      ${it.address ? `<div class="mt-1 text-xs text-slate-500">address: ${escapeHtml(it.address)}</div>` : ''}
-                    </div>
-                    <a href="${href}"
-                      class="shrink-0 rounded-lg px-3 py-1.5 bg-slate-900 text-white text-sm hover:bg-slate-700">
-                      ดูรายละเอียด
-                    </a>
-                  </div>
-                </li>`;
-            }).join('');
-
-            ul.classList.remove('hidden');
-          } catch (e) {
-            loading.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อ';
+          if (!items.length) {
+            empty.classList.remove('hidden');
+            return;
           }
-        });
 
-        btnClose?.addEventListener('click', close);
-        overlay?.addEventListener('click', close);
-        document.addEventListener('keydown', e => {
-          if (e.key === 'Escape' && !modal.classList.contains('hidden')) close();
-        });
-      })();
+          ul.innerHTML = items.map(it => {
+            const ev = it.event || {};
+            const title   = ev.title || '(ไม่ระบุชื่อกิจกรรม)';
+            const dateTxt = window.formatDateLabel(ev.dateText);
+            const loc     = ev.location || '—';
+            const orphan  = !ev._id; // event ถูกลบ
+
+            return `
+              <li class="rounded-xl border border-slate-200 bg-white/60 p-4">
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <div class="font-semibold text-slate-900">
+                      ${window.escapeHtml(title)}
+                      ${orphan ? '<span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-rose-100 text-rose-600">ถูกลบแล้ว</span>' : ''}
+                    </div>
+                    <div class="text-sm text-slate-500">
+                      ${dateTxt} • ${window.escapeHtml(loc)}
+                    </div>
+                    ${it.address ? `<div class="mt-1 text-xs text-slate-500">address: ${window.escapeHtml(it.address)}</div>` : ''}
+                  </div>
+                  <div class="shrink-0 flex gap-2">
+                    ${orphan
+                      ? `<button data-remove="${it._id}" class="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300">ลบออก</button>`
+                      : `<a href="./event.html?id=${ev._id}" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-700">ดูรายละเอียด</a>`
+                    }
+                  </div>
+                </div>
+              </li>`;
+          }).join('');
+          ul.classList.remove('hidden');
+
+          // ปุ่มลบรายการกำพร้า
+          ul.querySelectorAll('[data-remove]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = btn.getAttribute('data-remove');
+              try {
+                await fetch(`${API_BASE}/registrations/${id}`, {
+                  method: 'DELETE',
+                  headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+                });
+                loadHistory();
+              } catch {}
+            });
+          });
+
+        } catch (err) {
+          loading.textContent = 'โหลดไม่สำเร็จ: ' + err.message;
+        }
+      }
+
+      btnOpen.addEventListener('click', () => { open(); loadHistory(); });
+      btnClose?.addEventListener('click', close);
+      overlay?.addEventListener('click', close);
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) close();
+      });
+    })();
     </script>
   </body>
 </html>

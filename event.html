@@ -63,84 +63,121 @@
   <a href="./HOMEนศทตกลทบ.html" class="fixed bottom-5 right-5 h-12 w-12 grid place-items-center rounded-full bg-white text-black shadow-xl">🏠</a>
 
 <script>
-  // ใช้ฐานเดียวกับหน้าอื่น ๆ (local -> http://localhost:4000/api, prod -> /api)
+  // ใช้ฐานเดียวกับทุกหน้า: local -> http://localhost:4000/api, prod -> /api
   const API_BASE =
     (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
       ? 'http://localhost:4000/api'
       : '/api';
 
+  // ===== utils =====
   const params = new URLSearchParams(location.search);
   const id = params.get("id");
+  const token = localStorage.getItem("token") || "";
 
-  const token = localStorage.getItem("token"); // ใช้ตอนลงทะเบียน
+  if (!id) {
+    alert("ไม่พบบัตรกิจกรรม (id)");
+    location.href = "./HOMEนศทตกลทบ.html";
+  }
 
   const modal = document.getElementById("confirmModal");
   const openModal  = () => modal.classList.remove("hidden");
   const closeModal = () => modal.classList.add("hidden");
-
   document.getElementById("cmClose").onclick  = closeModal;
   document.getElementById("cmCancel").onclick = closeModal;
 
-  function markAsRegistered(){
-    const btn = document.getElementById("submitBtn");
-    btn.disabled = true;
-    btn.textContent = "ลงทะเบียนแล้ว";
-    btn.classList.remove("bg-green-600","hover:bg-green-500");
-    btn.classList.add("bg-slate-400","cursor-not-allowed");
+  const btnSubmit = document.getElementById("submitBtn");
+
+  function setBtnRegistered() {
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = "ลงทะเบียนแล้ว";
+    btnSubmit.classList.remove("bg-green-600","hover:bg-green-500");
+    btnSubmit.classList.add("bg-slate-400","cursor-not-allowed");
   }
 
-  // ✅ โหลดรายละเอียดกิจกรรม (สาธารณะ)
+  function setBtnLoading(on) {
+    btnSubmit.disabled = !!on;
+    btnSubmit.textContent = on ? "กำลังส่ง..." : "Submit";
+  }
+
+  // ===== load event (public) =====
   async function loadEvent() {
-    const res = await fetch(`${API_BASE}/events/${id}`);
-    if (!res.ok) { alert("กิจกรรมไม่พบ"); location.href = "./HOMEนศทตกลทบ.html"; return; }
-    const ev = await res.json();
-    document.getElementById("evTitle").textContent = ev.title || "กิจกรรม";
-    document.getElementById("evDesc").textContent  = ev.description || "—";
-    document.getElementById("evDate").textContent  = ev.dateText || "—";
-    document.getElementById("evLoc").textContent   = ev.location || "—";
-    if (ev.imageUrl) document.getElementById("bg").style.backgroundImage = `url('${ev.imageUrl}')`;
+    try {
+      const res = await fetch(`${API_BASE}/events/${id}`, { credentials: "include" });
+      if (!res.ok) throw new Error(String(res.status));
+      const ev = await res.json();
+
+      document.getElementById("evTitle").textContent = ev.title || "กิจกรรม";
+      document.getElementById("evDesc").textContent  = ev.description || "—";
+      document.getElementById("evDate").textContent  = ev.dateText || "—";
+      document.getElementById("evLoc").textContent   = ev.location || "—";
+      if (ev.imageUrl) document.getElementById("bg").style.backgroundImage = `url('${ev.imageUrl}')`;
+    } catch (e) {
+      alert("กิจกรรมไม่พบ");
+      location.href = "./HOMEนศทตกลทบ.html";
+    }
   }
 
-  // ✅ เช็กว่าลงทะเบียนไว้แล้วหรือยัง
-  async function checkRegistered(){
-    if (!token) return; // ยังไม่ล็อกอิน ไม่เช็ก
-    const res = await fetch(`${API_BASE}/events/${id}/registered`, {
-      headers: { Authorization: "Bearer " + token }
-    });
-    const j = await res.json().catch(()=> ({}));
-    if (j.registered) markAsRegistered();
+  // ===== check already registered =====
+  async function checkRegistered() {
+    if (!token) return; // ยังไม่ล็อกอิน ข้าม
+    try {
+      const res = await fetch(`${API_BASE}/events/${id}/registered`, {
+        headers: { Authorization: "Bearer " + token },
+        credentials: "include"
+      });
+      if (res.status === 401) return; // ยังไม่ล็อกอินจริง ๆ
+      const j = await res.json().catch(()=> ({}));
+      if (j.registered) setBtnRegistered();
+    } catch {}
   }
 
-  // ✅ กดยืนยัน -> call API /register
-  async function doRegister(){
+  // ===== do register =====
+  async function doRegister() {
     if (!token) { alert("โปรดเข้าสู่ระบบก่อน"); location.href = "./index.html"; return; }
 
     const address = (document.getElementById("address").value || "").trim();
+    setBtnLoading(true);
 
-    const res = await fetch(`${API_BASE}/events/${id}/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + token
-      },
-      body: JSON.stringify({ address })
-    });
+    try {
+      const res = await fetch(`${API_BASE}/events/${id}/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token
+        },
+        credentials: "include",
+        body: JSON.stringify({ address })
+      });
 
-    closeModal();
+      closeModal();
 
-    if (!res.ok) {
-      const data = await res.json().catch(()=> ({}));
-      alert(`ลงทะเบียนไม่สำเร็จ: ${data.message || res.status}`);
-      return;
+      // กันกรณีลงซ้ำ
+      if (res.status === 409) {
+        alert("คุณลงทะเบียนกิจกรรมนี้แล้ว");
+        setBtnRegistered();
+        return;
+      }
+
+      if (!res.ok) {
+        const data = await res.json().catch(()=> ({}));
+        throw new Error(data.message || `HTTP ${res.status}`);
+      }
+
+      alert("ลงทะเบียนสำเร็จ!");
+      setBtnRegistered();
+    } catch (e) {
+      alert("ลงทะเบียนไม่สำเร็จ: " + e.message);
+    } finally {
+      setBtnLoading(false);
     }
-    alert("ลงทะเบียนสำเร็จ!");
-    markAsRegistered();
   }
 
-  // เปิดป๊อปอัปเมื่อคลิก Submit
-  document.getElementById("submitBtn").addEventListener("click", () => {
+  // เปิดกล่องยืนยันเมื่อกด Submit (ถ้าลงแล้วจะไม่ให้กด)
+  btnSubmit.addEventListener("click", () => {
+    if (btnSubmit.disabled) return;
     openModal();
   });
+
   document.getElementById("cmOk").addEventListener("click", doRegister);
 
   // start
