@@ -45,30 +45,59 @@
   <a href="./HOMEนศทตกลทบ.html" class="fixed bottom-5 right-5 h-12 w-12 grid place-items-center rounded-full bg-white text-black shadow-xl">🏠</a>
 
   <script>
-    const API_BASE = `${location.protocol}//${location.hostname}:4000`;
+    // ใช้ฐานเดียวกันทุกหน้า: local -> http://localhost:4000/api, prod (Vercel) -> /api
+    const API_BASE =
+      (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+        ? 'http://localhost:4000/api'
+        : '/api';
 
     const params = new URLSearchParams(location.search);
     const id = params.get("id");
 
     async function loadEvent() {
-      const res = await fetch(`${API_BASE}/api/events/${id}`);
-      if (!res.ok) { alert("กิจกรรมไม่พบ"); location.href = "./HOMEเทศกาลงาน.html"; return; }
-      const ev = await res.json();
+      if (!id) {
+        alert("ไม่พบรหัสกิจกรรมใน URL");
+        location.href = "./HOMEนศทตกลทบ.html";
+        return;
+      }
 
-      document.getElementById("evTitle").textContent = ev.title || "กิจกรรม";
-      document.getElementById("evDesc").textContent = ev.description || "—";
-      document.getElementById("evDate").textContent = ev.dateText || "—";
-      document.getElementById("evLoc").textContent  = ev.location || "—";
-      if (ev.imageUrl) document.getElementById("bg").style.backgroundImage = `url('${ev.imageUrl}')`;
+      try {
+        const res = await fetch(`${API_BASE}/events/${encodeURIComponent(id)}`);
+        if (!res.ok) {
+          if (res.status === 404) {
+            alert("กิจกรรมไม่พบ");
+          } else {
+            const txt = await res.text().catch(() => "");
+            console.error("Load event failed:", res.status, txt);
+            alert(`โหลดกิจกรรมไม่สำเร็จ (${res.status})`);
+          }
+          location.href = "./HOMEนศทตกลทบ.html";
+          return;
+        }
+
+        const ev = await res.json();
+        document.getElementById("evTitle").textContent = ev.title || "กิจกรรม";
+        document.getElementById("evDesc").textContent  = ev.description || "—";
+        document.getElementById("evDate").textContent  = ev.dateText || "—";
+        document.getElementById("evLoc").textContent   = ev.location || "—";
+        if (ev.imageUrl) {
+          document.getElementById("bg").style.backgroundImage = `url('${ev.imageUrl}')`;
+        }
+      } catch (err) {
+        console.error(err);
+        alert("เครือข่ายมีปัญหา");
+        location.href = "./HOMEนศทตกลทบ.html";
+      }
     }
 
     document.getElementById("submitBtn").addEventListener("click", () => {
       const addr = document.getElementById("address").value.trim();
       alert("ส่งข้อมูล: " + (addr || "(ว่าง)"));
-      // ถ้าจะบันทึกการลงทะเบียนจริง: ทำ route POST /api/events/:id/register แล้ว fetch ไปที่นั่น
     });
 
     loadEvent();
   </script>
+
+
 </body>
 </html>

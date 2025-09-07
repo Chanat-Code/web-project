@@ -44,7 +44,9 @@
       </p>
       
 <script>
-  const API_BASE = '';
+  // ใช้ same-origin บน Vercel, ใช้ :4000 ตอนรัน local
+  const isVercel = location.hostname.endsWith('.vercel.app');
+  const API_BASE = isVercel ? '' : 'http://127.0.0.1:4000';
   const LOGIN_API = `${API_BASE}/api/auth/login`;
 
   document.getElementById("loginBtn").addEventListener("click", async () => {
@@ -59,7 +61,9 @@
         body: JSON.stringify({ usernameOrEmail, password })
       });
 
-      const data = await res.json().catch(()=> ({}));
+      let data = {};
+      try { data = await res.json(); } catch {}
+
       if (!res.ok) {
         alert(`Login failed (${res.status}): ${data.message || 'unknown error'}`);
         return;

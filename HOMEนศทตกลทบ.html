@@ -376,10 +376,14 @@
       })();
     </script>
 
-    <!-- ===== Auth + /me + Logout + Events (list + admin add) ===== -->
     <script>
       (function () {
-        const API_BASE = `${location.protocol}//${location.hostname}:4000`;
+        // ใช้ฐานเดียวกันทุกหน้า: local -> http://localhost:4000/api, prod -> /api
+        const API_BASE =
+          (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+            ? 'http://localhost:4000/api'
+            : '/api';
+
         const token = localStorage.getItem("token");
         if (!token) { location.href = "./index.html"; return; }
 
@@ -396,23 +400,26 @@
         const addCancel = $("#addCancel");
 
         function formatDateLabel(s) {
-        const d = new Date(s);
-        if (isNaN(d)) return s;          // ถ้าไม่ใช่วันที่ ให้คืนค่าเดิม
-        const day = d.getDate();
-        const month = d.getMonth() + 1;
-        const yearBE = d.getFullYear() + 543;
-        const yy = yearBE.toString().slice(-2);
-        return `${day}/${month}/${yy}`;  // เช่น 10/1/68
-       }
+          const d = new Date(s);
+          if (isNaN(d)) return s;
+          const day = d.getDate();
+          const month = d.getMonth() + 1;
+          const yearBE = d.getFullYear() + 543;
+          const yy = yearBE.toString().slice(-2);
+          return `${day}/${month}/${yy}`;  // เช่น 10/1/68
+        }
 
         // เติมข้อมูลผู้ใช้ในโมดัล + แสดง FAB เฉพาะ admin
         async function loadMe() {
-          const res = await fetch(`${API_BASE}/api/auth/me`, {
+          const res = await fetch(`${API_BASE}/auth/me`, {
             headers: { Authorization: "Bearer " + token },
             credentials: "include",
           });
           if (!res.ok) throw new Error("unauthorized");
-          const me = await res.json();
+
+          // route /auth/me ของเราอาจคืน {user: {...}} หรือ {...}
+          const json = await res.json().catch(() => ({}));
+          const me = json.user || json;
 
           const byId = (id) => document.getElementById(id);
           byId("ppName")  && (byId("ppName").textContent  = me.username ?? "—");
@@ -430,7 +437,7 @@
           if (!btn) return;
           btn.addEventListener("click", async () => {
             try {
-              await fetch(`${API_BASE}/api/auth/logout`, { method: "POST", credentials: "include" });
+              await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" });
             } catch (e) {}
             localStorage.removeItem("token");
             location.href = "./index.html";
@@ -439,7 +446,7 @@
 
         // โหลดรายการกิจกรรม
         async function loadEvents() {
-          const res = await fetch(`${API_BASE}/api/events`);
+          const res = await fetch(`${API_BASE}/events`);
           const items = await res.json();
 
           if (!Array.isArray(items) || items.length === 0) {
@@ -455,7 +462,7 @@
             return `
               <li>
                 <a href="./event.html?id=${ev._id}"
-                   class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition">
+                  class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition">
                   <span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span>
                   <span class="font-semibold tracking-wide">${dateTxt}${ev.title}</span>
                 </a>
@@ -474,7 +481,7 @@
           const fd = new FormData(addForm);
           const payload = Object.fromEntries(fd.entries());
 
-          const res = await fetch(`${API_BASE}/api/events`, {
+          const res = await fetch(`${API_BASE}/events`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

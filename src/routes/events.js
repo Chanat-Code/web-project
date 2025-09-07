@@ -2,23 +2,30 @@
 import { Router } from "express";
 import Event from "../models/Event.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
+import mongoose from "mongoose";
 
 const router = Router();
 
-// GET /api/events - list ทั้งหมด (ล่าสุดก่อน)
 router.get("/", async (_req, res) => {
   const items = await Event.find({}).sort({ createdAt: -1 }).lean();
   res.json(items);
 });
 
-// GET /api/events/:id - รายละเอียด
 router.get("/:id", async (req, res) => {
-  const ev = await Event.findById(req.params.id).lean();
-  if (!ev) return res.status(404).json({ message: "not found" });
-  res.json(ev);
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "invalid id" });
+    }
+    const ev = await Event.findById(id).lean();
+    if (!ev) return res.status(404).json({ message: "not found" });
+    res.json(ev);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "server error" });
+  }
 });
 
-// POST /api/events - เพิ่มกิจกรรม (admin เท่านั้น)
 router.post("/", requireAuth, requireAdmin, async (req, res) => {
   try {
     const { title, dateText, description, imageUrl, location } = req.body;

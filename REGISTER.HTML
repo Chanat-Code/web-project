@@ -45,7 +45,8 @@
   </main>
 
 <script>
-  const API_BASE = `${location.protocol}//${location.hostname}:4000`;
+  const isVercel = location.hostname.endsWith('.vercel.app');
+  const API_BASE = isVercel ? '' : 'http://127.0.0.1:4000';
   const API = `${API_BASE}/api/auth/register`;
 
   document.getElementById("registerForm").addEventListener("submit", async (e) => {
@@ -68,13 +69,15 @@
         body: JSON.stringify(payload)
       });
 
-      const data = await res.json().catch(()=> ({}));
+      let data = {};
+      try { data = await res.json(); } catch {}
+
       if (!res.ok) {
         alert(`Register failed (${res.status}): ${data.message || 'unknown error'}`);
         return;
       }
       alert("Register success!");
-      window.location.href = "./index.html"; 
+      window.location.href = "./index.html";
     } catch (err) {
       console.error(err);
       alert("Network error");
