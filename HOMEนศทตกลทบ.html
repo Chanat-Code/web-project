@@ -26,6 +26,20 @@
       height: var(--H);
       position: relative;
     }
+    
+    #tvPrev, #tvNext, #tvToggle, #tvDots { z-index: 60; pointer-events: auto; }
+
+    .tv-slide { pointer-events: none; }
+
+    #tvStage button, #tvDots { pointer-events: auto; }
+
+    .tv-slide      { z-index: 10; }
+    .tv-slide.is-center { z-index: 20; }
+    .tv-slide.is-left,
+    .tv-slide.is-right  { z-index: 15; }
+
+    #tvPrev { left: 10px; }
+    #tvNext { right: 10px; }
 
     .tv-slide {
       position: absolute;
@@ -212,7 +226,9 @@
         </button>
 
         <!-- Dots + Pause -->
-        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3">
+        <div id="tvDotsWrap" class="absolute bottom-2 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-3 pointer-events-auto">
+        <div id="tvDots" class="flex items-center gap-2"></div>
+        </div>
           <div id="tvDots" class="flex items-center gap-2"></div>
         </div>
         <button id="tvToggle"
@@ -905,6 +921,19 @@
           return await res.json().catch(()=>null);
         }catch{ return null; }
       }
+
+      async function fetchEventCounts(){
+        try{
+          const r = await fetch(`${API_BASE}/events/admin/summary`, {
+            headers:{ Authorization:'Bearer '+token }, credentials:'include'
+          });
+          if(!r.ok) return {};
+          const list = await r.json().catch(()=>[]);
+          const map = {};
+          list.forEach(it => { map[it.eventId] = it.count || 0; });
+          return map;
+        }catch{ return {}; }
+      }
       // ดึง id ของ event จาก registration ให้ครอบจักรวาล
       function getRegEventId(reg){
         if(!reg) return null;
@@ -1098,19 +1127,18 @@
         }
 
         // render
-        regUI.tbody.innerHTML = rows.map(r=>{
-          const c = (r.count==null)
-            ? '<span class="inline-block w-10 h-4 rounded bg-slate-100 animate-pulse align-middle"></span>'
-            : r.count;
-          return `<tr class="border-t">
-            <td class="py-2 pr-3">${esc(r.ev?.title||'(ไม่ระบุชื่อกิจกรรม)')}</td>
-            <td class="py-2 pr-3">${toDisplayDate(r.ev?.dateText)}</td>
-            <td class="py-2 pr-3 js-count">${c}</td>
-            <td class="py-2">
-              <button data-view="${r.ev?._id || ''}" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800">ดูรายชื่อ</button>
-            </td>
-          </tr>`;
-            }).join('');
+        const COUNTS = await fetchEventCounts();
+          regUI.tbody.innerHTML = events.map(ev => {
+            const c = COUNTS[ev._id] ?? 0;
+            return `<tr class="border-t">
+              <td class="py-2 pr-3">${esc(ev.title || '(ไม่ระบุชื่อกิจกรรม)')}</td>
+              <td class="py-2 pr-3">${toDisplayDate(ev.dateText)}</td>
+              <td class="py-2 pr-3">${c}</td>
+              <td class="py-2">
+                <button data-view="${ev._id}" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800">ดูรายชื่อ</button>
+              </td>
+            </tr>`;
+          }).join("");
 
         regUI.sumLoading.classList.add('hidden');
         if(!rows.length) regUI.sumEmpty.classList.remove('hidden'); else regUI.table.classList.remove('hidden');

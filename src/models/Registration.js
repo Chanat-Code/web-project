@@ -19,5 +19,6 @@ const regSchema = new mongoose.Schema(
 
 // กัน “ลงซ้ำ” user เดิมกับ event เดิม
 regSchema.index({ user: 1, event: 1 }, { unique: true });
+regSchema.index({ event: 1 });
 
 export default mongoose.model("Registration", regSchema);

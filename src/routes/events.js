@@ -7,7 +7,8 @@ const router = Router();
 
 /** ======================== Public ======================== */
 router.get("/", async (_req, res) => {
-  const items = await Event.find({}).sort({ createdAt: -1 }).lean();
+  const items = await Event.find({}, "title dateText location imageUrl").sort({ createdAt: -1 }).lean();
+  res.set("Cache-Control", "s-maxage=20, stale-while-revalidate=120");
   res.json(items);
 });
 
@@ -105,6 +106,40 @@ router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
   await Event.deleteOne({ _id: id });
 
   res.json({ message: "deleted", id });
+});
+
+router.get("/admin/summary", requireAuth, requireAdmin, async (_req, res) => {
+  const counts = await Registration.aggregate([
+    { $group: { _id: "$event", count: { $sum: 1 } } }
+  ]);
+  const countMap = Object.fromEntries(counts.map(r => [String(r._id), r.count]));
+
+  const events = await Event.find({}, "title dateText").sort({ createdAt: -1 }).lean();
+  res.set("Cache-Control", "s-maxage=20, stale-while-revalidate=120"); // เร่งบน Vercel
+  res.json(events.map(ev => ({
+    eventId: ev._id,
+    title: ev.title,
+    dateText: ev.dateText,
+    count: countMap[String(ev._id)] || 0
+  })));
+});
+
+router.get("/:id/registrations", requireAuth, requireAdmin, async (req, res) => {
+  const regs = await Registration.find({ event: req.params.id })
+    .sort({ createdAt: 1 })
+    .populate({ path: "user", select: "username idNumber email phone" })
+    .lean();
+
+  res.json(regs.map(r => ({
+    _id: r._id,
+    address: r.address || "",
+    user: r.user ? {
+      username: r.user.username,
+      idNumber: r.user.idNumber,
+      email: r.user.email,
+      phone: r.user.phone
+    } : null
+  })));
 });
 
 export default router;
