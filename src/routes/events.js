@@ -1,3 +1,4 @@
+// src/routes/events.js
 import { Router } from "express";
 import Event from "../models/Event.js";
 import Registration from "../models/Registration.js";
@@ -5,7 +6,32 @@ import { requireAuth, requireAdmin } from "../middleware/auth.js";
 
 const router = Router();
 
-/** ======================== Public ======================== */
+  // ✅ Admin: รายชื่อผู้ลงทะเบียนต่อกิจกรรม
+  router.get("/:id/registrations", requireAuth, requireAdmin, async (req, res) => {
+    const regs = await Registration.find({ event: req.params.id })
+      .sort({ createdAt: -1 })
+      .populate([
+        { path: "event", select: "title dateText location" },
+        { path: "user",  select: "username idNumber email phone" },
+      ])
+      .lean();
+
+    const items = regs.map(r => ({
+      _id: r._id,
+      address: r.address || "",
+      createdAt: r.createdAt,
+      event: r.event
+        ? { _id: r.event._id, title: r.event.title, dateText: r.event.dateText, location: r.event.location }
+        : null,
+      user: r.user
+        ? { _id: r.user._id, username: r.user.username, idNumber: r.user.idNumber, email: r.user.email, phone: r.user.phone }
+        : null,
+    }));
+    res.json(items);
+  });
+
+// ---- (คงของเดิม get / และ get /:id ไว้) ----
+
 router.get("/", async (_req, res) => {
   const items = await Event.find({}).sort({ createdAt: -1 }).lean();
   res.json(items);
@@ -17,47 +43,34 @@ router.get("/:id", async (req, res) => {
   res.json(ev);
 });
 
-/** ======================== User ======================== */
-
-// ผู้ใช้ลงทะเบียน (upsert) + บันทึก snapshot ครั้งแรก
+// ✅ ผู้ใช้ลงทะเบียนกิจกรรม
 router.post("/:id/register", requireAuth, async (req, res) => {
   try {
     const { address = "" } = req.body || {};
     const ev = await Event.findById(req.params.id).lean();
-    if (!ev) return res.status(404).json({ message: "event not found" });
+    if (!ev) return res.status(404).json({ message: "not found" });
 
-    const snap = {
-      title: ev.title || "",
-      dateText: ev.dateText || "",
-      location: ev.location || "",
-      imageUrl: ev.imageUrl || ""
-    };
-
+    // upsert: เคยลงแล้วให้แก้ address ได้ ไม่ซ้ำเรคคอร์ด
     const reg = await Registration.findOneAndUpdate(
       { user: req.user.sub, event: req.params.id },
-      {
-        $set: { address },
-        $setOnInsert: { eventSnapshot: snap }
-      },
+      { $set: { address } },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
 
     return res.status(201).json({ message: "registered", registrationId: reg._id });
   } catch (e) {
-    if (e?.code === 11000) return res.status(409).json({ message: "already registered" });
     console.error(e);
     return res.status(500).json({ message: "server error" });
   }
 });
 
-// เช็กว่าผู้ใช้ลงทะเบียนกิจกรรมนี้แล้วหรือยัง
+// ✅ เช็กว่าผู้ใช้ลงทะเบียนกิจกรรมนี้แล้วหรือยัง
 router.get("/:id/registered", requireAuth, async (req, res) => {
   const has = await Registration.exists({ user: req.user.sub, event: req.params.id });
   res.json({ registered: !!has });
 });
 
-/** ======================== Admin ======================== */
-
+// (ของเดิม) เพิ่มกิจกรรม (admin เท่านั้น)
 router.post("/", requireAuth, requireAdmin, async (req, res) => {
   try {
     const { title, dateText, description, imageUrl, location } = req.body;
@@ -75,36 +88,34 @@ router.post("/", requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// ✅ ลบกิจกรรม แต่เก็บประวัติของผู้ใช้ไว้ (เติม snapshot ให้ครบก่อนลบ)
-router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
+// ----- (ใหม่) เช็คลงทะเบียนแล้วหรือยัง -----
+router.get("/:id/registered", requireAuth, async (req, res) => {
+  const exists = await Registration.exists({
+    user: req.user.sub,
+    event: req.params.id
+  });
+  res.json({ registered: !!exists });
+});
+
+// ----- (ใหม่) ลงทะเบียนกิจกรรม -----
+router.post("/:id/register", requireAuth, async (req, res) => {
   const { id } = req.params;
-
+  const { address = "" } = req.body || {};
   const ev = await Event.findById(id).lean();
-  if (!ev) return res.status(404).json({ message: "not found" });
+  if (!ev) return res.status(404).json({ message: "event not found" });
 
-  const snap = {
-    title: ev.title || "",
-    dateText: ev.dateText || "",
-    location: ev.location || "",
-    imageUrl: ev.imageUrl || ""
-  };
-
-  // เติม snapshot ให้ registrations ที่ยังไม่มี
-  await Registration.updateMany(
-    {
+  try {
+    const doc = await Registration.create({
+      user: req.user.sub,
       event: id,
-      $or: [
-        { eventSnapshot: { $exists: false } },
-        { "eventSnapshot.title": { $exists: false } }
-      ]
-    },
-    { $set: { eventSnapshot: snap } }
-  );
-
-  // ลบเฉพาะ Event (เก็บ registration ไว้เป็นประวัติ)
-  await Event.deleteOne({ _id: id });
-
-  res.json({ message: "deleted", id });
+      address
+    });
+    res.status(201).json({ message: "registered", id: doc._id });
+  } catch (e) {
+    if (e.code === 11000) return res.status(409).json({ message: "already registered" });
+    console.error(e);
+    res.status(500).json({ message: "server error" });
+  }
 });
 
 export default router;

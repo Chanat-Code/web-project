@@ -1,3 +1,4 @@
+// src/routes/auth.js
 import { Router } from "express";
 import bcrypt from "bcryptjs";          // ใช้ bcryptjs
 import User from "../models/User.js";
@@ -91,7 +92,6 @@ router.post("/logout", (_req, res) => {
   res.json({ message: "logged out" });
 });
 
-// GET /api/auth/my-registrations
 router.get("/my-registrations", async (req, res) => {
   try {
     const token = getTokenFromReq(req);
@@ -103,39 +103,14 @@ router.get("/my-registrations", async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    const items = rows.map((r) => {
-      let event = null;
-
-      if (r.event && r.event._id) {
-        // กรณี event ยังอยู่
-        event = {
-          _id: r.event._id,
-          title: r.event.title,
-          dateText: r.event.dateText,
-          location: r.event.location,
-          imageUrl: r.event.imageUrl
-        };
-      } else if (r.eventSnapshot) {
-        // กรณี event ถูกลบ → ใช้ snapshot
-        event = {
-          _id: null,
-          title: r.eventSnapshot.title,
-          dateText: r.eventSnapshot.dateText,
-          location: r.eventSnapshot.location,
-          imageUrl: r.eventSnapshot.imageUrl
-        };
-      }
-
-      return {
+    res.json({
+      items: rows.map(r => ({
         id: r._id,
-        address: r.address || "",
-        event
-      };
+        address: r.address,
+        event: r.event
+      }))
     });
-
-    res.json({ items });
   } catch (e) {
-    console.error(e);
     return res.status(401).json({ message: "invalid token" });
   }
 });

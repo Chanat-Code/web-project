@@ -154,14 +154,14 @@
       <div class="text-3xl font-extrabold tracking-tight select-none"><span class="text-white">RLTG</span></div>
       <div class="flex-1 flex items-center">
         <div class="relative w-full max-w-3xl mx-auto">
-          <input id="searchInput" type="text" placeholder="ค้นหา..."
+          <input type="text" placeholder="ค้นหา..."
             class="w-full rounded-full bg-slate-700/90 pl-14 pr-14 py-3 text-white placeholder:text-slate-300 outline-none ring-1 ring-white/10 focus:ring-2 focus:ring-indigo-400 shadow-inner" />
           <svg class="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 opacity-80" fill="none" stroke="currentColor"
             stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round"
               d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z" />
           </svg>
-          <button id="searchBtn"
+          <button
             class="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-full hover:bg-white/10 active:scale-95 transition"
             aria-label="ค้นหา">
             <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -243,39 +243,6 @@
         d="M16 11a4 4 0 10-3.999-4A3.999 3.999 0 0016 11zm-8 0a4 4 0 10-4-3.999A3.999 3.999 0 008 11zm0 2c-4 0-6 2-6 4v1a1 1 0 001 1h10a1 1 0 001-1v-1c0-2-2-4-6-4zm8 0c-.445 0-.86.03-1.246.08A5.96 5.96 0 0120 18v1a1 1 0 001 1h3a1 1 0 001-1v-1c0-2-2-4-6-4z" />
     </svg>
   </button>
-
-  <!-- ปุ่มลอย: ลบกิจกรรม (เฉพาะ admin) -->
-<button id="fabDel"
-  class="fixed bottom-40 right-6 h-14 w-14 rounded-full bg-rose-600 text-white grid place-items-center shadow-xl hover:bg-rose-500 active:scale-95 transition hidden"
-  title="ลบกิจกรรม">
-  <!-- ไอคอนถังขยะ -->
-  <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M9 3h6a1 1 0 011 1v1h4a1 1 0 010 2h-1v12a2 2 0 01-2 2H7a2 2 0 01-2-2V7H4a1 1 0 010-2h4V4a1 1 0 011-1zm2 0v1h2V3h-2zm-1 6a1 1 0 10-2 0v8a1 1 0 102 0V9zm6 0a1 1 0 10-2 0v8a1 1 0 102 0V9z"/>
-  </svg>
-</button>
-
-<!-- Modal จัดการลบ -->
-<div id="delModal" class="fixed inset-0 z-[75] hidden" role="dialog" aria-modal="true">
-  <div data-overlay class="absolute inset-0 bg-black/50"></div>
-  <div class="relative z-10 min-h-full p-4 grid place-items-center">
-    <div class="modal-enter w-[720px] max-w-[calc(100vw-2rem)] rounded-2xl bg-white text-slate-900 shadow-2xl border border-slate-200">
-      <div class="flex items-center justify-between px-6 py-5 border-b">
-        <h3 class="text-xl font-bold">ลบกิจกรรม</h3>
-        <button id="delClose" class="h-9 w-9 grid place-items-center rounded-full hover:bg-black/5">✕</button>
-      </div>
-      <div class="p-6">
-        <div id="delLoading" class="h-10 rounded-lg bg-slate-100 animate-pulse"></div>
-        <div id="delEmpty" class="hidden text-slate-500">ยังไม่มีกิจกรรม</div>
-        <div id="delScroll" class="hidden max-h-[60vh] overflow-y-auto">
-          <ul id="delList" class="space-y-2"></ul>
-        </div>
-      </div>
-      <div class="px-6 pb-6 flex items-center justify-end">
-        <button id="delClose2" class="px-4 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800">ปิด</button>
-      </div>
-    </div>
-  </div>
-</div>
 
   <!-- ปุ่มไปหน้า Calendar (เฉพาะ user) -->
   <a id="calendarFab" href="./calendar.html"
@@ -478,8 +445,8 @@
     (function () {
       const IMAGES = [
         'assets/hero/IMG_20250807_143556.jpg',
-        'assets/hero/IMG_20250106_182958.jpg',
-        'assets/hero/S__11288578.jpg',
+        'assets/hero/IMG_20240213_184348.jpg',
+        'assets/hero/IMG_20231002_141026.jpg',
         'assets/hero/62403.jpg',
         'assets/hero/LINE_ALBUM_24768_250907_1.jpg',
         'assets/hero/IMG_20250206_135727.jpg'
@@ -601,67 +568,19 @@
       const token = localStorage.getItem("token");
       if (!token) { location.href = "./index.html"; return; }
 
-    const $ = (s)=>document.querySelector(s);
-    const eventList = $("#eventList");
-    const searchInput = $("#searchInput");
-    const searchBtn   = $("#searchBtn");
-    const fab=$("#fabAdd"), addModal=$("#addModal"), addForm=$("#addForm");
-    const dateInput=document.getElementById('addDate');
-    if(dateInput){ const offset=new Date().getTimezoneOffset()*60000; dateInput.value=new Date(Date.now()-offset).toISOString().slice(0,10); }
-    const addCancel=$("#addCancel");
-    let currentUser = null;
+      const $ = (s) => document.querySelector(s);
+      const eventList = $("#eventList");
+      const fab = $("#fabAdd"), addModal = $("#addModal"), addForm = $("#addForm");
+      const dateInput = document.getElementById('addDate');
+      if (dateInput) { const offset = new Date().getTimezoneOffset() * 60000; dateInput.value = new Date(Date.now() - offset).toISOString().slice(0, 10); }
+      const addCancel = $("#addCancel");
 
-    // เก็บรายการทั้งหมดไว้สำหรับกรอง
-    let ALL_EVENTS = [];
-  
-    // แสดงรายการ (รองรับข้อความเมื่อไม่พบผลลัพธ์)
-    function renderEvents(items, q=""){
-      if(!Array.isArray(items) || items.length===0){
-        eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">
-          ${q ? `ไม่พบกิจกรรมที่ตรงกับ “${window.escapeHtml(q)}”` : 'ยังไม่มีกิจกรรม'}
-        </li>`;
-        return;
-      }
-      eventList.innerHTML = items.map(ev=>{
-        const dateTxt = ev.dateText ? `${window.formatDateLabel(ev.dateText)} ` : "";
-        return `<li>
-          <a href="./event.html?id=${ev._id}" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 ring-1 ring-white/10 hover:bg-slate-700 transition">
-            <span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span>
-            <span class="font-semibold tracking-wide">${dateTxt}${window.escapeHtml(ev.title||'')}</span>
-          </a>
-        </li>`;
-      }).join("");
-    }
-  
-    // ฟังก์ชันกรอง
-    function applySearch(){
-      const q = (searchInput?.value || "").trim().toLowerCase();
-      if(!q){ renderEvents(ALL_EVENTS); return; }
-      const filtered = ALL_EVENTS.filter(ev=>{
-        const f = (v)=>String(v||"").toLowerCase();
-        return [ev.title, ev.location, ev.dateText].some(v=> f(v).includes(q));
-      });
-      renderEvents(filtered, q);
-    }
-  
-    // debounce เล็กน้อยให้พิมพ์ลื่น
-    const debounce = (fn,ms)=>{ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
-    const applySearchDebounced = debounce(applySearch, 150);
-  
-    // ผูกอีเวนต์ค้นหา
-    searchBtn?.addEventListener('click', applySearch);
-    searchInput?.addEventListener('input', applySearchDebounced);
-    searchInput?.addEventListener('keydown', (e)=>{
-      if(e.key==='Enter'){ e.preventDefault(); applySearch(); }
-      if(e.key==='Escape'){ searchInput.value=''; applySearch(); }
-    });
-
-    async function loadMe(){
-      const res=await fetch(`${API_BASE}/auth/me`,{ headers:{Authorization:"Bearer "+token}, credentials:"include" });
-      if(!res.ok) throw new Error("unauthorized");
-      const json=await res.json().catch(()=>({})); 
-      const me=json.user||json;
-      currentUser = me;
+      async function loadMe() {
+        const res = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: "Bearer " + token }, credentials: "include" });
+        if (!res.ok) throw new Error("unauthorized");
+        const json = await res.json().catch(() => ({}));
+        const me = json.user || json;
+        currentUser = me;
 
         const id = (x) => document.getElementById(x);
         id("ppName") && (id("ppName").textContent = me.username ?? "—");
@@ -670,113 +589,98 @@
         id("ppMajor") && (id("ppMajor").textContent = me.major ?? "—");
         id("ppPhone") && (id("ppPhone").textContent = me.phone ?? "—");
 
-      const calFab = document.getElementById('calendarFab');
-      if(me.role==="admin"){
-        fab?.classList.remove("hidden"); // admin เห็นปุ่ม +
-        calFab?.remove();                // ไม่ให้ปุ่ม calendar
-      }else{
-        calFab?.classList.remove('hidden'); // user เห็นปุ่ม calendar
+        const calFab = document.getElementById('calendarFab');
+        if (me.role === "admin") {
+          fab?.classList.remove("hidden"); // admin เห็นปุ่ม +
+          calFab?.remove();                // ไม่ให้ปุ่ม calendar
+        } else {
+          calFab?.classList.remove('hidden'); // user เห็นปุ่ม calendar
+        }
       }
-    }
 
-    (function wireLogout(){
-      const btn=document.getElementById("logoutBtn"); if(!btn) return;
-      btn.addEventListener("click", async()=>{
-        try{ await fetch(`${API_BASE}/auth/logout`,{method:"POST",credentials:"include"});}catch{}
-        localStorage.removeItem("token"); location.href="./index.html";
-      });
-    })();
+      (function wireLogout() {
+        const btn = document.getElementById("logoutBtn"); if (!btn) return;
+        btn.addEventListener("click", async () => {
+          try { await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" }); } catch { }
+          localStorage.removeItem("token"); location.href = "./index.html";
+        });
+      })();
 
-    async function loadEvents(){
-      const res=await fetch(`${API_BASE}/events`);
-      const items=await res.json();
-      if(!Array.isArray(items)||items.length===0){
-        eventList.innerHTML=`<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">ยังไม่มีกิจกรรม</li>`;
-        return;
-      }
-      eventList.innerHTML = items.map(ev=>{
-        const dateTxt = ev.dateText ? `${window.formatDateLabel(ev.dateText)} ` : "";
-        return `<li>
+      async function loadEvents() {
+        const res = await fetch(`${API_BASE}/events`);
+        const items = await res.json();
+        if (!Array.isArray(items) || items.length === 0) {
+          eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">ยังไม่มีกิจกรรม</li>`;
+          return;
+        }
+        eventList.innerHTML = items.map(ev => {
+          const dateTxt = ev.dateText ? `${window.formatDateLabel(ev.dateText)} ` : "";
+          return `<li>
           <a href="./event.html?id=${ev._id}" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition">
             <span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span>
             <span class="font-semibold tracking-wide">${dateTxt}${window.escapeHtml(ev.title || '')}</span>
           </a>
         </li>`;
-      }).join("");
-      ALL_EVENTS = Array.isArray(items) ? items : [];
-      renderEvents(ALL_EVENTS);
-    }
-    async function loadEvents(){
-      try{
-        const res = await fetch(`${API_BASE}/events`);
-        const items = await res.json();
-        ALL_EVENTS = Array.isArray(items) ? items : [];
-        renderEvents(ALL_EVENTS); // ใช้ renderer เดียวกับตอนค้นหา
-        }catch(e){
-          eventList.innerHTML =
-          `<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">
-            โหลดข้อมูลไม่สำเร็จ
-            </li>`;
-           }
-          }
-
-    function openAdd(){ addModal?.classList.remove("hidden"); }
-    function closeAdd(){ addModal?.classList.add("hidden"); addForm?.reset(); }
-
-    addForm?.addEventListener("submit", async(e)=>{
-      e.preventDefault();
-      const fd=new FormData(addForm); const payload=Object.fromEntries(fd.entries());
-      const res=await fetch(`${API_BASE}/events`,{
-        method:"POST", headers:{"Content-Type":"application/json", Authorization:"Bearer "+token},
-        credentials:"include", body:JSON.stringify(payload)
-      });
-      if(!res.ok){ const data=await res.json().catch(()=>({})); alert(`เพิ่มกิจกรรมไม่สำเร็จ: ${data.message||res.status}`); return; }
-      closeAdd(); loadEvents();
-    });
-    addCancel?.addEventListener("click", closeAdd);
-    fab?.addEventListener("click", openAdd);
-    addModal?.querySelector("[data-overlay]")?.addEventListener("click", closeAdd);
-
-    loadMe().then(loadEvents).catch(()=>{ localStorage.removeItem("token"); location.href="./index.html"; });
-  })();
-
-  (function historyModal(){
-    const API_BASE=window.API_BASE;
-    const btnOpen=document.getElementById('historyBtn');
-    const modal=document.getElementById('historyModal');
-    const btnClose=document.getElementById('historyClose');
-    const overlay=modal?.querySelector('[data-overlay]');
-    const ul=document.getElementById('historyList');
-    const empty=document.getElementById('historyEmpty');
-    const loading=document.getElementById('historyLoading');
-    if(!btnOpen||!modal) return;
-
-    const open=()=>modal.classList.remove('hidden');
-    const close=()=>modal.classList.add('hidden');
-
-    async function fetchMyRegistrations(){
-      const token=localStorage.getItem('token');
-      const opt={ headers:{Authorization:'Bearer '+token}, credentials:'include' };
-      let res=await fetch(`${API_BASE}/registrations/me`,opt);
-      if(res.ok){ const j=await res.json().catch(()=>({})); return j.items||[]; }
-      if(res.status===404){
-        res=await fetch(`${API_BASE}/auth/my-registrations`,opt);
-        if(res.ok){ const j=await res.json().catch(()=>({})); return j.items||[]; }
+        }).join("");
       }
-      const t=await res.text().catch(()=> ''); throw new Error(`GET failed ${res.status}: ${t||'unknown error'}`);
-    }
 
-    async function loadHistory(){
-      ul.classList.add('hidden'); ul.innerHTML=''; empty.classList.add('hidden'); loading.classList.remove('hidden');
-      try{
-        const items=await fetchMyRegistrations();
-        loading.classList.add('hidden');
-        if(!items.length){ empty.classList.remove('hidden'); return; }
-        ul.innerHTML = items.map(it=>{
-          const ev=it.event||{}; const title=ev.title||'(ไม่ระบุชื่อกิจกรรม)';
-          const dateTxt=window.formatDateLabel(ev.dateText); const loc=ev.location||'—';
-          const orphan=!ev._id;
-          return `<li class="rounded-xl border border-slate-200 bg-white/60 p-4">
+      function openAdd() { addModal?.classList.remove("hidden"); }
+      function closeAdd() { addModal?.classList.add("hidden"); addForm?.reset(); }
+
+      addForm?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fd = new FormData(addForm); const payload = Object.fromEntries(fd.entries());
+        const res = await fetch(`${API_BASE}/events`, {
+          method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          credentials: "include", body: JSON.stringify(payload)
+        });
+        if (!res.ok) { const data = await res.json().catch(() => ({})); alert(`เพิ่มกิจกรรมไม่สำเร็จ: ${data.message || res.status}`); return; }
+        closeAdd(); loadEvents();
+      });
+      addCancel?.addEventListener("click", closeAdd);
+      fab?.addEventListener("click", openAdd);
+      addModal?.querySelector("[data-overlay]")?.addEventListener("click", closeAdd);
+
+      loadMe().then(loadEvents).catch(() => { localStorage.removeItem("token"); location.href = "./index.html"; });
+    })();
+
+    (function historyModal() {
+      const API_BASE = window.API_BASE;
+      const btnOpen = document.getElementById('historyBtn');
+      const modal = document.getElementById('historyModal');
+      const btnClose = document.getElementById('historyClose');
+      const overlay = modal?.querySelector('[data-overlay]');
+      const ul = document.getElementById('historyList');
+      const empty = document.getElementById('historyEmpty');
+      const loading = document.getElementById('historyLoading');
+      if (!btnOpen || !modal) return;
+
+      const open = () => modal.classList.remove('hidden');
+      const close = () => modal.classList.add('hidden');
+
+      async function fetchMyRegistrations() {
+        const token = localStorage.getItem('token');
+        const opt = { headers: { Authorization: 'Bearer ' + token }, credentials: 'include' };
+        let res = await fetch(`${API_BASE}/registrations/me`, opt);
+        if (res.ok) { const j = await res.json().catch(() => ({})); return j.items || []; }
+        if (res.status === 404) {
+          res = await fetch(`${API_BASE}/auth/my-registrations`, opt);
+          if (res.ok) { const j = await res.json().catch(() => ({})); return j.items || []; }
+        }
+        const t = await res.text().catch(() => ''); throw new Error(`GET failed ${res.status}: ${t || 'unknown error'}`);
+      }
+
+      async function loadHistory() {
+        ul.classList.add('hidden'); ul.innerHTML = ''; empty.classList.add('hidden'); loading.classList.remove('hidden');
+        try {
+          const items = await fetchMyRegistrations();
+          loading.classList.add('hidden');
+          if (!items.length) { empty.classList.remove('hidden'); return; }
+          ul.innerHTML = items.map(it => {
+            const ev = it.event || {}; const title = ev.title || '(ไม่ระบุชื่อกิจกรรม)';
+            const dateTxt = window.formatDateLabel(ev.dateText); const loc = ev.location || '—';
+            const orphan = !ev._id;
+            return `<li class="rounded-xl border border-slate-200 bg-white/60 p-4">
             <div class="flex items-start justify-between gap-3">
               <div>
                 <div class="font-semibold text-slate-900">
@@ -788,36 +692,36 @@
               </div>
               <div class="shrink-0 flex gap-2">
                 ${orphan
-                  ? `<button data-remove="${it._id}" class="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300">ลบออก</button>`
-                  : `<a href="./event.html?id=${ev._id}" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-700">ดูรายละเอียด</a>`}
+                ? `<button data-remove="${it._id}" class="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300">ลบออก</button>`
+                : `<a href="./event.html?id=${ev._id}" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-700">ดูรายละเอียด</a>`}
               </div>
             </div>
           </li>`;
-        }).join('');
-        ul.classList.remove('hidden');
+          }).join('');
+          ul.classList.remove('hidden');
 
-        ul.querySelectorAll('[data-remove]').forEach(btn=>{
-          btn.addEventListener('click', async()=>{
-            const id=btn.getAttribute('data-remove');
-            try{
-              await fetch(`${API_BASE}/registrations/${id}`,{
-                method:'DELETE', headers:{Authorization:'Bearer '+localStorage.getItem('token')}
-              });
-              loadHistory();
-            }catch{}
+          ul.querySelectorAll('[data-remove]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = btn.getAttribute('data-remove');
+              try {
+                await fetch(`${API_BASE}/registrations/${id}`, {
+                  method: 'DELETE', headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+                });
+                loadHistory();
+              } catch { }
+            });
           });
-        });
-      }catch(err){ loading.textContent='โหลดไม่สำเร็จ: '+err.message; }
-    }
+        } catch (err) { loading.textContent = 'โหลดไม่สำเร็จ: ' + err.message; }
+      }
 
-    btnOpen.addEventListener('click', ()=>{ open(); loadHistory(); });
-    btnClose?.addEventListener('click', close);
-    overlay?.addEventListener('click', close);
-    document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !modal.classList.contains('hidden')) close(); });
-  })();
+      btnOpen.addEventListener('click', () => { open(); loadHistory(); });
+      btnClose?.addEventListener('click', close);
+      overlay?.addEventListener('click', close);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
+    })();
   </script>
 
-    <script>
+  <script>
     /* ===== Admin Registrations Modal (Fixed v2) ===== */
     (function () {
       const API_BASE = window.API_BASE;
@@ -829,114 +733,101 @@
       const eventList = $("#eventList");
       const fabAdd = $("#fabAdd");
       const fabReg = $("#fabReg");
-      const fabDel = $("#fabDel");
-      
-      const delUI = {
-        wrap: document.getElementById('delModal'),
-        overlay: document.querySelector('#delModal [data-overlay]'),
-        close: document.getElementById('delClose'),
-        close2: document.getElementById('delClose2'),
-        loading: document.getElementById('delLoading'),
-        empty: document.getElementById('delEmpty'),
-        scroll: document.getElementById('delScroll'),
-        list: document.getElementById('delList'),
-        };
 
-          const regUI = {
-            wrap: document.getElementById('regModal'),
-            overlay: document.querySelector('#regModal [data-overlay]'),
-            close: document.getElementById('regClose'),
-            close2: document.getElementById('regClose2'),
-            sumWrap: document.getElementById('regSummary'),
-            sumScroll: document.getElementById('regScroll'),
-            // summary
-            sumLoading: document.getElementById('regLoading'),
-            sumEmpty: document.getElementById('regEmpty'),
-            table: document.getElementById('regTable'),
-            tbody: document.getElementById('regTbody'),
-            // detail
-            detailWrap: document.getElementById('regDetail'),
-            dScroll: document.getElementById('rdScroll'),
-            dTitle: document.getElementById('rdTitle'),
-            dDate: document.getElementById('rdDate'),
-            dLoading: document.getElementById('rdLoading'),
-            dEmpty: document.getElementById('rdEmpty'),
-            dTable: document.getElementById('rdTable'),
-            dTbody: document.getElementById('rdTbody'),
-            dBack: document.getElementById('rdBack'),
-          };
+      const regUI = {
+        wrap: document.getElementById('regModal'),
+        overlay: document.querySelector('#regModal [data-overlay]'),
+        close: document.getElementById('regClose'),
+        close2: document.getElementById('regClose2'),
+        sumWrap: document.getElementById('regSummary'),
+        sumScroll: document.getElementById('regScroll'),
+        // summary
+        sumLoading: document.getElementById('regLoading'),
+        sumEmpty: document.getElementById('regEmpty'),
+        table: document.getElementById('regTable'),
+        tbody: document.getElementById('regTbody'),
+        // detail
+        detailWrap: document.getElementById('regDetail'),
+        dScroll: document.getElementById('rdScroll'),
+        dTitle: document.getElementById('rdTitle'),
+        dDate: document.getElementById('rdDate'),
+        dLoading: document.getElementById('rdLoading'),
+        dEmpty: document.getElementById('rdEmpty'),
+        dTable: document.getElementById('rdTable'),
+        dTbody: document.getElementById('rdTbody'),
+        dBack: document.getElementById('rdBack'),
+      };
 
-          // ---------- Utils ----------
-          const esc = window.escapeHtml ?? (s => s);
-          const fmt = window.formatDateLabel ?? (s => s);
+      // ---------- Utils ----------
+      const esc = window.escapeHtml ?? (s => s);
+      const fmt = window.formatDateLabel ?? (s => s);
 
-      function toDisplayDate(s){
-        if(!s) return '—';
-        const d = /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(s+'T00:00:00') : new Date(s);
-        if(isNaN(d)) return '—';
-        const day=d.getDate(), month=d.getMonth()+1, year=d.getFullYear()+543;
+      function toDisplayDate(s) {
+        if (!s) return '—';
+        const d = /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(s + 'T00:00:00') : new Date(s);
+        if (isNaN(d)) return '—';
+        const day = d.getDate(), month = d.getMonth() + 1, year = d.getFullYear() + 543;
         return `${day}/${month}/${String(year).slice(-2)}`;
       }
-      function showModal(el){
+      function showModal(el) {
         el.classList.remove('hidden');
         document.documentElement.classList.add('overflow-hidden');
-        const p=el.querySelector('.modal-enter');
-        if(p) requestAnimationFrame(()=>p.classList.add('modal-enter-active'));
+        const p = el.querySelector('.modal-enter');
+        if (p) requestAnimationFrame(() => p.classList.add('modal-enter-active'));
       }
-      function hideModal(el){
-        const p=el.querySelector('.modal-enter');
-        if(p) p.classList.remove('modal-enter-active');
-        setTimeout(()=>{ el.classList.add('hidden'); document.documentElement.classList.remove('overflow-hidden'); },180);
+      function hideModal(el) {
+        const p = el.querySelector('.modal-enter');
+        if (p) p.classList.remove('modal-enter-active');
+        setTimeout(() => { el.classList.add('hidden'); document.documentElement.classList.remove('overflow-hidden'); }, 180);
       }
 
       // รูปแบบ response → array
-      function listify(j){
-        if(!j) return [];
-        if(Array.isArray(j)) return j;
-        if(Array.isArray(j.items)) return j.items;
-        if(Array.isArray(j.data)) return j.data;
-        if(Array.isArray(j.results)) return j.results;
+      function listify(j) {
+        if (!j) return [];
+        if (Array.isArray(j)) return j;
+        if (Array.isArray(j.items)) return j.items;
+        if (Array.isArray(j.data)) return j.data;
+        if (Array.isArray(j.results)) return j.results;
         return [];
       }
-      async function tryJson(url){
-        try{
-          const res = await fetch(url,{headers:{Authorization:'Bearer '+token}, credentials:'include'});
-          if(!res.ok) return null;
-          return await res.json().catch(()=>null);
-        }catch{ return null; }
+      async function tryJson(url) {
+        try {
+          const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token }, credentials: 'include' });
+          if (!res.ok) return null;
+          return await res.json().catch(() => null);
+        } catch { return null; }
       }
       // ดึง id ของ event จาก registration ให้ครอบจักรวาล
-      function getRegEventId(reg){
-        if(!reg) return null;
-        if(typeof reg.event === 'string') return reg.event;
-        if(reg.event && typeof reg.event === 'object') return reg.event._id || null;
+      function getRegEventId(reg) {
+        if (!reg) return null;
+        if (typeof reg.event === 'string') return reg.event;
+        if (reg.event && typeof reg.event === 'object') return reg.event._id || null;
         return reg.eventId || reg.eventID || reg.event_id || null;
       }
 
-          // ---------- State ----------
-          let CURRENT_USER = null;
-          let EVENTS_CACHE = [];
+      // ---------- State ----------
+      let CURRENT_USER = null;
+      let EVENTS_CACHE = [];
 
-      async function loadMe(){
-        const res = await fetch(`${API_BASE}/auth/me`, {headers:{Authorization:'Bearer '+token}, credentials:'include'});
-        const j = await res.json().catch(()=> ({}));
+      async function loadMe() {
+        const res = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: 'Bearer ' + token }, credentials: 'include' });
+        const j = await res.json().catch(() => ({}));
         CURRENT_USER = j.user || j;
-        if (CURRENT_USER?.role === 'admin'){
+        if (CURRENT_USER?.role === 'admin') {
           fabAdd?.classList.remove('hidden');
           fabReg?.classList.remove('hidden');
-          fabDel?.classList.remove('hidden');
           document.getElementById('calendarFab')?.remove?.();
         }
       }
-      async function loadEvents(){
-        const res = await fetch(`${API_BASE}/events`, {credentials:'include'});
-        const items = await res.json().catch(()=>[]);
+      async function loadEvents() {
+        const res = await fetch(`${API_BASE}/events`, { credentials: 'include' });
+        const items = await res.json().catch(() => []);
         EVENTS_CACHE = Array.isArray(items) ? items : [];
-        if(!EVENTS_CACHE.length){
+        if (!EVENTS_CACHE.length) {
           eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">ยังไม่มีกิจกรรม</li>`;
           return;
         }
-        eventList.innerHTML = EVENTS_CACHE.map(ev=>{
+        eventList.innerHTML = EVENTS_CACHE.map(ev => {
           const d = ev.dateText ? `${fmt(ev.dateText)} ` : '';
           return `<li>
             <a href="./event.html?id=${ev._id}" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 ring-1 ring-white/10 hover:bg-slate-700 transition">
@@ -946,84 +837,21 @@
           </li>`;
         }).join('');
       }
-      // ---------- ลบกิจกรรม (Admin) ----------
-      function openDelModal(){
-        delUI.loading.classList.remove('hidden');
-        delUI.empty.classList.add('hidden');
-        delUI.scroll.classList.add('hidden');
-        delUI.list.innerHTML = '';
-        showModal(delUI.wrap);
-    
-        const items = EVENTS_CACHE || [];
-        delUI.loading.classList.add('hidden');
-        if (!items.length){ delUI.empty.classList.remove('hidden'); return; }
-    
-        delUI.list.innerHTML = items.map(ev => `
-          <li class="rounded-xl border border-slate-200 bg-white/60 p-4 flex items-center justify-between gap-3">
-            <div>
-              <div class="font-semibold">${esc(ev.title || '(ไม่ระบุชื่อกิจกรรม)')}</div>
-              <div class="text-sm text-slate-500">${fmt(ev.dateText)} • ${esc(ev.location||'—')}</div>
-            </div>
-            <button data-del="${ev._id}" class="px-3 py-1.5 rounded-lg bg-rose-600 text-white hover:bg-rose-500">ลบ</button>
-          </li>`).join('');
-        delUI.scroll.classList.remove('hidden');
-    
-        delUI.list.querySelectorAll('button[data-del]').forEach(btn=>{
-          btn.addEventListener('click', async ()=>{
-            const id = btn.getAttribute('data-del');
-            const ev = EVENTS_CACHE.find(e=>e._id===id);
-            const name = ev?.title || '';
-            if (!confirm(`ยืนยันลบกิจกรรมนี้?\n\n${name}`)) return;
-            btn.disabled = true;
-            try{
-              const r = await fetch(`${API_BASE}/events/${id}`, {
-                method: 'DELETE',
-                headers: { Authorization: 'Bearer ' + token },
-                credentials: 'include'
-              });
-              if (!r.ok){
-                const j = await r.json().catch(()=>({}));
-                throw new Error(j.message || r.status);
-              }
-              // อัปเดตรายการในหน้า
-              EVENTS_CACHE = EVENTS_CACHE.filter(e=>e._id!==id);
-              // รีเฟรชลิสต์ใหญ่
-              await loadEvents();
-              // ลบแถวใน modal
-              btn.closest('li')?.remove();
-              if (!delUI.list.children.length){
-                delUI.scroll.classList.add('hidden');
-                delUI.empty.classList.remove('hidden');
-              }
-              alert('ลบสำเร็จ');
-            }catch(e){
-              alert('ลบไม่สำเร็จ: ' + e.message);
-            }finally{
-              btn.disabled = false;
-            }
-          });
-        });
-      }
-    
-      fabDel?.addEventListener('click', openDelModal);
-      delUI.overlay?.addEventListener('click', ()=> hideModal(delUI.wrap));
-      delUI.close?.addEventListener('click', ()=> hideModal(delUI.wrap));
-      delUI.close2?.addEventListener('click', ()=> hideModal(delUI.wrap));
 
       // ---------- Fetch registrations ----------
-      async function fetchAllRegistrations(){
+      async function fetchAllRegistrations() {
         const urls = [
           `${API_BASE}/registrations`,
           `${API_BASE}/admin/registrations`,
           `${API_BASE}/registration`,
         ];
-        for(const u of urls){
+        for (const u of urls) {
           const j = await tryJson(u);
-          if(j!==null) return listify(j); // อาจเป็น [] ได้
+          if (j !== null) return listify(j); // อาจเป็น [] ได้
         }
         return undefined; // ไม่มี endpoint รวม
       }
-      async function fetchRegistrationsByEvent(eventId){
+      async function fetchRegistrationsByEvent(eventId) {
         const urls = [
           `${API_BASE}/events/${eventId}/registrations`,
           `${API_BASE}/events/${eventId}/registration`,
@@ -1034,25 +862,25 @@
           `${API_BASE}/registrations/by-event/${eventId}`,
           `${API_BASE}/registrations/event/${eventId}`,
         ];
-        for(const u of urls){
+        for (const u of urls) {
           const j = await tryJson(u);
-          if(j!==null) return listify(j);
+          if (j !== null) return listify(j);
         }
         return [];
       }
-      function countFromEvent(ev){
-        if(ev==null) return null;
-        if(typeof ev.registrationsCount === 'number') return ev.registrationsCount;
-        if(typeof ev.registrationCount  === 'number') return ev.registrationCount;
-        if(typeof ev.attendeesCount     === 'number') return ev.attendeesCount;
-        if(typeof ev.participantsCount  === 'number') return ev.participantsCount;
-        if(Array.isArray(ev.registrations)) return ev.registrations.length;
-        if(Array.isArray(ev.attendees))     return ev.attendees.length;
+      function countFromEvent(ev) {
+        if (ev == null) return null;
+        if (typeof ev.registrationsCount === 'number') return ev.registrationsCount;
+        if (typeof ev.registrationCount === 'number') return ev.registrationCount;
+        if (typeof ev.attendeesCount === 'number') return ev.attendeesCount;
+        if (typeof ev.participantsCount === 'number') return ev.participantsCount;
+        if (Array.isArray(ev.registrations)) return ev.registrations.length;
+        if (Array.isArray(ev.attendees)) return ev.attendees.length;
         return null;
       }
 
       // ---------- Summary ----------
-      async function openRegModal(){
+      async function openRegModal() {
         if (CURRENT_USER?.role !== 'admin') return;
 
         // reset
@@ -1061,36 +889,36 @@
         regUI.detailWrap.classList.add('hidden');
         regUI.sumEmpty.classList.add('hidden');
         regUI.table.classList.add('hidden');
-        regUI.tbody.innerHTML='';
+        regUI.tbody.innerHTML = '';
         regUI.detailWrap.classList.add('hidden');
-        regUI.sumScroll?.scrollTo?.(0,0);
+        regUI.sumScroll?.scrollTo?.(0, 0);
         showModal(regUI.wrap);
 
         // events
         let events = EVENTS_CACHE;
-        if(!events.length){
-          const r = await fetch(`${API_BASE}/events`, {credentials:'include'});
-          events = await r.json().catch(()=>[]);
-          events = Array.isArray(events)? events : [];
+        if (!events.length) {
+          const r = await fetch(`${API_BASE}/events`, { credentials: 'include' });
+          events = await r.json().catch(() => []);
+          events = Array.isArray(events) ? events : [];
         }
 
-            // ลองดึงทั้งหมด
-            const allListMaybe = await fetchAllRegistrations(); // undefined = ไม่มี endpoint รวม
-            const allList = Array.isArray(allListMaybe) ? allListMaybe : (allListMaybe === undefined ? undefined : listify(allListMaybe));
+        // ลองดึงทั้งหมด
+        const allListMaybe = await fetchAllRegistrations(); // undefined = ไม่มี endpoint รวม
+        const allList = Array.isArray(allListMaybe) ? allListMaybe : (allListMaybe === undefined ? undefined : listify(allListMaybe));
 
         let rows = [];
-        if(allList === undefined || allList.length === 0){
+        if (allList === undefined || allList.length === 0) {
           // ❗ ถ้าไม่มี/ว่าง → ใช้ fallback ต่อกิจกรรม (จะไปนับทีหลัง)
           rows = events.map(ev => ({ ev, count: countFromEvent(ev) }));
-        }else{
+        } else {
           // มีข้อมูลรวม → group
           const map = new Map();
-          allList.forEach(reg=>{
+          allList.forEach(reg => {
             const id = getRegEventId(reg);
-            if(!id) return;
+            if (!id) return;
             map.set(id, (map.get(id) || 0) + 1);
           });
-          rows = events.map(ev=>{
+          rows = events.map(ev => {
             const fromEv = countFromEvent(ev);
             const grouped = map.get(ev._id) ?? 0;
             return { ev, count: (fromEv ?? grouped) };
@@ -1098,82 +926,82 @@
         }
 
         // render
-        regUI.tbody.innerHTML = rows.map(r=>{
-          const c = (r.count==null)
+        regUI.tbody.innerHTML = rows.map(r => {
+          const c = (r.count == null)
             ? '<span class="inline-block w-10 h-4 rounded bg-slate-100 animate-pulse align-middle"></span>'
             : r.count;
           return `<tr class="border-t">
-            <td class="py-2 pr-3">${esc(r.ev?.title||'(ไม่ระบุชื่อกิจกรรม)')}</td>
+            <td class="py-2 pr-3">${esc(r.ev?.title || '(ไม่ระบุชื่อกิจกรรม)')}</td>
             <td class="py-2 pr-3">${toDisplayDate(r.ev?.dateText)}</td>
             <td class="py-2 pr-3 js-count">${c}</td>
             <td class="py-2">
               <button data-view="${r.ev?._id || ''}" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800">ดูรายชื่อ</button>
             </td>
           </tr>`;
-            }).join('');
+        }).join('');
 
         regUI.sumLoading.classList.add('hidden');
-        if(!rows.length) regUI.sumEmpty.classList.remove('hidden'); else regUI.table.classList.remove('hidden');
+        if (!rows.length) regUI.sumEmpty.classList.remove('hidden'); else regUI.table.classList.remove('hidden');
 
         // เติมจำนวนแบบ per-event สำหรับแถวที่ยังไม่มีค่า
-        const needFill = [...regUI.tbody.querySelectorAll('tr')].filter(tr=>{
+        const needFill = [...regUI.tbody.querySelectorAll('tr')].filter(tr => {
           const c = tr.querySelector('.js-count');
-          return c && c.textContent.trim()===''; // skeleton ไม่มีข้อความ
+          return c && c.textContent.trim() === ''; // skeleton ไม่มีข้อความ
         });
-        for(const tr of needFill){
+        for (const tr of needFill) {
           const id = tr.querySelector('button[data-view]')?.getAttribute('data-view');
-          if(!id) continue;
+          if (!id) continue;
           const regs = await fetchRegistrationsByEvent(id);
           tr.querySelector('.js-count').textContent = regs.length;
         }
 
         // bind
-        regUI.tbody.querySelectorAll('button[data-view]').forEach(btn=>{
-          btn.addEventListener('click', async ()=>{
+        regUI.tbody.querySelectorAll('button[data-view]').forEach(btn => {
+          btn.addEventListener('click', async () => {
             const id = btn.getAttribute('data-view');
-            const ev = events.find(e=>e._id===id) || {};
+            const ev = events.find(e => e._id === id) || {};
             await openRegDetail(ev);
           });
         });
       }
 
       // ---------- Detail ----------
-      async function openRegDetail(ev){
+      async function openRegDetail(ev) {
         regUI.detailWrap.classList.remove('hidden');
         regUI.sumWrap.classList.add('hidden');
         regUI.detailWrap.classList.remove('hidden');
-        regUI.dScroll?.scrollTo?.(0,0);
+        regUI.dScroll?.scrollTo?.(0, 0);
         regUI.dTitle.textContent = ev.title || '(ไม่ระบุชื่อกิจกรรม)';
-        regUI.dDate.textContent  = toDisplayDate(ev.dateText);
+        regUI.dDate.textContent = toDisplayDate(ev.dateText);
         regUI.dLoading.classList.remove('hidden');
         regUI.dEmpty.classList.add('hidden');
         regUI.dTable.classList.add('hidden');
-        regUI.dTbody.innerHTML='';
+        regUI.dTbody.innerHTML = '';
 
-            // 1) ลอง per-event ก่อน
-            let regs = await fetchRegistrationsByEvent(ev._id);
+        // 1) ลอง per-event ก่อน
+        let regs = await fetchRegistrationsByEvent(ev._id);
 
         // 2) ถ้ายังว่าง → ลองดึงรวมแล้วกรองเอง
-        if(!regs.length){
+        if (!regs.length) {
           const all = await fetchAllRegistrations();
-          if(Array.isArray(all)){
+          if (Array.isArray(all)) {
             regs = all.filter(r => getRegEventId(r) === ev._id);
           }
         }
 
         regUI.dLoading.classList.add('hidden');
-        if(!regs.length){
+        if (!regs.length) {
           regUI.dEmpty.classList.remove('hidden');
           return;
         }
 
-        regUI.dTbody.innerHTML = regs.map(r=>{
+        regUI.dTbody.innerHTML = regs.map(r => {
           const u = r.user || r.profile || r.account || {};
-          const name  = u.username || u.fullName || u.name || r.name || r.username || '—';
+          const name = u.username || u.fullName || u.name || r.name || r.username || '—';
           const idnum = u.idNumber || u.studentId || r.idNumber || r.studentId || r.sid || '—';
           const email = u.email || r.email || '—';
           const phone = u.phone || u.tel || r.phone || r.tel || '—';
-          const addr  = r.address || r.addr || r.registrationAddress || r.contactAddress || '—';
+          const addr = r.address || r.addr || r.registrationAddress || r.contactAddress || '—';
           return `<tr class="border-t">
             <td class="py-2 pr-3">${esc(String(name))}</td>
             <td class="py-2 pr-3">${esc(String(idnum))}</td>
@@ -1181,25 +1009,79 @@
             <td class="py-2 pr-3">${esc(String(phone))}</td>
             <td class="py-2 pr-3">${esc(String(addr))}</td>
           </tr>`;
-            }).join('');
-            regUI.dTable.classList.remove('hidden');
-          }
+        }).join('');
+        regUI.dTable.classList.remove('hidden');
+      }
 
       // ---------- wire ----------
       fabReg?.addEventListener('click', openRegModal);
-      regUI.overlay?.addEventListener('click', ()=> hideModal(regUI.wrap));
-      regUI.close?.addEventListener('click', ()=> hideModal(regUI.wrap));
-      regUI.close2?.addEventListener('click', ()=> hideModal(regUI.wrap));
-      regUI.dBack?.addEventListener('click', ()=>{
+      regUI.overlay?.addEventListener('click', () => hideModal(regUI.wrap));
+      regUI.close?.addEventListener('click', () => hideModal(regUI.wrap));
+      regUI.close2?.addEventListener('click', () => hideModal(regUI.wrap));
+      regUI.dBack?.addEventListener('click', () => {
         regUI.detailWrap.classList.add('hidden');
         regUI.sumWrap.classList.remove('hidden');
-        regUI.sumScroll?.scrollTo?.(0,0);
-        });
-      document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && !regUI.wrap.classList.contains('hidden')) hideModal(regUI.wrap); });
+        regUI.sumScroll?.scrollTo?.(0, 0);
+      });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !regUI.wrap.classList.contains('hidden')) hideModal(regUI.wrap); });
 
       // ---------- start ----------
-      loadMe().then(loadEvents).catch(()=>{});
+      loadMe().then(loadEvents).catch(() => { });
     })();
-    </script>
+  </script>
+
+  <script>
+    
+    // Realtime search
+    (function realtimeSearch() {
+      const searchInput = document.querySelector('input[placeholder="ค้นหา..."]');
+      const eventList = document.getElementById('eventList');
+      let allItems = [];
+
+      // ดึงข้อมูลกิจกรรมทั้งหมด (ใช้ซ้ำกับ loadEvents)
+      async function fetchEvents() {
+        const res = await fetch(window.API_BASE + '/events');
+        const items = await res.json();
+        return Array.isArray(items) ? items : [];
+      }
+
+      // แสดงผลลัพธ์ที่กรอง
+      function render(items) {
+        if (!items.length) {
+          eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">ไม่พบกิจกรรมที่ค้นหา</li>`;
+          return;
+        }
+        eventList.innerHTML = items.map(ev => {
+          const dateTxt = ev.dateText ? `${window.formatDateLabel(ev.dateText)} ` : "";
+          return `<li>
+        <a href="./event.html?id=${ev._id}" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition">
+          <span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span>
+          <span class="font-semibold tracking-wide">${dateTxt}${window.escapeHtml(ev.title || '')}</span>
+        </a>
+      </li>`;
+        }).join("");
+      }
+
+      // โหลดกิจกรรมครั้งแรก
+      fetchEvents().then(items => {
+        allItems = items;
+      });
+
+      // ฟังค์ชันกรอง
+      searchInput?.addEventListener('input', e => {
+        const q = e.target.value.trim().toLowerCase();
+        if (!q) { render(allItems); return; }
+        const filtered = allItems.filter(ev =>
+          (ev.title || '').toLowerCase().includes(q) ||
+          (ev.location || '').toLowerCase().includes(q) ||
+          (window.formatDateLabel(ev.dateText) || '').includes(q)
+        );
+        render(filtered);
+      });
+    })();
+
+
+  </script>
 </body>
+
 </html>
