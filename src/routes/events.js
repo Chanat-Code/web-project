@@ -6,6 +6,30 @@ import { requireAuth, requireAdmin } from "../middleware/auth.js";
 
 const router = Router();
 
+  // ✅ Admin: รายชื่อผู้ลงทะเบียนต่อกิจกรรม
+  router.get("/:id/registrations", requireAuth, requireAdmin, async (req, res) => {
+    const regs = await Registration.find({ event: req.params.id })
+      .sort({ createdAt: -1 })
+      .populate([
+        { path: "event", select: "title dateText location" },
+        { path: "user",  select: "username idNumber email phone" },
+      ])
+      .lean();
+
+    const items = regs.map(r => ({
+      _id: r._id,
+      address: r.address || "",
+      createdAt: r.createdAt,
+      event: r.event
+        ? { _id: r.event._id, title: r.event.title, dateText: r.event.dateText, location: r.event.location }
+        : null,
+      user: r.user
+        ? { _id: r.user._id, username: r.user.username, idNumber: r.user.idNumber, email: r.user.email, phone: r.user.phone }
+        : null,
+    }));
+    res.json(items);
+  });
+
 // ---- (คงของเดิม get / และ get /:id ไว้) ----
 
 router.get("/", async (_req, res) => {
