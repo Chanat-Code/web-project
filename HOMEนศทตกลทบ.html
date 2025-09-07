@@ -18,7 +18,6 @@
 
     .tv-slide{
       position:absolute; top:50%; left:50%;
-      /* ใช้ transform (แทน translate property เดิม) */
       transform: translate(-50%, -50%);
       width:min(1100px,76vw, calc(var(--H) * 16 / 9));
       aspect-ratio:16/9;
@@ -28,15 +27,17 @@
                  opacity   800ms cubic-bezier(.2,.6,.2,1),
                  filter    800ms cubic-bezier(.2,.6,.2,1);
       will-change: transform, opacity, filter;
+      z-index:10;
     }
-
     .tv-slide img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
     .tv-slide .fade{ position:absolute; inset-inline:0; bottom:0; height:5.5rem;
       background:linear-gradient(to top,rgba(0,0,0,.45),transparent); pointer-events:none; }
 
     .tv-slide.is-center{ z-index:30; transform:translate(-50%,-50%) scale(1) rotateY(0); opacity:1; filter:none; }
-    .tv-slide.is-left  { z-index:20; transform:translate(calc(-50% - 18vw),-50%) scale(.9) rotateY(14deg); opacity:.9; filter:grayscale(.25) brightness(.85); }
-    .tv-slide.is-right { z-index:20; transform:translate(calc(-50% + 18vw),-50%) scale(.9) rotateY(-14deg); opacity:.9; filter:grayscale(.25) brightness(.85); }
+    .tv-slide.is-left  { z-index:20; transform:translate(calc(-50% - 18vw),-50%) scale(.9) rotateY(14deg);
+                         opacity:.9; filter:grayscale(.25) brightness(.85); }
+    .tv-slide.is-right { z-index:20; transform:translate(calc(-50% + 18vw),-50%) scale(.9) rotateY(-14deg);
+                         opacity:.9; filter:grayscale(.25) brightness(.85); }
     .tv-slide.is-hidden{ z-index:10; transform:translate(-50%,-50%) scale(.86); opacity:0; pointer-events:none; }
 
     @keyframes kb{ from{ transform:scale(1) } to{ transform:scale(1.06) } }
@@ -49,12 +50,10 @@
     @media (prefers-reduced-motion:reduce){
       .tv-slide, .tv-slide img{ transition:none !important; animation:none !important; }
     }
-    /* สเกเลตันระหว่างโหลด */
     .tv-slide[data-loading]::before{
       content:"";
       position:absolute; inset:0;
-      background:
-        linear-gradient(90deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.14) 50%, rgba(255,255,255,0.06) 100%);
+      background:linear-gradient(90deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.14) 50%, rgba(255,255,255,0.06) 100%);
       background-size:200% 100%;
       animation: shimmer 1.2s linear infinite;
       border-radius:inherit;
@@ -64,8 +63,8 @@
 </head>
 <body class="bg-slate-900 text-slate-100">
 
-  <!-- Header -->
-  <header class="fixed inset-x-0 top-0 z-40 bg-slate-800/95 backdrop-blur supports-[backdrop-filter]:bg-slate-800/80 border-b border-white/10">
+  <!-- Header (z-50 สูงกว่า hero) -->
+  <header class="fixed inset-x-0 top-0 z-50 bg-slate-800/95 backdrop-blur supports-[backdrop-filter]:bg-slate-800/80 border-b border-white/10">
     <div class="mx-auto max-w-none px-4 sm:px-6 lg:px-8 h-[var(--header-h)] flex items-center gap-4 w-full">
       <div class="text-3xl font-extrabold tracking-tight select-none"><span class="text-white">RLTG</span></div>
       <div class="flex-1 flex items-center">
@@ -89,7 +88,7 @@
   <!-- ===== MAIN ===== -->
   <main class="pt-[var(--header-h)]">
 
-    <!-- Hero -->
+    <!-- Hero (Full-bleed) -->
     <section class="relative mx-[calc(50%-50vw)] w-screen">
       <div id="tvStage" class="relative">
         <!-- Edge fades -->
@@ -105,11 +104,11 @@
         </button>
 
         <!-- Dots + Pause -->
-        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3">
+        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3">
           <div id="tvDots" class="flex items-center gap-2"></div>
         </div>
-        <button id="tvToggle" class="absolute bottom-2 right-3 md:right-6 z-50 h-8 w-8 grid place-items-center rounded-full bg-white/90 text-slate-900 hover:bg-white">⏸</button>
-      </div> <!-- ✅ ปิด #tvStage ให้เรียบร้อย -->
+        <button id="tvToggle" class="absolute bottom-2 right-3 md:right-6 z-30 h-8 w-8 grid place-items-center rounded-full bg-white/90 text-slate-900 hover:bg-white">⏸</button>
+      </div> <!-- ✅ ปิด tvStage -->
     </section>
 
     <!-- รายการกิจกรรม -->
@@ -124,11 +123,20 @@
   <!-- FAB: admin only -->
   <button id="fabAdd" class="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-indigo-600 shadow-xl text-white text-3xl leading-none grid place-items-center hover:bg-indigo-500 active:scale-95 transition hidden" title="เพิ่มกิจกรรม">+</button>
 
+  <!-- ปุ่มไปหน้า Calendar (เฉพาะ user) -->
+  <a id="calendarFab" href="./calendar.html"
+     class="hidden fixed bottom-6 right-6 h-14 w-14 rounded-full bg-indigo-600 text-white grid place-items-center shadow-xl hover:bg-indigo-500 active:scale-95 transition"
+     title="Calendar" aria-label="Calendar">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M7 2a1 1 0 011 1v1h8V3a1 1 0 112 0v1h1a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h1V3a1 1 0 112 0v1zm13 6H4v10h16V8z"/>
+    </svg>
+  </a>
+
   <!-- Modal เพิ่มกิจกรรม -->
-  <div id="addModal" class="fixed inset-0 z-50 hidden">
-    <div data-overlay class="absolute inset-0 bg-black/50"></div>
-    <div class="relative z-10 min-h-full p-4 grid place-items-center">
-      <form id="addForm" class="w-full max-w-xl rounded-2xl bg-white text-slate-900 p-6 space-y-4 shadow-2xl">
+  <div id="addModal" class="fixed inset-0 z-[70] hidden">
+    <div data-overlay class="absolute inset-0 bg-black/50 z-10"></div>
+    <div class="relative z-20 min-h-full p-4 grid place-items-center">
+      <form id="addForm" class="w-full max-w-xl rounded-2xl bg-white text-slate-900 p-6 space-y-4 shadow-2xl border border-black/5">
         <h2 class="text-xl font-bold">เพิ่มกิจกรรม</h2>
         <input name="title" required placeholder="ชื่อกิจกรรม" class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400">
         <input name="dateText" id="addDate" type="date" class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400" required>
@@ -143,13 +151,56 @@
     </div>
   </div>
 
-  <!-- ปุ่มไปหน้า Calendar (user เท่านั้น) -->
-  <a id="calendarFab" href="./calendar.html"
-     class="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-indigo-600 text-white grid place-items-center shadow-xl hover:bg-indigo-500 active:scale-95 transition">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M7 2a1 1 0 011 1v1h8V3a1 1 0 112 0v1h1a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h1V3a1 1 0 112 0v1zm13 6H4v10h16V8z"/>
-    </svg>
-  </a>
+  <!-- ===== Profile modal (z สูงสุด) ===== -->
+  <div id="profileModal" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true">
+    <div data-overlay class="absolute inset-0 bg-black/50 backdrop-blur-sm z-10"></div>
+    <div class="relative z-20 min-h-full p-4">
+      <!-- การ์ดต้องอยู่เหนือ overlay เสมอ -->
+      <div id="profileCard" class="fixed z-20 w-80 sm:w-96 rounded-2xl bg-white text-slate-900 shadow-2xl border border-black/5">
+        <div class="absolute -top-2 right-10 w-4 h-4 bg-white rotate-45 shadow ring-1 ring-black/5"></div>
+        <button data-close class="absolute right-3 top-3 h-9 w-9 grid place-items-center rounded-full hover:bg-black/5 text-slate-900" aria-label="ปิด">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
+        <div class="p-6 space-y-6">
+          <div class="mx-auto h-16 w-16 rounded-full bg-slate-200 grid place-items-center">
+            <svg class="h-10 w-10 text-slate-700" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6a1 1 0 001 1h14a1 1 0 001-1c0-3.33-2.67-6-8-6z"/></svg>
+          </div>
+
+          <div class="space-y-3 text-[15px]">
+            <div class="flex items-center gap-2"><span class="font-medium">Name :</span><span id="ppName" class="text-slate-600">—</span></div>
+            <div class="flex items-center gap-2"><span class="font-medium">ID :</span><span id="ppId" class="text-slate-600">—</span></div>
+            <div class="flex items-center gap-2"><span class="font-medium">E-mail :</span><span id="ppEmail" class="text-slate-600">—</span></div>
+            <div class="flex items-center gap-2"><span class="font-medium">Major :</span><span id="ppMajor" class="text-slate-600">—</span></div>
+            <div class="flex items-center gap-2"><span class="font-medium">Phone :</span><span id="ppPhone" class="text-slate-600">—</span></div>
+          </div>
+
+          <div class="space-y-3">
+            <button id="historyBtn" class="w-full rounded-2xl bg-indigo-900 text-white px-5 py-3 font-semibold tracking-wide hover:bg-indigo-800 active:scale-[.99] transition">Registration History</button>
+            <button id="logoutBtn" class="w-full rounded-xl bg-slate-900 text-white px-5 py-2.5 font-medium hover:bg-slate-800 active:scale-[.99] transition">Log out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== History modal ===== -->
+  <div id="historyModal" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true">
+    <div data-overlay class="absolute inset-0 bg-black/60 backdrop-blur-sm z-10"></div>
+    <div class="relative z-20 min-h-full p-4 grid place-items-center">
+      <div class="relative w-[720px] max-w-[calc(100vw-2rem)] max-h-[85vh] rounded-2xl bg-white text-slate-900 shadow-2xl flex flex-col">
+        <div class="flex items-center justify-between px-6 py-4 border-b">
+          <h3 class="text-xl font-bold">ประวัติการลงทะเบียน</h3>
+          <button id="historyClose" class="h-9 w-9 grid place-items-center rounded-full hover:bg-black/5" aria-label="ปิด">✕</button>
+        </div>
+        <div id="historyScroll" class="p-6 overflow-y-auto overscroll-contain">
+          <div id="historyLoading" class="text-slate-500">กำลังโหลด...</div>
+          <div id="historyEmpty" class="hidden text-slate-500">ยังไม่มีรายการลงทะเบียน</div>
+          <ul id="historyList" class="hidden space-y-3"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Footer -->
   <footer class="py-6 text-center text-sm text-white/70">© 2025 RLTG</footer>
@@ -255,58 +306,41 @@
   })();
   </script>
 
-  <!-- ===== Profile modal ===== -->
-  <div id="profileModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
-    <div data-overlay class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-    <div class="relative z-10 min-h-full p-4">
-      <div id="profileCard" class="fixed w-80 sm:w-96 rounded-2xl bg-white text-slate-900 shadow-2xl border border-black/5">
-        <div class="absolute -top-2 right-10 w-4 h-4 bg-white rotate-45 shadow ring-1 ring-black/5"></div>
-        <button data-close class="absolute right-3 top-3 h-9 w-9 grid place-items-center rounded-full hover:bg-black/5 text-slate-900" aria-label="ปิด">
-          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-
-        <div class="p-6 space-y-6">
-          <div class="mx-auto h-16 w-16 rounded-full bg-slate-200 grid place-items-center">
-            <svg class="h-10 w-10 text-slate-700" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6a1 1 0 001 1h14a1 1 0 001-1c0-3.33-2.67-6-8-6z"/></svg>
-          </div>
-
-          <div class="space-y-3 text-[15px]">
-            <div class="flex items-center gap-2"><span class="font-medium">Name :</span><span id="ppName" class="text-slate-600">—</span></div>
-            <div class="flex items-center gap-2"><span class="font-medium">ID :</span><span id="ppId" class="text-slate-600">—</span></div>
-            <div class="flex items-center gap-2"><span class="font-medium">E-mail :</span><span id="ppEmail" class="text-slate-600">—</span></div>
-            <div class="flex items-center gap-2"><span class="font-medium">Major :</span><span id="ppMajor" class="text-slate-600">—</span></div>
-            <div class="flex items-center gap-2"><span class="font-medium">Phone :</span><span id="ppPhone" class="text-slate-600">—</span></div>
-          </div>
-
-          <div class="space-y-3">
-            <button id="historyBtn" class="w-full rounded-2xl bg-indigo-900 text-white px-5 py-3 font-semibold tracking-wide hover:bg-indigo-800 active:scale-[.99] transition">Registration History</button>
-            <button id="logoutBtn" class="w-full rounded-xl bg-slate-900 text-white px-5 py-2.5 font-medium hover:bg-slate-800 active:scale-[.99] transition">Log out</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== History modal ===== -->
-  <div id="historyModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
-    <div data-overlay class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-    <div class="relative z-10 min-h-full p-4 grid place-items-center">
-      <div class="relative w-[720px] max-w-[calc(100vw-2rem)] max-h-[85vh] rounded-2xl bg-white text-slate-900 shadow-2xl flex flex-col">
-        <div class="flex items-center justify-between px-6 py-4 border-b">
-          <h3 class="text-xl font-bold">ประวัติการลงทะเบียน</h3>
-          <button id="historyClose" class="h-9 w-9 grid place-items-center rounded-full hover:bg-black/5" aria-label="ปิด">✕</button>
-        </div>
-        <div id="historyScroll" class="p-6 overflow-y-auto overscroll-contain">
-          <div id="historyLoading" class="text-slate-500">กำลังโหลด...</div>
-          <div id="historyEmpty" class="hidden text-slate-500">ยังไม่มีรายการลงทะเบียน</div>
-          <ul id="historyList" class="hidden space-y-3"></ul>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- ===== Profile/History logic + Events loader ===== -->
   <script>
+  let currentUser = null;
+
+  (function(){
+    const btn = document.getElementById('profileBtn');
+    const modal = document.getElementById('profileModal');
+    const card = document.getElementById('profileCard');
+    if(!btn||!modal||!card) return;
+
+    const overlay = modal.querySelector('[data-overlay]');
+    const closeBtn = modal.querySelector('[data-close]');
+    let lastActive = null;
+
+    function place(){
+      const r = btn.getBoundingClientRect(), gap=10, width = card.offsetWidth||360;
+      const maxLeft = window.innerWidth - width - 8;
+      const left = Math.max(8, Math.min(r.right - width, maxLeft));
+      const top  = Math.min(r.bottom + gap, window.innerHeight - card.offsetHeight - 8);
+      card.style.left = left+'px'; card.style.top = top+'px';
+    }
+    function lockScroll(lock){
+      const el = document.scrollingElement || document.documentElement;
+      if(lock){ el.dataset.prevOverflow = el.style.overflow||''; el.style.overflow='hidden'; document.body.classList.add('overflow-hidden'); }
+      else { el.style.overflow = el.dataset.prevOverflow||''; document.body.classList.remove('overflow-hidden'); delete el.dataset.prevOverflow; }
+    }
+    function open(){ lastActive=document.activeElement; modal.classList.remove('hidden'); lockScroll(true); requestAnimationFrame(place); window.addEventListener('resize', place, {passive:true}); }
+    function close(){ modal.classList.add('hidden'); lockScroll(false); if(lastActive) lastActive.focus(); window.removeEventListener('resize', place); }
+
+    btn.addEventListener('click', open);
+    overlay.addEventListener('click', close);
+    closeBtn.addEventListener('click', close);
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !modal.classList.contains('hidden')) close(); });
+  })();
+
   (function (){
     const API_BASE = window.API_BASE;
     const token = localStorage.getItem("token");
@@ -319,12 +353,12 @@
     if(dateInput){ const offset=new Date().getTimezoneOffset()*60000; dateInput.value=new Date(Date.now()-offset).toISOString().slice(0,10); }
     const addCancel=$("#addCancel");
 
-    let me = null; // ✅ เก็บผู้ใช้ไว้ใช้ต่อ
-
     async function loadMe(){
       const res=await fetch(`${API_BASE}/auth/me`,{ headers:{Authorization:"Bearer "+token}, credentials:"include" });
       if(!res.ok) throw new Error("unauthorized");
-      const json=await res.json().catch(()=>({})); me=json.user||json;
+      const json=await res.json().catch(()=>({})); 
+      const me=json.user||json;
+      currentUser = me;
 
       const id=(x)=>document.getElementById(x);
       id("ppName")&&(id("ppName").textContent=me.username??"—");
@@ -333,14 +367,12 @@
       id("ppMajor")&&(id("ppMajor").textContent=me.major??"—");
       id("ppPhone")&&(id("ppPhone").textContent=me.phone??"—");
 
-      // ✅ ปุ่ม + สำหรับ admin เท่านั้น
-      if(me.role==="admin"&&fab) fab.classList.remove("hidden");
-
-      // ✅ ปุ่ม Calendar ซ่อนเมื่อเป็น admin
       const calFab = document.getElementById('calendarFab');
-      if (calFab){
-        if (me.role === 'admin') calFab.remove();
-        else calFab.classList.remove('hidden');
+      if(me.role==="admin"){
+        fab?.classList.remove("hidden"); // admin เห็นปุ่ม +
+        calFab?.remove();                // ไม่ให้ปุ่ม calendar
+      }else{
+        calFab?.classList.remove('hidden'); // user เห็นปุ่ม calendar
       }
     }
 
@@ -359,7 +391,6 @@
         eventList.innerHTML=`<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">ยังไม่มีกิจกรรม</li>`;
         return;
       }
-      // ❌ เอา logic ปุ่ม Calendar ออกจากที่นี่ (เพราะ me ยังไม่แน่ชัด)
       eventList.innerHTML = items.map(ev=>{
         const dateTxt = ev.dateText ? `${window.formatDateLabel(ev.dateText)} ` : "";
         return `<li>
@@ -388,8 +419,7 @@
     fab?.addEventListener("click", openAdd);
     addModal?.querySelector("[data-overlay]")?.addEventListener("click", closeAdd);
 
-    // ✅ โหลด me ก่อน แล้วค่อยโหลด events
-    loadMe().then(()=>loadEvents()).catch(()=>{ localStorage.removeItem("token"); location.href="./index.html"; });
+    loadMe().then(loadEvents).catch(()=>{ localStorage.removeItem("token"); location.href="./index.html"; });
   })();
 
   (function historyModal(){
