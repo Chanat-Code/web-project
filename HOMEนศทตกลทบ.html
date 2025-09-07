@@ -18,31 +18,25 @@
 
     .tv-slide{
       position:absolute; top:50%; left:50%;
-      /* ⬇️ เปลี่ยนจาก translate:-50% -50% เป็น transform: translate(...) */
+      /* ใช้ transform (แทน translate property เดิม) */
       transform: translate(-50%, -50%);
       width:min(1100px,76vw, calc(var(--H) * 16 / 9));
       aspect-ratio:16/9;
       border-radius:22px; overflow:hidden; background:#000;
       box-shadow:0 40px 90px rgba(0,0,0,.45);
       transition:transform 800ms cubic-bezier(.2,.6,.2,1),
-                opacity   800ms cubic-bezier(.2,.6,.2,1),
-                filter    800ms cubic-bezier(.2,.6,.2,1);
+                 opacity   800ms cubic-bezier(.2,.6,.2,1),
+                 filter    800ms cubic-bezier(.2,.6,.2,1);
       will-change: transform, opacity, filter;
     }
 
-    .tv-slide img{
-      width:100%; height:100%;
-      object-fit:cover; object-position:center;
-      display:block;
-    }
+    .tv-slide img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
     .tv-slide .fade{ position:absolute; inset-inline:0; bottom:0; height:5.5rem;
       background:linear-gradient(to top,rgba(0,0,0,.45),transparent); pointer-events:none; }
 
     .tv-slide.is-center{ z-index:30; transform:translate(-50%,-50%) scale(1) rotateY(0); opacity:1; filter:none; }
-    .tv-slide.is-left  { z-index:20; transform:translate(calc(-50% - 18vw),-50%) scale(.9) rotateY(14deg);
-                         opacity:.9; filter:grayscale(.25) brightness(.85); }
-    .tv-slide.is-right { z-index:20; transform:translate(calc(-50% + 18vw),-50%) scale(.9) rotateY(-14deg);
-                         opacity:.9; filter:grayscale(.25) brightness(.85); }
+    .tv-slide.is-left  { z-index:20; transform:translate(calc(-50% - 18vw),-50%) scale(.9) rotateY(14deg); opacity:.9; filter:grayscale(.25) brightness(.85); }
+    .tv-slide.is-right { z-index:20; transform:translate(calc(-50% + 18vw),-50%) scale(.9) rotateY(-14deg); opacity:.9; filter:grayscale(.25) brightness(.85); }
     .tv-slide.is-hidden{ z-index:10; transform:translate(-50%,-50%) scale(.86); opacity:0; pointer-events:none; }
 
     @keyframes kb{ from{ transform:scale(1) } to{ transform:scale(1.06) } }
@@ -92,10 +86,10 @@
     </div>
   </header>
 
-  <!-- ===== MAIN: padding ชดเชย header, มี hero + รายการกิจกรรม ===== -->
+  <!-- ===== MAIN ===== -->
   <main class="pt-[var(--header-h)]">
 
-    <!-- Hero (Full-bleed) -->
+    <!-- Hero -->
     <section class="relative mx-[calc(50%-50vw)] w-screen">
       <div id="tvStage" class="relative">
         <!-- Edge fades -->
@@ -112,9 +106,10 @@
 
         <!-- Dots + Pause -->
         <div class="absolute bottom-2 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3">
-        <div id="tvDots" class="flex items-center gap-2"></div>
-      </div>
-      <button id="tvToggle" class="absolute bottom-2 right-3 md:right-6 z-50 h-8 w-8 grid place-items-center rounded-full bg-white/90 text-slate-900 hover:bg-white">⏸</button>
+          <div id="tvDots" class="flex items-center gap-2"></div>
+        </div>
+        <button id="tvToggle" class="absolute bottom-2 right-3 md:right-6 z-50 h-8 w-8 grid place-items-center rounded-full bg-white/90 text-slate-900 hover:bg-white">⏸</button>
+      </div> <!-- ✅ ปิด #tvStage ให้เรียบร้อย -->
     </section>
 
     <!-- รายการกิจกรรม -->
@@ -147,14 +142,14 @@
       </form>
     </div>
   </div>
-    <!-- ปุ่มไปหน้า Calendar (ของ user เท่านั้น) -->
-    <a id="calendarFab" href="./calendar.html"
-      class="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-indigo-600 text-white grid place-items-center shadow-xl hover:bg-indigo-500 active:scale-95 transition">
-      <!-- ไอคอนปฏิทิน -->
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M7 2a1 1 0 011 1v1h8V3a1 1 0 112 0v1h1a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h1V3a1 1 0 112 0v1zm13 6H4v10h16V8z"/>
-      </svg>
-    </a>
+
+  <!-- ปุ่มไปหน้า Calendar (user เท่านั้น) -->
+  <a id="calendarFab" href="./calendar.html"
+     class="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-indigo-600 text-white grid place-items-center shadow-xl hover:bg-indigo-500 active:scale-95 transition">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M7 2a1 1 0 011 1v1h8V3a1 1 0 112 0v1h1a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h1V3a1 1 0 112 0v1zm13 6H4v10h16V8z"/>
+    </svg>
+  </a>
 
   <!-- Footer -->
   <footer class="py-6 text-center text-sm text-white/70">© 2025 RLTG</footer>
@@ -183,7 +178,6 @@
       'https://scontent.fbkk5-6.fna.fbcdn.net/v/t1.15752-9/541204099_1788416001789353_1943572426746784606_n.jpg?stp=dst-jpg_p526x395_tt6&_nc_cat=102&ccb=1-7&_nc_sid=0024fc&_nc_ohc=wxhOVFx4Z5cQ7kNvwFyJoA-&_nc_oc=AdmiROp1KDNUAnYxMDOYloWIbqeC6wHY-WCXZo68uQbhtnRB4xfoOj4AtYj9-4jQ45Q&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-6.fna&oh=03_Q7cD3QEDGNffMz-fFjUzFSzf3v-aa79C8ngL84UZyO5uLjuMLQ&oe=68E2A5B4',
       'https://scontent.fbkk5-1.fna.fbcdn.net/v/t1.15752-9/518799968_629113920244652_5877296196147382941_n.png?_nc_cat=109&ccb=1-7&_nc_sid=9f807c&_nc_ohc=zmp3d8b8SMgQ7kNvwGLaLwi&_nc_oc=Adno2ZUJMvKe4ITeypMbJI5ZIiOYv5EsuFZ87qdZE83MxzH84Tp8i-WEIYeUwgTW5t8&_nc_zt=23&_nc_ht=scontent.fbkk5-1.fna&oh=03_Q7cD3QFVhJr5n2ZatdOGJcXs7n_w7oIaP1cRBNRn8Byr-0npyg&oe=68E29C97'
     ];
-      // รูปสำรอง (จะใช้เมื่อโหลดของจริงไม่ได้)
     const FALLBACKS = [
       'https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=1600&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop',
@@ -192,86 +186,76 @@
       'https://images.unsplash.com/photo-1522199755839-a2bacb67c546?q=80&w=1600&auto=format&fit=crop'
     ];
 
-      const stage   = document.getElementById('tvStage');
-      const dotsWrap= document.getElementById('tvDots');
-      const btnPrev = document.getElementById('tvPrev');
-      const btnNext = document.getElementById('tvNext');
-      const btnToggle = document.getElementById('tvToggle');
+    const stage   = document.getElementById('tvStage');
+    const dotsWrap= document.getElementById('tvDots');
+    const btnPrev = document.getElementById('tvPrev');
+    const btnNext = document.getElementById('tvNext');
+    const btnToggle = document.getElementById('tvToggle');
 
-      // สร้างการ์ดสไลด์ (มีสเกเลตัน + fallback)
-      function makeSlide(src, i){
-        const el = document.createElement('div');
-        el.className = 'tv-slide';
-        el.innerHTML = `
-          <img src="${src}" alt="" loading="eager" decoding="async"
-              referrerpolicy="no-referrer" crossorigin="anonymous">
-          <div class="fade"></div>`;
-        const img = el.querySelector('img');
+    function makeSlide(src, i){
+      const el = document.createElement('div');
+      el.className = 'tv-slide';
+      el.innerHTML = `
+        <img src="${src}" alt="" loading="eager" decoding="async" referrerpolicy="no-referrer" crossorigin="anonymous">
+        <div class="fade"></div>`;
+      const img = el.querySelector('img');
 
-        // สเกเลตันจนกว่าจะโหลดเสร็จ/ผิดพลาด
-        el.dataset.loading = '1';
-        img.addEventListener('load',  ()=> { delete el.dataset.loading; });
-        img.addEventListener('error', ()=> {
-          // ถ้าโหลดรูปหลักไม่ได้ → ใช้รูปสำรอง
-          img.src = FALLBACKS[i % FALLBACKS.length];
-        });
+      el.dataset.loading = '1';
+      img.addEventListener('load',  ()=> { delete el.dataset.loading; });
+      img.addEventListener('error', ()=> { img.src = FALLBACKS[i % FALLBACKS.length]; });
 
-        stage.appendChild(el);
-        return el;
-      }
+      stage.appendChild(el);
+      return el;
+    }
 
-      // ====== (1) สร้างสไลด์ + จุดนำทาง ======
-      const slides = IMAGES.map((src, i)=> makeSlide(src, i));
-      const dots   = IMAGES.map((_,i)=>{
-        const b=document.createElement('button');
-        b.className='dot'; b.addEventListener('click',()=>goTo(i));
-        dotsWrap.appendChild(b); return b;
+    const slides = IMAGES.map((src, i)=> makeSlide(src, i));
+    const dots   = IMAGES.map((_,i)=>{
+      const b=document.createElement('button');
+      b.className='dot'; b.addEventListener('click',()=>goTo(i));
+      dotsWrap.appendChild(b); return b;
+    });
+
+    let index=0, timer=null, playing=true;
+    const INTERVAL=6000;
+
+    function apply(){
+      const n=slides.length, L=(index-1+n)%n, R=(index+1)%n;
+      slides.forEach((sl,i)=>{
+        sl.classList.remove('is-center','is-left','is-right','is-hidden');
+        if(i===index) sl.classList.add('is-center');
+        else if(i===L) sl.classList.add('is-left');
+        else if(i===R) sl.classList.add('is-right');
+        else sl.classList.add('is-hidden');
+
+        const img=sl.querySelector('img');
+        if(i===index){ img.style.animation='none'; img.offsetHeight; img.style.animation=''; }
       });
+      dots.forEach((d,i)=> d.classList.toggle('active', i===index));
+    }
+    function goTo(i){ index=(i+slides.length)%slides.length; apply(); restart(); }
+    const next=()=>goTo(index+1), prev=()=>goTo(index-1);
+    function start(){ if(playing && !timer) timer=setInterval(next,INTERVAL); }
+    function stop(){ clearInterval(timer); timer=null; }
+    function restart(){ stop(); start(); }
 
-      // ====== (2) ตำแหน่ง/แอนิเมชันแบบ Apple ======
-      let index=0, timer=null, playing=true;
-      const INTERVAL=6000;
+    btnNext.addEventListener('click', next);
+    btnPrev.addEventListener('click', prev);
+    btnToggle.addEventListener('click', ()=>{ playing=!playing; btnToggle.textContent=playing?'⏸':'▶︎'; playing?start():stop(); });
 
-      function apply(){
-        const n=slides.length, L=(index-1+n)%n, R=(index+1)%n;
-        slides.forEach((sl,i)=>{
-          sl.classList.remove('is-center','is-left','is-right','is-hidden');
-          if(i===index) sl.classList.add('is-center');
-          else if(i===L) sl.classList.add('is-left');
-          else if(i===R) sl.classList.add('is-right');
-          else sl.classList.add('is-hidden');
+    stage.tabIndex=0;
+    stage.addEventListener('keydown', e=>{ if(e.key==='ArrowRight') next(); if(e.key==='ArrowLeft') prev(); });
+    let sx=0,dx=0;
+    stage.addEventListener('touchstart', e=>{ sx=e.touches[0].clientX; dx=0; stop(); }, {passive:true});
+    stage.addEventListener('touchmove',  e=>{ dx=e.touches[0].clientX-sx; }, {passive:true});
+    stage.addEventListener('touchend',   ()=>{ if(Math.abs(dx)>40) (dx<0?next():prev()); if(playing) start(); });
 
-          // รีสตาร์ท Ken-Burns เมื่อสไลด์เข้ากลาง
-          const img=sl.querySelector('img');
-          if(i===index){ img.style.animation='none'; img.offsetHeight; img.style.animation=''; }
-        });
-        dots.forEach((d,i)=> d.classList.toggle('active', i===index));
-      }
-      function goTo(i){ index=(i+slides.length)%slides.length; apply(); restart(); }
-      const next=()=>goTo(index+1), prev=()=>goTo(index-1);
-      function start(){ if(playing && !timer) timer=setInterval(next,INTERVAL); }
-      function stop(){ clearInterval(timer); timer=null; }
-      function restart(){ stop(); start(); }
+    document.addEventListener('visibilitychange', ()=> document.hidden?stop():start());
 
-      btnNext.addEventListener('click', next);
-      btnPrev.addEventListener('click', prev);
-      btnToggle.addEventListener('click', ()=>{ playing=!playing; btnToggle.textContent=playing?'⏸':'▶︎'; playing?start():stop(); });
+    apply(); start();
+  })();
+  </script>
 
-      // คีย์บอร์ด + สไลด์ด้วยนิ้ว
-      stage.tabIndex=0;
-      stage.addEventListener('keydown', e=>{ if(e.key==='ArrowRight') next(); if(e.key==='ArrowLeft') prev(); });
-      let sx=0,dx=0;
-      stage.addEventListener('touchstart', e=>{ sx=e.touches[0].clientX; dx=0; stop(); }, {passive:true});
-      stage.addEventListener('touchmove',  e=>{ dx=e.touches[0].clientX-sx; }, {passive:true});
-      stage.addEventListener('touchend',   ()=>{ if(Math.abs(dx)>40) (dx<0?next():prev()); if(playing) start(); });
-
-      document.addEventListener('visibilitychange', ()=> document.hidden?stop():start());
-
-      apply(); start();
-    })();
-    </script>
-
-  <!-- ===== Profile modal (เหมือนเดิม) ===== -->
+  <!-- ===== Profile modal ===== -->
   <div id="profileModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
     <div data-overlay class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
     <div class="relative z-10 min-h-full p-4">
@@ -323,37 +307,6 @@
 
   <!-- ===== Profile/History logic + Events loader ===== -->
   <script>
-  (function(){
-    const btn = document.getElementById('profileBtn');
-    const modal = document.getElementById('profileModal');
-    const card = document.getElementById('profileCard');
-    if(!btn||!modal||!card) return;
-
-    const overlay = modal.querySelector('[data-overlay]');
-    const closeBtn = modal.querySelector('[data-close]');
-    let lastActive = null;
-
-    function place(){
-      const r = btn.getBoundingClientRect(), gap=10, width = card.offsetWidth||360;
-      const maxLeft = window.innerWidth - width - 8;
-      const left = Math.max(8, Math.min(r.right - width, maxLeft));
-      const top  = Math.min(r.bottom + gap, window.innerHeight - card.offsetHeight - 8);
-      card.style.left = left+'px'; card.style.top = top+'px';
-    }
-    function lockScroll(lock){
-      const el = document.scrollingElement || document.documentElement;
-      if(lock){ el.dataset.prevOverflow = el.style.overflow||''; el.style.overflow='hidden'; document.body.classList.add('overflow-hidden'); }
-      else { el.style.overflow = el.dataset.prevOverflow||''; document.body.classList.remove('overflow-hidden'); delete el.dataset.prevOverflow; }
-    }
-    function open(){ lastActive=document.activeElement; modal.classList.remove('hidden'); lockScroll(true); requestAnimationFrame(place); window.addEventListener('resize', place, {passive:true}); }
-    function close(){ modal.classList.add('hidden'); lockScroll(false); if(lastActive) lastActive.focus(); window.removeEventListener('resize', place); }
-
-    btn.addEventListener('click', open);
-    overlay.addEventListener('click', close);
-    closeBtn.addEventListener('click', close);
-    document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !modal.classList.contains('hidden')) close(); });
-  })();
-
   (function (){
     const API_BASE = window.API_BASE;
     const token = localStorage.getItem("token");
@@ -366,17 +319,29 @@
     if(dateInput){ const offset=new Date().getTimezoneOffset()*60000; dateInput.value=new Date(Date.now()-offset).toISOString().slice(0,10); }
     const addCancel=$("#addCancel");
 
+    let me = null; // ✅ เก็บผู้ใช้ไว้ใช้ต่อ
+
     async function loadMe(){
       const res=await fetch(`${API_BASE}/auth/me`,{ headers:{Authorization:"Bearer "+token}, credentials:"include" });
       if(!res.ok) throw new Error("unauthorized");
-      const json=await res.json().catch(()=>({})); const me=json.user||json;
+      const json=await res.json().catch(()=>({})); me=json.user||json;
+
       const id=(x)=>document.getElementById(x);
       id("ppName")&&(id("ppName").textContent=me.username??"—");
       id("ppId")&&(id("ppId").textContent=me.idNumber??"—");
       id("ppEmail")&&(id("ppEmail").textContent=me.email??"—");
       id("ppMajor")&&(id("ppMajor").textContent=me.major??"—");
       id("ppPhone")&&(id("ppPhone").textContent=me.phone??"—");
+
+      // ✅ ปุ่ม + สำหรับ admin เท่านั้น
       if(me.role==="admin"&&fab) fab.classList.remove("hidden");
+
+      // ✅ ปุ่ม Calendar ซ่อนเมื่อเป็น admin
+      const calFab = document.getElementById('calendarFab');
+      if (calFab){
+        if (me.role === 'admin') calFab.remove();
+        else calFab.classList.remove('hidden');
+      }
     }
 
     (function wireLogout(){
@@ -394,12 +359,7 @@
         eventList.innerHTML=`<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">ยังไม่มีกิจกรรม</li>`;
         return;
       }
-      const calFab = document.getElementById('calendarFab');
-      if (me.role === 'admin') {
-        calFab?.remove();                    // เอาออกเลยกันเผลอกด
-      } else {
-        calFab?.classList.remove('hidden');  // เผื่อคุณตั้ง hidden ไว้ตอนโหลด
-      }
+      // ❌ เอา logic ปุ่ม Calendar ออกจากที่นี่ (เพราะ me ยังไม่แน่ชัด)
       eventList.innerHTML = items.map(ev=>{
         const dateTxt = ev.dateText ? `${window.formatDateLabel(ev.dateText)} ` : "";
         return `<li>
@@ -428,7 +388,8 @@
     fab?.addEventListener("click", openAdd);
     addModal?.querySelector("[data-overlay]")?.addEventListener("click", closeAdd);
 
-    loadMe().then(loadEvents).catch(()=>{ localStorage.removeItem("token"); location.href="./index.html"; });
+    // ✅ โหลด me ก่อน แล้วค่อยโหลด events
+    loadMe().then(()=>loadEvents()).catch(()=>{ localStorage.removeItem("token"); location.href="./index.html"; });
   })();
 
   (function historyModal(){
