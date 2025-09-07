@@ -21,21 +21,30 @@
   </style>
 </head>
 <body class="bg-white text-slate-900">
-  <!-- Header -->
-  <header class="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-slate-200">
-    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-      <a href="./HOMEนศทตกลทบ.html" class="font-extrabold text-xl tracking-tight">RLTG</a>
-      <div class="flex items-center gap-2">
-        <button id="btnPrev" class="h-10 px-3 rounded-xl border border-slate-300 hover:bg-slate-50">← Prev</button>
-        <div id="monthLabel" class="min-w-[10ch] text-center font-semibold"></div>
-        <button id="btnNext" class="h-10 px-3 rounded-xl border border-slate-300 hover:bg-slate-50">Next →</button>
+<header class="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-slate-200">
+  <div class="max-w-6xl mx-auto px-4 h-16 flex items-center relative">
+    <!-- ซ้าย: โลโก้ -->
+    <a href="./HOMEนศทตกลทบ.html" class="font-extrabold text-xl tracking-tight">RLTG</a>
+
+    <!-- กลาง: ปุ่ม Prev/เดือน/Next ถูก "จัดกลางทั้งแถบ" ด้วย absolute -->
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+      <div class="pointer-events-auto flex items-center gap-2">
+        <button id="btnPrev"
+                class="h-10 px-3 rounded-xl border border-slate-300 hover:bg-slate-50">
+          ← Prev
+        </button>
+
+        <div id="monthLabel"
+             class="min-w-[10ch] text-center font-semibold tabular-nums"></div>
+
+        <button id="btnNext"
+                class="h-10 px-3 rounded-xl border border-slate-300 hover:bg-slate-50">
+          Next →
+        </button>
       </div>
-      <a href="./HOMEนศทตกลทบ.html"
-         class="h-10 px-3 rounded-xl bg-slate-900 text-white hover:bg-slate-800 grid place-items-center">
-        กลับหน้าแรก
-      </a>
     </div>
-  </header>
+  </div>
+</header>
 
   <!-- Main -->
   <main class="max-w-6xl mx-auto px-4 py-6">
