@@ -11,23 +11,11 @@
   <style>
     body{ font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial,'Noto Sans',sans-serif; }
     .day-cell{ position:relative; }
-    .day-badge{
-      position:absolute; right:.5rem; top:.5rem;
-      font-size:.75rem; line-height:1; color:rgb(100 116 139);
-    }
-    .dot{
-      width:6px;height:6px;border-radius:9999px;background:#4f46e5;
-      position:absolute; left:10px; bottom:10px;
-      box-shadow:0 0 0 3px rgba(79,70,229,.15);
-    }
-    .chip{
-      font-size:.75rem; line-height:1rem;
-      display:inline-block; padding:.25rem .5rem; border-radius:9999px;
-      background:rgba(79,70,229,.08); color:#1f2937; border:1px solid rgba(79,70,229,.18)
-    }
+    .day-badge{ position:absolute; right:.5rem; top:.5rem; font-size:.75rem; color:rgb(100 116 139); }
+    .dot{ width:6px;height:6px;border-radius:9999px;background:#4f46e5;position:absolute;left:10px;bottom:10px;box-shadow:0 0 0 3px rgba(79,70,229,.15); }
+    .chip{ font-size:.75rem; display:inline-block; padding:.25rem .5rem; border-radius:9999px; background:rgba(79,70,229,.08); color:#111827; border:1px solid rgba(79,70,229,.18) }
     .skeleton{ background:linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 37%,#f3f4f6 63%); background-size:400% 100%; animation:shimmer 1.2s ease infinite; }
     @keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
-    /* modal animation */
     .modal-enter{ transform:scale(.98); opacity:0 }
     .modal-enter-active{ transform:scale(1); opacity:1; transition:all .18s ease }
   </style>
@@ -37,13 +25,11 @@
   <header class="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-slate-200">
     <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
       <a href="./HOMEนศทตกลทบ.html" class="font-extrabold text-xl tracking-tight">RLTG</a>
-
       <div class="flex items-center gap-2">
         <button id="btnPrev" class="h-10 px-3 rounded-xl border border-slate-300 hover:bg-slate-50">← Prev</button>
         <div id="monthLabel" class="min-w-[10ch] text-center font-semibold"></div>
         <button id="btnNext" class="h-10 px-3 rounded-xl border border-slate-300 hover:bg-slate-50">Next →</button>
       </div>
-
       <a href="./HOMEนศทตกลทบ.html"
          class="h-10 px-3 rounded-xl bg-slate-900 text-white hover:bg-slate-800 grid place-items-center">
         กลับหน้าแรก
@@ -89,7 +75,7 @@
     </section>
   </main>
 
-  <!-- FAB: กลับหน้าแรก (ขวาล่าง) -->
+  <!-- FAB: กลับหน้าแรก -->
   <a href="./HOMEนศทตกลทบ.html"
      class="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-slate-900 text-white grid place-items-center shadow-xl hover:bg-slate-800 active:scale-95 transition"
      title="กลับหน้าแรก" aria-label="กลับหน้าแรก">
@@ -171,11 +157,26 @@
         ? 'http://localhost:4000/api' : '/api';
 
     const TH_MONTH = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
-
-    const pad = n => String(n).padStart(2,'0');
-    const keyOfDate = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    function pad(n){ return String(n).padStart(2,'0'); }
+    function keyOfDate(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
     function parseDateLike(s){ if(!s) return null; if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(s+'T00:00:00'); const d=new Date(s); return isNaN(d)?null:d; }
     function toDisplayDate(d){ const day=d.getDate(); const month=d.getMonth()+1; const y=d.getFullYear()+543; return `${day}/${month}/${String(y).slice(-2)}`; }
+
+    // ==== GLOBAL MODAL HELPERS (ล็อกสกอลล์ + แอนิเมชัน) ====
+    function showModal(wrapper){
+      wrapper.classList.remove('hidden');
+      document.documentElement.classList.add('overflow-hidden');
+      const panel = wrapper.querySelector('.modal-enter');
+      if (panel) requestAnimationFrame(()=> panel.classList.add('modal-enter-active'));
+    }
+    function hideModal(wrapper){
+      const panel = wrapper.querySelector('.modal-enter');
+      if (panel) panel.classList.remove('modal-enter-active');
+      setTimeout(()=>{
+        wrapper.classList.add('hidden');
+        document.documentElement.classList.remove('overflow-hidden');
+      }, 180);
+    }
 
     // ==== STATE ====
     let allRegs = [];          // list of my registrations
@@ -216,22 +217,6 @@
       no: document.getElementById('cmNo'),
     };
 
-    // ==== Modal helpers (GLOBAL) ====
-    function showModal(wrapper){
-      wrapper.classList.remove('hidden');                // show overlay
-      document.documentElement.classList.add('overflow-hidden');  // lock scroll
-      const panel = wrapper.querySelector('.modal-enter');
-      if (panel) requestAnimationFrame(()=> panel.classList.add('modal-enter-active'));
-    }
-    function hideModal(wrapper){
-      const panel = wrapper.querySelector('.modal-enter');
-      if (panel) panel.classList.remove('modal-enter-active');
-      setTimeout(()=>{
-        wrapper.classList.add('hidden');
-        document.documentElement.classList.remove('overflow-hidden');
-      }, 180); // keep in sync with CSS transition
-    }
-
     // ==== FETCH ====
     async function fetchMyRegistrations(){
       const token = localStorage.getItem('token');
@@ -257,8 +242,8 @@
     }
 
     // ==== RENDER CALENDAR ====
-    const daysInMonth = (y,m)=> new Date(y, m+1, 0).getDate();
-    const firstWeekday = (y,m)=> new Date(y, m, 1).getDay(); // 0=Sun
+    function daysInMonth(y, m){ return new Date(y, m+1, 0).getDate(); }
+    function firstWeekday(y, m){ return new Date(y, m, 1).getDay(); } // 0=Sun
 
     function drawMonth(y, m){
       viewYear = y; viewMonth = m;
@@ -274,13 +259,15 @@
       const prevMonthDays = daysInMonth(y, m-1 < 0 ? 11 : m-1);
       for (let i = prevDays; i > 0; i--){
         const day = prevMonthDays - i + 1;
-        cells.push({ d: new Date(y, m-1, day), muted: true });
+        const d = new Date(y, m-1, day);
+        cells.push({ d, muted: true });
       }
       for (let day = 1; day <= dcount; day++){
         cells.push({ d: new Date(y, m, day), muted: false });
       }
-      for (let n=1; cells.length < totalCells; n++){
-        cells.push({ d: new Date(y, m+1, n), muted: true });
+      let n=1;
+      while (cells.length < totalCells){
+        cells.push({ d: new Date(y, m+1, n++), muted: true });
       }
 
       for (const cell of cells){
@@ -338,7 +325,9 @@
       const monthItems = [];
       for (const [k, arr] of byDate.entries()){
         const [Y, M] = k.split('-').map(Number);
-        if (Y === y && (M-1) === m) monthItems.push(...arr);
+        if (Y === y && (M-1) === m){
+          monthItems.push(...arr);
+        }
       }
       monthItems.sort((a,b)=> a.date - b.date);
 
@@ -359,8 +348,8 @@
           </div>
           <button class="text-sm px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800">ดูรายละเอียด</button>
         `;
-        li.querySelector('button').addEventListener('click', ()=>{
-          openEventModal([{ ev, date, reg }], 0);
+        li.querySelector('button').addEventListener('click', ()=> {
+          openEventModal([ {ev, date, reg} ], 0);
         });
         frag.appendChild(li);
       });
@@ -397,18 +386,14 @@
         em.switcherWrap.classList.add('hidden');
       }
 
-      // bind cancel button
+      // ยกเลิก
       em.btnCancel.onclick = ()=> openConfirmModal(item);
     }
 
     function openEventModal(items, index){
-      currentItems = items;
-      currentIndex = index || 0;
-      fillEventModal();
-      showModal(em.wrap);
+      currentItems = items; currentIndex = index || 0;
+      fillEventModal(); showModal(em.wrap);
     }
-
-    // close Event modal
     em.btnClose.addEventListener('click', ()=> hideModal(em.wrap));
     em.btnClose2.addEventListener('click', ()=> hideModal(em.wrap));
     em.wrap.addEventListener('click', (e)=>{ if(e.target === em.wrap) hideModal(em.wrap); });
@@ -429,28 +414,32 @@
           method: 'DELETE',
           headers: { Authorization: 'Bearer ' + token }
         });
-        // update local
+        // update local state
         allRegs = allRegs.filter(r => r._id !== item.reg._id);
         byDate = indexByDate(allRegs);
-
         drawMonth(viewYear, viewMonth);
-        hideModal(cm.wrap);
-        hideModal(em.wrap);
-      }catch(e){
-        alert('ยกเลิกไม่สำเร็จ');
-      }finally{
-        cm.yes.disabled = false;
-      }
+        hideModal(cm.wrap); hideModal(em.wrap);
+      }catch(e){ alert('ยกเลิกไม่สำเร็จ'); }
+      finally{ cm.yes.disabled = false; }
     }
 
     // ==== INIT ====
     (async function init(){
-      const token = localStorage.getItem('token');
-      if (!token){ location.href = './index.html'; return; }
+      // guard: admin ไม่ให้ใช้หน้า calendar → กลับหน้าแรก
+      try{
+        const token = localStorage.getItem('token');
+        const meRes = await fetch(`${API_BASE}/auth/me`, { headers:{Authorization:'Bearer '+token}, credentials:'include' });
+        if (meRes.ok){
+          const meJson = await meRes.json().catch(()=>({}));
+          const me = meJson.user || meJson;
+          if (me?.role === 'admin'){ location.href = './HOMEนศทตกลทบ.html'; return; }
+        } else {
+          location.href='./index.html'; return;
+        }
+      }catch{ location.href='./index.html'; return; }
 
       const now = new Date();
-      viewYear = now.getFullYear();
-      viewMonth = now.getMonth();
+      viewYear = now.getFullYear(); viewMonth = now.getMonth();
 
       try{
         allRegs = await fetchMyRegistrations();
@@ -472,7 +461,7 @@
         drawMonth(d.getFullYear(), d.getMonth());
       });
 
-      // ESC to close
+      // ESC ปิดโมดัล
       document.addEventListener('keydown', e=>{
         if (e.key === 'Escape'){ hideModal(em.wrap); hideModal(cm.wrap); }
       });
