@@ -2,6 +2,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";          // ใช้ bcryptjs
 import User from "../models/User.js";
+import Registration from "../models/Registration.js";
 import {
   signToken,
   setAuthCookie,
@@ -89,6 +90,29 @@ router.get("/me", async (req, res) => {
 router.post("/logout", (_req, res) => {
   clearAuthCookie(res);
   res.json({ message: "logged out" });
+});
+
+router.get("/my-registrations", async (req, res) => {
+  try {
+    const token = getTokenFromReq(req);
+    if (!token) return res.status(401).json({ message: "no token" });
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+
+    const rows = await Registration.find({ user: payload.sub })
+      .populate("event", "title dateText location imageUrl")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({
+      items: rows.map(r => ({
+        id: r._id,
+        address: r.address,
+        event: r.event
+      }))
+    });
+  } catch (e) {
+    return res.status(401).json({ message: "invalid token" });
+  }
 });
 
 export default router;
