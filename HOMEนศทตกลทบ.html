@@ -391,38 +391,62 @@
         const modal = document.getElementById('profileModal');
         const card = document.getElementById('profileCard');
         if(!btn || !modal || !card) return;
+
         const overlay = modal.querySelector('[data-overlay]');
         const closeBtn = modal.querySelector('[data-close]');
         let lastActive = null;
 
+        // คำนวณตำแหน่งด้วยพิกัด "viewport" (ห้ามบวก scrollX/scrollY)
         function place(){
           const r = btn.getBoundingClientRect();
-          const gap = 10, width = card.offsetWidth || 360;
-          const maxLeft = window.scrollX + window.innerWidth - width - 8;
-          const left = Math.max(8, Math.min(r.right + window.scrollX - width, maxLeft));
-          const top  = r.bottom + gap + window.scrollY;
+          const gap = 10;
+          const width = card.offsetWidth || 360;
+
+          const maxLeft = window.innerWidth - width - 8;
+          const left = Math.max(8, Math.min(r.right - width, maxLeft));
+          // กันเลยขอบล่างเล็กน้อย
+          const top  = Math.min(r.bottom + gap, window.innerHeight - card.offsetHeight - 8);
+
           card.style.left = left + 'px';
           card.style.top  = top  + 'px';
         }
+
+        // ล็อกการสกอลล์ฉากหลัง (กันบางเบราว์เซอร์ยังเลื่อนได้)
+        function lockScroll(lock){
+          const el = document.scrollingElement || document.documentElement;
+          if (lock) {
+            el.dataset.prevOverflow = el.style.overflow || '';
+            el.style.overflow = 'hidden';
+            document.body.classList.add('overflow-hidden');
+          } else {
+            el.style.overflow = el.dataset.prevOverflow || '';
+            document.body.classList.remove('overflow-hidden');
+            delete el.dataset.prevOverflow;
+          }
+        }
+
         function open(){
           lastActive = document.activeElement;
           modal.classList.remove('hidden');
-          document.body.classList.add('overflow-hidden');
+          lockScroll(true);
           requestAnimationFrame(place);
-          window.addEventListener('resize', place);
-          window.addEventListener('scroll', place, { passive: true });
+          // ไม่ผูก scroll listener เพื่อไม่ให้การ์ดเลื่อนตาม
+          window.addEventListener('resize', place, { passive: true });
         }
+
         function close(){
           modal.classList.add('hidden');
-          document.body.classList.remove('overflow-hidden');
+          lockScroll(false);
           if(lastActive) lastActive.focus();
           window.removeEventListener('resize', place);
-          window.removeEventListener('scroll', place);
         }
+
         btn.addEventListener('click', open);
         overlay.addEventListener('click', close);
         closeBtn.addEventListener('click', close);
-        document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
+        document.addEventListener('keydown', (e)=>{
+          if(e.key === 'Escape' && !modal.classList.contains('hidden')) close();
+        });
       })();
     </script>
 
