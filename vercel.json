@@ -5,6 +5,7 @@
     { "src": "index.html", "use": "@vercel/static" },
     { "src": "REGISTER.HTML", "use": "@vercel/static" },
     { "src": "HOMEนศทตกลทบ.html", "use": "@vercel/static" },
+    { "src": "calendar.html", "use": "@vercel/static" },
     { "src": "event.html", "use": "@vercel/static" },
     { "src": "dist/**", "use": "@vercel/static" }
   ],
