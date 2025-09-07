@@ -117,5 +117,14 @@ router.post("/:id/register", requireAuth, async (req, res) => {
     res.status(500).json({ message: "server error" });
   }
 });
+// ✅ Admin ลบกิจกรรม + ลบรายการลงทะเบียนของกิจกรรมนั้นทั้งหมด
+router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  // ลบ regs ก่อน กัน orphan
+  await Registration.deleteMany({ event: id });
+  const ev = await Event.findByIdAndDelete(id);
+  if (!ev) return res.status(404).json({ message: "not found" });
+  res.json({ message: "deleted", id });
+  });
 
 export default router;
