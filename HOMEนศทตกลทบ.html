@@ -1,677 +1,497 @@
 <!DOCTYPE html>
 <html lang="th">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>RLTG</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RLTG</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Manjari:wght@700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
 
-    <!-- Tailwind (ใช้ได้ในโหมด dev) -->
-    <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{ --header-h:72px; }
+    body{ font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial,'Noto Sans','Liberation Sans',sans-serif; }
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Manjari:wght@700&family=Inter:wght@400;600;800&display=swap"
-      rel="stylesheet"
-    />
+    /* ===== Apple TV+ Hero ===== */
+    #tvStage{ --H:clamp(320px,58vh,660px); height:var(--H); position:relative; }
 
-    <style>
-      :root { --header-h: 72px; }
-      body {
-        font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto,
-          'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif;
-      }
+    .tv-slide{
+      position:absolute; top:50%; left:50%;
+      /* ⬇️ เปลี่ยนจาก translate:-50% -50% เป็น transform: translate(...) */
+      transform: translate(-50%, -50%);
+      width:min(1100px,76vw, calc(var(--H) * 16 / 9));
+      aspect-ratio:16/9;
+      border-radius:22px; overflow:hidden; background:#000;
+      box-shadow:0 40px 90px rgba(0,0,0,.45);
+      transition:transform 800ms cubic-bezier(.2,.6,.2,1),
+                opacity   800ms cubic-bezier(.2,.6,.2,1),
+                filter    800ms cubic-bezier(.2,.6,.2,1);
+      will-change: transform, opacity, filter;
+    }
 
-      /* ของเดิมยังคงอยู่ ไม่กระทบคารูเซลใหม่ */
-      @keyframes cardSpin { from { transform: rotateY(0deg) scale(1.10);} to { transform: rotateY(360deg) scale(1.10);} }
-      .slide.spin { animation: cardSpin 700ms ease; }
-      .perspective { perspective: 1200px; }
-      @keyframes fadeZoomCenter {
-        0%   { opacity: .2; transform: scale(.98) rotateY(6deg); }
-        60%  { opacity: 1;  transform: scale(1.06) rotateY(0deg); }
-        100% { opacity: 1;  transform: scale(1); }
-      }
-      @keyframes fadeOnly { 0% { opacity:.2 } 100% { opacity:1 } }
-      @keyframes enterRightSoft { 0% { opacity:0; transform: translateX(16px) scale(.98); filter: blur(2px);} 100% { opacity:1; transform: translateX(0) scale(1); filter: blur(0);} }
-      .slide { flex: 0 0 auto; max-width: none; aspect-ratio: 16 / 9; width: calc((100vw - 9rem) / 5); position: relative; will-change: transform, opacity; contain: paint; }
-      .slide .frame { position: relative; width: 100%; height: 100%; border-radius: inherit; overflow: hidden; backface-visibility: hidden; transform: translateZ(0); will-change: transform, opacity; contain: paint; }
-      .slide .frame .layer { position: absolute; inset: 0; border-radius: inherit; background-position: center; background-size: cover; opacity: 0; transition: opacity 900ms cubic-bezier(0.2,0.6,0.2,1); will-change: opacity; backface-visibility: hidden; transform: translateZ(0); }
-      .slide .frame .layer.show { opacity: 1; }
-      .frame.anim-center { animation: fadeZoomCenter 1000ms cubic-bezier(0.2,0.6,0.2,1); animation-fill-mode: both; }
-      .frame.anim-enter-right { animation: enterRightSoft 800ms cubic-bezier(0.2,0.6,0.2,1); animation-fill-mode: both; }
+    .tv-slide img{
+      width:100%; height:100%;
+      object-fit:cover; object-position:center;
+      display:block;
+    }
+    .tv-slide .fade{ position:absolute; inset-inline:0; bottom:0; height:5.5rem;
+      background:linear-gradient(to top,rgba(0,0,0,.45),transparent); pointer-events:none; }
 
-      @media (prefers-reduced-motion: reduce) {
-        .frame, .layer { animation: none !important; transition: none !important; }
-      }
-    </style>
-  </head>
+    .tv-slide.is-center{ z-index:30; transform:translate(-50%,-50%) scale(1) rotateY(0); opacity:1; filter:none; }
+    .tv-slide.is-left  { z-index:20; transform:translate(calc(-50% - 18vw),-50%) scale(.9) rotateY(14deg);
+                         opacity:.9; filter:grayscale(.25) brightness(.85); }
+    .tv-slide.is-right { z-index:20; transform:translate(calc(-50% + 18vw),-50%) scale(.9) rotateY(-14deg);
+                         opacity:.9; filter:grayscale(.25) brightness(.85); }
+    .tv-slide.is-hidden{ z-index:10; transform:translate(-50%,-50%) scale(.86); opacity:0; pointer-events:none; }
 
-  <body class="bg-slate-900 text-slate-100">
-    <!-- Header -->
-    <header
-      class="fixed inset-x-0 top-0 z-40 bg-slate-800/95 backdrop-blur supports-[backdrop-filter]:bg-slate-800/80 border-b border-white/10"
-    >
-      <div class="mx-auto max-w-none px-4 sm:px-6 lg:px-8 h-[var(--header-h)] flex items-center gap-4 w-full">
-        <!-- Brand -->
-        <div class="text-3xl font-extrabold tracking-tight select-none">
-          <span class="text-white">RLTG</span>
-        </div>
+    @keyframes kb{ from{ transform:scale(1) } to{ transform:scale(1.06) } }
+    .tv-slide.is-center img{ animation: kb 3000ms ease-in-out both; }
 
-        <!-- Search -->
-        <div class="flex-1 flex items-center">
-          <div class="relative w-full max-w-3xl mx-auto">
-            <input
-              type="text"
-              placeholder="ค้นหา..."
-              class="w-full rounded-full bg-slate-700/90 pl-14 pr-14 py-3 text-white placeholder:text-slate-300 outline-none ring-1 ring-white/10 focus:ring-2 focus:ring-indigo-400 shadow-inner"
-            />
-            <svg
-              class="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 opacity-80"
-              fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z"/>
-            </svg>
-            <button
-              class="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-full hover:bg-white/10 active:scale-95 transition"
-              aria-label="ค้นหา">
-              <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M10.5 3a7.5 7.5 0 015.91 12.19l3.2 3.2a1 1 0 01-1.42 1.42l-3.2-3.2A7.5 7.5 0 1110.5 3zm0 2a5.5 5.5 0 100 11 5.5 5.5 0 000-11z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
+    #tvDots .dot{ width:6px; height:6px; border-radius:9999px; background:rgba(255,255,255,.7);
+                  opacity:.6; transition:width .25s ease, opacity .25s ease; }
+    #tvDots .dot.active{ width:26px; opacity:1; }
 
-        <!-- Profile icon -->
-        <button
-          class="shrink-0 h-12 w-12 rounded-full bg-slate-700 grid place-items-center ring-1 ring-white/10 hover:ring-indigo-400 transition"
-          id="profileBtn" aria-label="โปรไฟล์">
-          <svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6a1 1 0 001 1h14a1 1 0 001-1c0-3.33-2.67-6-8-6z" />
+    @media (prefers-reduced-motion:reduce){
+      .tv-slide, .tv-slide img{ transition:none !important; animation:none !important; }
+    }
+    /* สเกเลตันระหว่างโหลด */
+    .tv-slide[data-loading]::before{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.14) 50%, rgba(255,255,255,0.06) 100%);
+      background-size:200% 100%;
+      animation: shimmer 1.2s linear infinite;
+      border-radius:inherit;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100">
+
+  <!-- Header -->
+  <header class="fixed inset-x-0 top-0 z-40 bg-slate-800/95 backdrop-blur supports-[backdrop-filter]:bg-slate-800/80 border-b border-white/10">
+    <div class="mx-auto max-w-none px-4 sm:px-6 lg:px-8 h-[var(--header-h)] flex items-center gap-4 w-full">
+      <div class="text-3xl font-extrabold tracking-tight select-none"><span class="text-white">RLTG</span></div>
+      <div class="flex-1 flex items-center">
+        <div class="relative w-full max-w-3xl mx-auto">
+          <input type="text" placeholder="ค้นหา..." class="w-full rounded-full bg-slate-700/90 pl-14 pr-14 py-3 text-white placeholder:text-slate-300 outline-none ring-1 ring-white/10 focus:ring-2 focus:ring-indigo-400 shadow-inner"/>
+          <svg class="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 opacity-80" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z"/>
           </svg>
-        </button>
-      </div>
-    </header>
-
-    <!-- Hero / Banner -->
-    <main class="pt-[var(--header-h)]">
-      <section class="relative min-h-[90vh] grid place-items-center overflow-y-hidden overflow-x-visible">
-        <!-- Background image -->
-        <div
-          class="absolute inset-0 -z-10 bg-cover bg-center"
-          style="background-image:url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=1600&auto=format&fit=crop');"
-        ></div>
-
-        <div class="relative z-0">
-          <div id="hero" class="relative mx-[calc(50%-50vw)] w-screen max-w-none">
-
-          <!-- BG รูปปัจจุบัน + ไล่เฉดซ้าย/ขวา (เทาโปร่ง + grayscale) -->
-          <div id="heroBg" class="absolute inset-0 -z-10 bg-center bg-cover grayscale">
-            <!-- เทาโปร่งแทน bg-black/45 -->
-            <div class="absolute inset-0 bg-slate-400/35"></div>
-
-            <!-- ไล่เฉดขอบซ้าย/ขวาเป็นเทาโปร่ง -->
-            <div class="pointer-events-none absolute inset-y-0 left-0 w-40
-                        bg-gradient-to-r from-slate-400/45 to-transparent"></div>
-            <div class="pointer-events-none absolute inset-y-0 right-0 w-40
-                        bg-gradient-to-l from-slate-400/45 to-transparent"></div>
-          </div>
-
-            <!-- กล่องสไลด์รวม (เตี้ยกำลังดี) -->
-            <div class="relative">
-              <div class="relative h-0 pb-[30%] md:pb-[28%] lg:pb-[26%]">
-
-                <!-- Peek ซ้าย -->
-                <div id="heroPrevPeek"
-                    class="absolute left-0 top-1/2 -translate-y-1/2
-                            w-[16vw] md:w-[18vw] h-[80%]
-                            rounded-xl overflow-hidden opacity-85 pointer-events-none ring-1 ring-white/20">
-                  <img alt="prev"
-                      class="h-full w-full object-cover transition-all duration-500
-                              blur-[2px] brightness-75" />
-                </div>
-
-                <!-- การ์ดกลาง -->
-                <div id="heroCenter"
-                    class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
-                            w-[65vw] md:w-[60vw] lg:w-[56vw]
-                            h-[100%] rounded-2xl overflow-hidden ring-1 ring-white/25 shadow-2xl bg-black/10">
-                  <img alt="current"
-                      class="h-full w-full object-cover transition-opacity duration-700 select-none" />
-                  <!-- ไล่เฉดขาวดำล่าง (เหมือนมีฐานรองหัวข้อ) -->
-                  <div class="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/45 to-transparent"></div>
-                </div>
-
-                <!-- Peek ขวา -->
-                <div id="heroNextPeek"
-                    class="absolute right-0 top-1/2 -translate-y-1/2
-                            w-[16vw] md:w-[18vw] h-[80%]
-                            rounded-xl overflow-hidden opacity-85 pointer-events-none ring-1 ring-white/20">
-                  <img alt="next"
-                      class="h-full w-full object-cover transition-all duration-500
-                              blur-[2px] brightness-75" />
-                </div>
-
-                <!-- ปุ่มลูกศร -->
-                <button id="heroPrevBtn"
-                  class="absolute left-4 md:left-6 top-1/2 -translate-y-1/2
-                        h-10 w-10 grid place-items-center rounded-full
-                        bg-black/45 text-white hover:bg-black/60 ring-1 ring-white/30">
-                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
-                </button>
-                <button id="heroNextBtn"
-                  class="absolute right-4 md:right-6 top-1/2 -translate-y-1/2
-                        h-10 w-10 grid place-items-center rounded-full
-                        bg-black/45 text-white hover:bg-black/60 ring-1 ring-white/30">
-                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="m10 6-1.41 1.41L13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
-                </button>
-              </div>
-            </div>
-
-            <!-- จุดนำทาง -->
-            <div id="heroDots" class="absolute left-1/2 -translate-x-1/2 bottom-3 flex items-center gap-2"></div>
-          </div>
+          <button class="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-full hover:bg-white/10 active:scale-95 transition" aria-label="ค้นหา">
+            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 015.91 12.19l3.2 3.2a1 1 0 01-1.42 1.42l-3.2-3.2A7.5 7.5 0 1110.5 3zm0 2a5.5 5.5 0 100 11 5.5 5.5 0 000-11z"/></svg>
+          </button>
         </div>
-        <!-- Center content -->
-        <div class="relative z-10 w-full max-w-3xl px-4 mt-14 md:mt-20 lg:mt-28">
-          <div class="mx-auto rounded-2xl bg-white/30 backdrop-blur shadow-2xl ring-1 ring-white/40 p-6 sm:p-8">
-            <!-- รายการกิจกรรมจาก Mongo -->
-            <ul id="eventList" class="space-y-4"><!-- เติมด้วย JS --></ul>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <!-- FAB: โชว์เฉพาะ admin -->
-    <button id="fabAdd"
-      class="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-indigo-600 shadow-xl text-white text-3xl leading-none grid place-items-center hover:bg-indigo-500 active:scale-95 transition hidden"
-      title="เพิ่มกิจกรรม">+</button>
-
-    <!-- Modal เพิ่มกิจกรรม -->
-    <div id="addModal" class="fixed inset-0 z-50 hidden">
-      <div data-overlay class="absolute inset-0 bg-black/50"></div>
-      <div class="relative z-10 min-h-full p-4 grid place-items-center">
-        <form id="addForm" class="w-full max-w-xl rounded-2xl bg-white text-slate-900 p-6 space-y-4 shadow-2xl">
-          <h2 class="text-xl font-bold">เพิ่มกิจกรรม</h2>
-          <input name="title" required placeholder="ชื่อกิจกรรม"
-                 class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400">
-          <input name="dateText" id="addDate" type="date"
-                 class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400"
-                 required>
-          <input name="location" placeholder="สถานที่"
-                 class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400">
-          <input name="imageUrl" placeholder="รูปปก (URL)"
-                 class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400">
-          <textarea name="description" rows="4" placeholder="รายละเอียด"
-                 class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400"></textarea>
-
-          <div class="flex justify-end gap-3 pt-2">
-            <button type="button" id="addCancel"
-                    class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300">ยกเลิก</button>
-            <button type="submit"
-                    class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500">บันทึก</button>
-          </div>
-        </form>
       </div>
+
+      <button class="shrink-0 h-12 w-12 rounded-full bg-slate-700 grid place-items-center ring-1 ring-white/10 hover:ring-indigo-400 transition" id="profileBtn" aria-label="โปรไฟล์">
+        <svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6a1 1 0 001 1h14a1 1 0 001-1c0-3.33-2.67-6-8-6z"/></svg>
+      </button>
     </div>
+  </header>
 
-    <!-- Footer -->
-    <footer class="py-6 text-center text-sm text-white/70">© 2025 RLTG</footer>
-      
-      <script>
-      // ใช้ฐาน API เดียวกันทุกหน้า
-      window.API_BASE =
-        (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-          ? 'http://localhost:4000/api'
-          : '/api';
+  <!-- ===== MAIN: padding ชดเชย header, มี hero + รายการกิจกรรม ===== -->
+  <main class="pt-[var(--header-h)]">
 
-      // แปลงวันที่ (รองรับค่าสตริงว่าง/ไม่ใช่วันที่)
-      window.formatDateLabel = function (s) {
-        if (!s) return '—';
-        const d = new Date(s);
-        if (isNaN(d)) return s;
-        const day = d.getDate();
-        const month = d.getMonth() + 1;
-        const yearBE = d.getFullYear() + 543;
-        return `${day}/${month}/${yearBE.toString().slice(-2)}`;
-      };
+    <!-- Hero (Full-bleed) -->
+    <section class="relative mx-[calc(50%-50vw)] w-screen">
+      <div id="tvStage" class="relative">
+        <!-- Edge fades -->
+        <div class="pointer-events-none absolute inset-y-0 left-0 w-[7vw] max-w-32 bg-gradient-to-r from-black/30 to-transparent z-20"></div>
+        <div class="pointer-events-none absolute inset-y-0 right-0 w-[7vw] max-w-32 bg-gradient-to-l from-black/30 to-transparent z-20"></div>
 
-      // กัน XSS เวลาวางข้อความจากฐานข้อมูล
-      window.escapeHtml = (t='') => t.replace(/[&<>"']/g, m =>
-        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    </script>
+        <!-- Arrows -->
+        <button id="tvPrev" class="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-30 h-10 w-10 grid place-items-center rounded-full bg-black/45 text-white ring-1 ring-white/30 hover:bg-black/60">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+        </button>
+        <button id="tvNext" class="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 z-30 h-10 w-10 grid place-items-center rounded-full bg-black/45 text-white ring-1 ring-white/30 hover:bg-black/60">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="m10 6-1.41 1.41L13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+        </button>
 
-    <script>
-    (function () {
-      // รูปที่จะใช้
-      const IMAGES = [
-        'https://scontent.fbkk5-5.fna.fbcdn.net/v/t1.15752-9/541580581_1832297024361432_2434426195445033768_n.jpg?stp=dst-jpg_s480x480_tt6&_nc_cat=100&ccb=1-7&_nc_sid=0024fc&_nc_ohc=DqJJ_w2VfAgQ7kNvwH3lv4Z&_nc_oc=AdlWLk8VJvauP9i7KFtD__5uUgyNanQOemEeFEVsjJGRiJQUA8wQKsgx0FSB6EllBTM&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-5.fna&oh=03_Q7cD3QFcxHjA3vyOoqHJF1-mNKQFbdRrMrDlnjjlSGYObn2mow&oe=68E28D74',
-        'https://scontent.fbkk5-5.fna.fbcdn.net/v/t1.15752-9/524396974_1181053770725464_3585919528059644840_n.jpg?stp=dst-jpg_s480x480_tt6&_nc_cat=104&ccb=1-7&_nc_sid=0024fc&_nc_ohc=GDEYQfACRb0Q7kNvwF3yTMV&_nc_oc=Adk9TsHxqO48jjVf2WtpCDk807Ffo8Zxe-cSvssC3oL8Qw59rAWD11NqlmKj7seYvfI&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-5.fna&oh=03_Q7cD3QF-vphrnudQGhnC6PzNgBp_2xEpDildrYldSR5dLndF9Q&oe=68E29070',
-        'https://scontent.fbkk5-6.fna.fbcdn.net/v/t1.15752-9/522774291_1794230574833895_5143035480781800635_n.jpg?stp=dst-jpg_s640x640_tt6&_nc_cat=101&ccb=1-7&_nc_sid=0024fc&_nc_ohc=HXQWM6wK3esQ7kNvwH370us&_nc_oc=Adk6XZhvPmLTqa8XFeikINZGGFguI6SDlBDH3bauQRYS_4zQz9K3lwCOtjEBqCINmeE&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-6.fna&oh=03_Q7cD3QHu25WxZzLUMufIJnQ3F6-KWSyLcZd7l56rEaoYqHsJTg&oe=68E284B1',
-        'https://scontent.fbkk5-6.fna.fbcdn.net/v/t1.15752-9/541204099_1788416001789353_1943572426746784606_n.jpg?stp=dst-jpg_p526x395_tt6&_nc_cat=102&ccb=1-7&_nc_sid=0024fc&_nc_ohc=wxhOVFx4Z5cQ7kNvwFyJoA-&_nc_oc=AdmiROp1KDNUAnYxMDOYloWIbqeC6wHY-WCXZo68uQbhtnRB4xfoOj4AtYj9-4jQ45Q&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-6.fna&oh=03_Q7cD3QEDGNffMz-fFjUzFSzf3v-aa79C8ngL84UZyO5uLjuMLQ&oe=68E2A5B4',
-        'https://scontent.fbkk5-1.fna.fbcdn.net/v/t1.15752-9/518799968_629113920244652_5877296196147382941_n.png?_nc_cat=109&ccb=1-7&_nc_sid=9f807c&_nc_ohc=zmp3d8b8SMgQ7kNvwGLaLwi&_nc_oc=Adno2ZUJMvKe4ITeypMbJI5ZIiOYv5EsuFZ87qdZE83MxzH84Tp8i-WEIYeUwgTW5t8&_nc_zt=23&_nc_ht=scontent.fbkk5-1.fna&oh=03_Q7cD3QFVhJr5n2ZatdOGJcXs7n_w7oIaP1cRBNRn8Byr-0npyg&oe=68E29C97'
-      ];
+        <!-- Dots + Pause -->
+        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3">
+        <div id="tvDots" class="flex items-center gap-2"></div>
+      </div>
+      <button id="tvToggle" class="absolute bottom-2 right-3 md:right-6 z-50 h-8 w-8 grid place-items-center rounded-full bg-white/90 text-slate-900 hover:bg-white">⏸</button>
+    </section>
 
-      // องค์ประกอบ
-      const bg     = document.getElementById('heroBg');
-      const center = document.querySelector('#heroCenter img');
-      const prevPk = document.querySelector('#heroPrevPeek img');
-      const nextPk = document.querySelector('#heroNextPeek img');
-      const btnPrev= document.getElementById('heroPrevBtn');
-      const btnNext= document.getElementById('heroNextBtn');
-      const dotsWrap = document.getElementById('heroDots');
+    <!-- รายการกิจกรรม -->
+    <section class="relative z-10 w-full max-w-3xl px-4 mx-auto mt-14 md:mt-20">
+      <div class="rounded-2xl bg-white/30 backdrop-blur shadow-2xl ring-1 ring-white/40 p-6 sm:p-8">
+        <ul id="eventList" class="space-y-4"><!-- เติมด้วย JS --></ul>
+      </div>
+    </section>
 
-      // จุดนำทางสไตล์
-      const dots = IMAGES.map((_, i) => {
-        const b = document.createElement('button');
-        b.className = 'h-2.5 w-2.5 rounded-full bg-white/40 hover:bg-white/70 transition';
-        b.addEventListener('click', () => goTo(i));
-        dotsWrap.appendChild(b);
-        return b;
+  </main>
+
+  <!-- FAB: admin only -->
+  <button id="fabAdd" class="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-indigo-600 shadow-xl text-white text-3xl leading-none grid place-items-center hover:bg-indigo-500 active:scale-95 transition hidden" title="เพิ่มกิจกรรม">+</button>
+
+  <!-- Modal เพิ่มกิจกรรม -->
+  <div id="addModal" class="fixed inset-0 z-50 hidden">
+    <div data-overlay class="absolute inset-0 bg-black/50"></div>
+    <div class="relative z-10 min-h-full p-4 grid place-items-center">
+      <form id="addForm" class="w-full max-w-xl rounded-2xl bg-white text-slate-900 p-6 space-y-4 shadow-2xl">
+        <h2 class="text-xl font-bold">เพิ่มกิจกรรม</h2>
+        <input name="title" required placeholder="ชื่อกิจกรรม" class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400">
+        <input name="dateText" id="addDate" type="date" class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400" required>
+        <input name="location" placeholder="สถานที่" class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400">
+        <input name="imageUrl" placeholder="รูปปก (URL)" class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400">
+        <textarea name="description" rows="4" placeholder="รายละเอียด" class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400"></textarea>
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" id="addCancel" class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300">ยกเลิก</button>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500">บันทึก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="py-6 text-center text-sm text-white/70">© 2025 RLTG</footer>
+
+  <!-- ===== Globals / Utils ===== -->
+  <script>
+    window.API_BASE = (location.hostname==='localhost'||location.hostname==='127.0.0.1')
+      ? 'http://localhost:4000/api' : '/api';
+
+    window.formatDateLabel = function(s){
+      if(!s) return '—';
+      const d=new Date(s); if(isNaN(d)) return s;
+      const day=d.getDate(), month=d.getMonth()+1, yearBE=d.getFullYear()+543;
+      return `${day}/${month}/${yearBE.toString().slice(-2)}`;
+    };
+    window.escapeHtml = (t='') => t.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  </script>
+
+  <!-- ===== Hero slider script ===== -->
+  <script>
+  (function(){
+    const IMAGES = [
+      'https://scontent.fbkk5-5.fna.fbcdn.net/v/t1.15752-9/541580581_1832297024361432_2434426195445033768_n.jpg?stp=dst-jpg_s480x480_tt6&_nc_cat=100&ccb=1-7&_nc_sid=0024fc&_nc_ohc=DqJJ_w2VfAgQ7kNvwH3lv4Z&_nc_oc=AdlWLk8VJvauP9i7KFtD__5uUgyNanQOemEeFEVsjJGRiJQUA8wQKsgx0FSB6EllBTM&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-5.fna&oh=03_Q7cD3QFcxHjA3vyOoqHJF1-mNKQFbdRrMrDlnjjlSGYObn2mow&oe=68E28D74',
+      'https://scontent.fbkk5-5.fna.fbcdn.net/v/t1.15752-9/524396974_1181053770725464_3585919528059644840_n.jpg?stp=dst-jpg_s480x480_tt6&_nc_cat=104&ccb=1-7&_nc_sid=0024fc&_nc_ohc=GDEYQfACRb0Q7kNvwF3yTMV&_nc_oc=Adk9TsHxqO48jjVf2WtpCDk807Ffo8Zxe-cSvssC3oL8Qw59rAWD11NqlmKj7seYvfI&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-5.fna&oh=03_Q7cD3QF-vphrnudQGhnC6PzNgBp_2xEpDildrYldSR5dLndF9Q&oe=68E29070',
+      'https://scontent.fbkk5-6.fna.fbcdn.net/v/t1.15752-9/522774291_1794230574833895_5143035480781800635_n.jpg?stp=dst-jpg_s640x640_tt6&_nc_cat=101&ccb=1-7&_nc_sid=0024fc&_nc_ohc=HXQWM6wK3esQ7kNvwH370us&_nc_oc=Adk6XZhvPmLTqa8XFeikINZGGFguI6SDlBDH3bauQRYS_4zQz9K3lwCOtjEBqCINmeE&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-6.fna&oh=03_Q7cD3QHu25WxZzLUMufIJnQ3F6-KWSyLcZd7l56rEaoYqHsJTg&oe=68E284B1',
+      'https://scontent.fbkk5-6.fna.fbcdn.net/v/t1.15752-9/541204099_1788416001789353_1943572426746784606_n.jpg?stp=dst-jpg_p526x395_tt6&_nc_cat=102&ccb=1-7&_nc_sid=0024fc&_nc_ohc=wxhOVFx4Z5cQ7kNvwFyJoA-&_nc_oc=AdmiROp1KDNUAnYxMDOYloWIbqeC6wHY-WCXZo68uQbhtnRB4xfoOj4AtYj9-4jQ45Q&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fbkk5-6.fna&oh=03_Q7cD3QEDGNffMz-fFjUzFSzf3v-aa79C8ngL84UZyO5uLjuMLQ&oe=68E2A5B4',
+      'https://scontent.fbkk5-1.fna.fbcdn.net/v/t1.15752-9/518799968_629113920244652_5877296196147382941_n.png?_nc_cat=109&ccb=1-7&_nc_sid=9f807c&_nc_ohc=zmp3d8b8SMgQ7kNvwGLaLwi&_nc_oc=Adno2ZUJMvKe4ITeypMbJI5ZIiOYv5EsuFZ87qdZE83MxzH84Tp8i-WEIYeUwgTW5t8&_nc_zt=23&_nc_ht=scontent.fbkk5-1.fna&oh=03_Q7cD3QFVhJr5n2ZatdOGJcXs7n_w7oIaP1cRBNRn8Byr-0npyg&oe=68E29C97'
+    ];
+      // รูปสำรอง (จะใช้เมื่อโหลดของจริงไม่ได้)
+    const FALLBACKS = [
+      'https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=1600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1522199755839-a2bacb67c546?q=80&w=1600&auto=format&fit=crop'
+    ];
+
+      const stage   = document.getElementById('tvStage');
+      const dotsWrap= document.getElementById('tvDots');
+      const btnPrev = document.getElementById('tvPrev');
+      const btnNext = document.getElementById('tvNext');
+      const btnToggle = document.getElementById('tvToggle');
+
+      // สร้างการ์ดสไลด์ (มีสเกเลตัน + fallback)
+      function makeSlide(src, i){
+        const el = document.createElement('div');
+        el.className = 'tv-slide';
+        el.innerHTML = `
+          <img src="${src}" alt="" loading="eager" decoding="async"
+              referrerpolicy="no-referrer" crossorigin="anonymous">
+          <div class="fade"></div>`;
+        const img = el.querySelector('img');
+
+        // สเกเลตันจนกว่าจะโหลดเสร็จ/ผิดพลาด
+        el.dataset.loading = '1';
+        img.addEventListener('load',  ()=> { delete el.dataset.loading; });
+        img.addEventListener('error', ()=> {
+          // ถ้าโหลดรูปหลักไม่ได้ → ใช้รูปสำรอง
+          img.src = FALLBACKS[i % FALLBACKS.length];
+        });
+
+        stage.appendChild(el);
+        return el;
+      }
+
+      // ====== (1) สร้างสไลด์ + จุดนำทาง ======
+      const slides = IMAGES.map((src, i)=> makeSlide(src, i));
+      const dots   = IMAGES.map((_,i)=>{
+        const b=document.createElement('button');
+        b.className='dot'; b.addEventListener('click',()=>goTo(i));
+        dotsWrap.appendChild(b); return b;
       });
 
-      let index = 0, timer = null, DURATION = 3000;
+      // ====== (2) ตำแหน่ง/แอนิเมชันแบบ Apple ======
+      let index=0, timer=null, playing=true;
+      const INTERVAL=6000;
 
-      // preload
-      IMAGES.forEach(src => { const im = new Image(); im.decoding='async'; im.loading='eager'; im.src=src; });
+      function apply(){
+        const n=slides.length, L=(index-1+n)%n, R=(index+1)%n;
+        slides.forEach((sl,i)=>{
+          sl.classList.remove('is-center','is-left','is-right','is-hidden');
+          if(i===index) sl.classList.add('is-center');
+          else if(i===L) sl.classList.add('is-left');
+          else if(i===R) sl.classList.add('is-right');
+          else sl.classList.add('is-hidden');
 
-      function setSrc(img, src) {
-        img.style.opacity = 0;
-        const im = new Image();
-        im.onload = () => { img.src = src; img.style.opacity = 1; };
-        im.src = src;
-      }
-
-      function apply() {
-        const n = IMAGES.length;
-        const cur  = IMAGES[index];
-        const prev = IMAGES[(index - 1 + n) % n];
-        const next = IMAGES[(index + 1) % n];
-
-        bg.style.backgroundImage = 'none';
-        setSrc(center, cur); setSrc(prevPk, prev); setSrc(nextPk, next);
-
-        dots.forEach((d, i) => {
-          d.classList.toggle('bg-white', i === index);
-          d.classList.toggle('bg-white/40', i !== index);
+          // รีสตาร์ท Ken-Burns เมื่อสไลด์เข้ากลาง
+          const img=sl.querySelector('img');
+          if(i===index){ img.style.animation='none'; img.offsetHeight; img.style.animation=''; }
         });
+        dots.forEach((d,i)=> d.classList.toggle('active', i===index));
       }
-
-      function goTo(i){ index = (i + IMAGES.length) % IMAGES.length; apply(); restart(); }
-      const next = () => goTo(index + 1);
-      const prev = () => goTo(index - 1);
-
-      function start(){ if (!timer) timer = setInterval(next, DURATION); }
-      function stop(){ clearInterval(timer); timer = null; }
+      function goTo(i){ index=(i+slides.length)%slides.length; apply(); restart(); }
+      const next=()=>goTo(index+1), prev=()=>goTo(index-1);
+      function start(){ if(playing && !timer) timer=setInterval(next,INTERVAL); }
+      function stop(){ clearInterval(timer); timer=null; }
       function restart(){ stop(); start(); }
 
       btnNext.addEventListener('click', next);
       btnPrev.addEventListener('click', prev);
+      btnToggle.addEventListener('click', ()=>{ playing=!playing; btnToggle.textContent=playing?'⏸':'▶︎'; playing?start():stop(); });
 
-      const hero = document.getElementById('hero');
-      hero.addEventListener('mouseenter', stop);
-      hero.addEventListener('mouseleave', start);
-      document.addEventListener('visibilitychange', ()=> document.hidden ? stop() : start());
+      // คีย์บอร์ด + สไลด์ด้วยนิ้ว
+      stage.tabIndex=0;
+      stage.addEventListener('keydown', e=>{ if(e.key==='ArrowRight') next(); if(e.key==='ArrowLeft') prev(); });
+      let sx=0,dx=0;
+      stage.addEventListener('touchstart', e=>{ sx=e.touches[0].clientX; dx=0; stop(); }, {passive:true});
+      stage.addEventListener('touchmove',  e=>{ dx=e.touches[0].clientX-sx; }, {passive:true});
+      stage.addEventListener('touchend',   ()=>{ if(Math.abs(dx)>40) (dx<0?next():prev()); if(playing) start(); });
 
-      // คีย์บอร์ด + ปัดนิ้ว
-      hero.tabIndex = 0;
-      hero.addEventListener('keydown', (e)=>{ if(e.key==='ArrowRight') next(); if(e.key==='ArrowLeft') prev(); });
-      let sx=0, dx=0;
-      hero.addEventListener('touchstart', e=>{ sx=e.touches[0].clientX; dx=0; stop(); }, {passive:true});
-      hero.addEventListener('touchmove',  e=>{ dx=e.touches[0].clientX - sx; }, {passive:true});
-      hero.addEventListener('touchend',   ()=>{ if(Math.abs(dx)>40) (dx<0?next():prev()); start(); });
+      document.addEventListener('visibilitychange', ()=> document.hidden?stop():start());
 
       apply(); start();
     })();
     </script>
 
+  <!-- ===== Profile modal (เหมือนเดิม) ===== -->
+  <div id="profileModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+    <div data-overlay class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="relative z-10 min-h-full p-4">
+      <div id="profileCard" class="fixed w-80 sm:w-96 rounded-2xl bg-white text-slate-900 shadow-2xl border border-black/5">
+        <div class="absolute -top-2 right-10 w-4 h-4 bg-white rotate-45 shadow ring-1 ring-black/5"></div>
+        <button data-close class="absolute right-3 top-3 h-9 w-9 grid place-items-center rounded-full hover:bg-black/5 text-slate-900" aria-label="ปิด">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
 
-    <!-- Profile Modal -->
-    <div id="profileModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
-      <div data-overlay class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-      <div class="relative z-10 min-h-full p-4">
-        <div id="profileCard" class="fixed w-80 sm:w-96 rounded-2xl bg-white text-slate-900 shadow-2xl border border-black/5">
-          <div class="absolute -top-2 right-10 w-4 h-4 bg-white rotate-45 shadow ring-1 ring-black/5"></div>
-          <button data-close class="absolute right-3 top-3 h-9 w-9 grid place-items-center rounded-full hover:bg-black/5 text-slate-900" aria-label="ปิด">
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
+        <div class="p-6 space-y-6">
+          <div class="mx-auto h-16 w-16 rounded-full bg-slate-200 grid place-items-center">
+            <svg class="h-10 w-10 text-slate-700" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6a1 1 0 001 1h14a1 1 0 001-1c0-3.33-2.67-6-8-6z"/></svg>
+          </div>
 
-          <div class="p-6 space-y-6">
-            <div class="mx-auto h-16 w-16 rounded-full bg-slate-200 grid place-items-center">
-              <svg class="h-10 w-10 text-slate-700" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6a1 1 0 001 1h14a1 1 0 001-1c0-3.33-2.67-6-8-6z"/></svg>
-            </div>
+          <div class="space-y-3 text-[15px]">
+            <div class="flex items-center gap-2"><span class="font-medium">Name :</span><span id="ppName" class="text-slate-600">—</span></div>
+            <div class="flex items-center gap-2"><span class="font-medium">ID :</span><span id="ppId" class="text-slate-600">—</span></div>
+            <div class="flex items-center gap-2"><span class="font-medium">E-mail :</span><span id="ppEmail" class="text-slate-600">—</span></div>
+            <div class="flex items-center gap-2"><span class="font-medium">Major :</span><span id="ppMajor" class="text-slate-600">—</span></div>
+            <div class="flex items-center gap-2"><span class="font-medium">Phone :</span><span id="ppPhone" class="text-slate-600">—</span></div>
+          </div>
 
-            <div class="space-y-3 text-[15px]">
-              <div class="flex items-center gap-2"><span class="font-medium">Name :</span><span id="ppName" class="text-slate-600">—</span></div>
-              <div class="flex items-center gap-2"><span class="font-medium">ID :</span><span id="ppId" class="text-slate-600">—</span></div>
-              <div class="flex items-center gap-2"><span class="font-medium">E-mail :</span><span id="ppEmail" class="text-slate-600">—</span></div>
-              <div class="flex items-center gap-2"><span class="font-medium">Major :</span><span id="ppMajor" class="text-slate-600">—</span></div>
-              <div class="flex items-center gap-2"><span class="font-medium">Phone :</span><span id="ppPhone" class="text-slate-600">—</span></div>
-            </div>
-
-            <div class="space-y-3">
-              <button id="historyBtn"
-              class="w-full rounded-2xl bg-indigo-900 text-white px-5 py-3 font-semibold tracking-wide hover:bg-indigo-800 active:scale-[.99] transition">
-              Registration History
-              </button>
-              <button id="logoutBtn" class="w-full rounded-xl bg-slate-900 text-white px-5 py-2.5 font-medium hover:bg-slate-800 active:scale-[.99] transition">Log out</button>
-            </div>
+          <div class="space-y-3">
+            <button id="historyBtn" class="w-full rounded-2xl bg-indigo-900 text-white px-5 py-3 font-semibold tracking-wide hover:bg-indigo-800 active:scale-[.99] transition">Registration History</button>
+            <button id="logoutBtn" class="w-full rounded-xl bg-slate-900 text-white px-5 py-2.5 font-medium hover:bg-slate-800 active:scale-[.99] transition">Log out</button>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- ===== History Modal (แยกจาก profileModal) ===== -->
-    <div id="historyModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
-      <div data-overlay class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-      <div class="relative z-10 min-h-full p-4 grid place-items-center">
-        <div class="relative w-[720px] max-w-[calc(100vw-2rem)]
-                    max-h-[85vh] rounded-2xl bg-white text-slate-900
-                    shadow-2xl flex flex-col">
-          <div class="flex items-center justify-between px-6 py-4 border-b">
-            <h3 class="text-xl font-bold">ประวัติการลงทะเบียน</h3>
-            <button id="historyClose"
-              class="h-9 w-9 grid place-items-center rounded-full hover:bg-black/5"
-              aria-label="ปิด">✕</button>
-          </div>
-
-          <!-- พื้นที่สกรอลล์ -->
-          <div id="historyScroll" class="p-6 overflow-y-auto overscroll-contain">
-            <div id="historyLoading" class="text-slate-500">กำลังโหลด...</div>
-            <div id="historyEmpty" class="hidden text-slate-500">ยังไม่มีรายการลงทะเบียน</div>
-            <ul id="historyList" class="hidden space-y-3"></ul>
-          </div>
+  <!-- ===== History modal ===== -->
+  <div id="historyModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+    <div data-overlay class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div class="relative z-10 min-h-full p-4 grid place-items-center">
+      <div class="relative w-[720px] max-w-[calc(100vw-2rem)] max-h-[85vh] rounded-2xl bg-white text-slate-900 shadow-2xl flex flex-col">
+        <div class="flex items-center justify-between px-6 py-4 border-b">
+          <h3 class="text-xl font-bold">ประวัติการลงทะเบียน</h3>
+          <button id="historyClose" class="h-9 w-9 grid place-items-center rounded-full hover:bg-black/5" aria-label="ปิด">✕</button>
+        </div>
+        <div id="historyScroll" class="p-6 overflow-y-auto overscroll-contain">
+          <div id="historyLoading" class="text-slate-500">กำลังโหลด...</div>
+          <div id="historyEmpty" class="hidden text-slate-500">ยังไม่มีรายการลงทะเบียน</div>
+          <ul id="historyList" class="hidden space-y-3"></ul>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Profile modal logic -->
-    <script>
-      (function(){
-        const btn = document.getElementById('profileBtn');
-        const modal = document.getElementById('profileModal');
-        const card = document.getElementById('profileCard');
-        if(!btn || !modal || !card) return;
+  <!-- ===== Profile/History logic + Events loader ===== -->
+  <script>
+  (function(){
+    const btn = document.getElementById('profileBtn');
+    const modal = document.getElementById('profileModal');
+    const card = document.getElementById('profileCard');
+    if(!btn||!modal||!card) return;
 
-        const overlay = modal.querySelector('[data-overlay]');
-        const closeBtn = modal.querySelector('[data-close]');
-        let lastActive = null;
+    const overlay = modal.querySelector('[data-overlay]');
+    const closeBtn = modal.querySelector('[data-close]');
+    let lastActive = null;
 
-        // คำนวณตำแหน่งด้วยพิกัด "viewport" (ห้ามบวก scrollX/scrollY)
-        function place(){
-          const r = btn.getBoundingClientRect();
-          const gap = 10;
-          const width = card.offsetWidth || 360;
+    function place(){
+      const r = btn.getBoundingClientRect(), gap=10, width = card.offsetWidth||360;
+      const maxLeft = window.innerWidth - width - 8;
+      const left = Math.max(8, Math.min(r.right - width, maxLeft));
+      const top  = Math.min(r.bottom + gap, window.innerHeight - card.offsetHeight - 8);
+      card.style.left = left+'px'; card.style.top = top+'px';
+    }
+    function lockScroll(lock){
+      const el = document.scrollingElement || document.documentElement;
+      if(lock){ el.dataset.prevOverflow = el.style.overflow||''; el.style.overflow='hidden'; document.body.classList.add('overflow-hidden'); }
+      else { el.style.overflow = el.dataset.prevOverflow||''; document.body.classList.remove('overflow-hidden'); delete el.dataset.prevOverflow; }
+    }
+    function open(){ lastActive=document.activeElement; modal.classList.remove('hidden'); lockScroll(true); requestAnimationFrame(place); window.addEventListener('resize', place, {passive:true}); }
+    function close(){ modal.classList.add('hidden'); lockScroll(false); if(lastActive) lastActive.focus(); window.removeEventListener('resize', place); }
 
-          const maxLeft = window.innerWidth - width - 8;
-          const left = Math.max(8, Math.min(r.right - width, maxLeft));
-          // กันเลยขอบล่างเล็กน้อย
-          const top  = Math.min(r.bottom + gap, window.innerHeight - card.offsetHeight - 8);
+    btn.addEventListener('click', open);
+    overlay.addEventListener('click', close);
+    closeBtn.addEventListener('click', close);
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !modal.classList.contains('hidden')) close(); });
+  })();
 
-          card.style.left = left + 'px';
-          card.style.top  = top  + 'px';
-        }
+  (function (){
+    const API_BASE = window.API_BASE;
+    const token = localStorage.getItem("token");
+    if (!token) { location.href="./index.html"; return; }
 
-        // ล็อกการสกอลล์ฉากหลัง (กันบางเบราว์เซอร์ยังเลื่อนได้)
-        function lockScroll(lock){
-          const el = document.scrollingElement || document.documentElement;
-          if (lock) {
-            el.dataset.prevOverflow = el.style.overflow || '';
-            el.style.overflow = 'hidden';
-            document.body.classList.add('overflow-hidden');
-          } else {
-            el.style.overflow = el.dataset.prevOverflow || '';
-            document.body.classList.remove('overflow-hidden');
-            delete el.dataset.prevOverflow;
-          }
-        }
+    const $ = (s)=>document.querySelector(s);
+    const eventList = $("#eventList");
+    const fab=$("#fabAdd"), addModal=$("#addModal"), addForm=$("#addForm");
+    const dateInput=document.getElementById('addDate');
+    if(dateInput){ const offset=new Date().getTimezoneOffset()*60000; dateInput.value=new Date(Date.now()-offset).toISOString().slice(0,10); }
+    const addCancel=$("#addCancel");
 
-        function open(){
-          lastActive = document.activeElement;
-          modal.classList.remove('hidden');
-          lockScroll(true);
-          requestAnimationFrame(place);
-          // ไม่ผูก scroll listener เพื่อไม่ให้การ์ดเลื่อนตาม
-          window.addEventListener('resize', place, { passive: true });
-        }
+    async function loadMe(){
+      const res=await fetch(`${API_BASE}/auth/me`,{ headers:{Authorization:"Bearer "+token}, credentials:"include" });
+      if(!res.ok) throw new Error("unauthorized");
+      const json=await res.json().catch(()=>({})); const me=json.user||json;
+      const id=(x)=>document.getElementById(x);
+      id("ppName")&&(id("ppName").textContent=me.username??"—");
+      id("ppId")&&(id("ppId").textContent=me.idNumber??"—");
+      id("ppEmail")&&(id("ppEmail").textContent=me.email??"—");
+      id("ppMajor")&&(id("ppMajor").textContent=me.major??"—");
+      id("ppPhone")&&(id("ppPhone").textContent=me.phone??"—");
+      if(me.role==="admin"&&fab) fab.classList.remove("hidden");
+    }
 
-        function close(){
-          modal.classList.add('hidden');
-          lockScroll(false);
-          if(lastActive) lastActive.focus();
-          window.removeEventListener('resize', place);
-        }
-
-        btn.addEventListener('click', open);
-        overlay.addEventListener('click', close);
-        closeBtn.addEventListener('click', close);
-        document.addEventListener('keydown', (e)=>{
-          if(e.key === 'Escape' && !modal.classList.contains('hidden')) close();
-        });
-      })();
-    </script>
-
-      <script>
-        (function () {
-          const API_BASE = window.API_BASE;                 // ← ใช้ global
-          const token = localStorage.getItem("token");
-          if (!token) { location.href = "./index.html"; return; }
-
-          const $  = (sel) => document.querySelector(sel);
-          const eventList = $("#eventList");
-          const fab       = $("#fabAdd");
-          const addModal  = $("#addModal");
-          const addForm   = $("#addForm");
-          const dateInput = document.getElementById('addDate');
-          if (dateInput) {
-            const offset = new Date().getTimezoneOffset() * 60000;
-            dateInput.value = new Date(Date.now() - offset).toISOString().slice(0, 10);
-          }
-          const addCancel = $("#addCancel");
-
-          // เติมข้อมูลผู้ใช้ + แสดง FAB เมื่อเป็น admin
-          async function loadMe() {
-            const res = await fetch(`${API_BASE}/auth/me`, {
-              headers: { Authorization: "Bearer " + token },
-              credentials: "include",
-            });
-            if (!res.ok) throw new Error("unauthorized");
-            const json = await res.json().catch(() => ({}));
-            const me = json.user || json;
-
-            const byId = (id) => document.getElementById(id);
-            byId("ppName")  && (byId("ppName").textContent  = me.username ?? "—");
-            byId("ppId")    && (byId("ppId").textContent    = me.idNumber ?? "—");
-            byId("ppEmail") && (byId("ppEmail").textContent = me.email ?? "—");
-            byId("ppMajor") && (byId("ppMajor").textContent = me.major ?? "—");
-            byId("ppPhone") && (byId("ppPhone").textContent = me.phone ?? "—");
-
-            if (me.role === "admin" && fab) fab.classList.remove("hidden");
-          }
-
-          // Logout
-          (function wireLogout(){
-            const btn = document.getElementById("logoutBtn");
-            if (!btn) return;
-            btn.addEventListener("click", async () => {
-              try { await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" }); }
-              catch (e) {}
-              localStorage.removeItem("token");
-              location.href = "./index.html";
-            });
-          })();
-
-          // โหลดกิจกรรม
-          async function loadEvents() {
-            const res = await fetch(`${API_BASE}/events`);
-            const items = await res.json();
-
-            if (!Array.isArray(items) || items.length === 0) {
-              eventList.innerHTML = `
-                <li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">
-                  ยังไม่มีกิจกรรม
-                </li>`;
-              return;
-            }
-
-            eventList.innerHTML = items.map(ev => {
-              const dateTxt = ev.dateText ? `${window.formatDateLabel(ev.dateText)} ` : "";
-              return `
-                <li>
-                  <a href="./event.html?id=${ev._id}"
-                    class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition">
-                    <span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span>
-                    <span class="font-semibold tracking-wide">${dateTxt}${ev.title}</span>
-                  </a>
-                </li>`;
-            }).join("");
-          }
-
-          // Modal helpers
-          function openAdd()  { addModal?.classList.remove("hidden"); }
-          function closeAdd() { addModal?.classList.add("hidden"); addForm?.reset(); }
-
-          // เพิ่มกิจกรรม (admin)
-          addForm?.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const fd = new FormData(addForm);
-            const payload = Object.fromEntries(fd.entries());
-
-            const res = await fetch(`${API_BASE}/events`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token
-              },
-              credentials: "include",
-              body: JSON.stringify(payload)
-            });
-
-            if (!res.ok) {
-              const data = await res.json().catch(()=> ({}));
-              alert(`เพิ่มกิจกรรมไม่สำเร็จ: ${data.message || res.status}`);
-              return;
-            }
-            closeAdd();
-            loadEvents();
-          });
-
-          addCancel?.addEventListener("click", closeAdd);
-          fab?.addEventListener("click", openAdd);
-          addModal?.querySelector("[data-overlay]")?.addEventListener("click", closeAdd);
-
-          // start
-          loadMe().then(loadEvents).catch(() => {
-            localStorage.removeItem("token");
-            location.href = "./index.html";
-          });
-        })();
-      </script>
-
-    <script>
-    (function historyModal() {
-      const API_BASE = window.API_BASE;
-      const btnOpen   = document.getElementById('historyBtn');
-      const modal     = document.getElementById('historyModal');
-      const btnClose  = document.getElementById('historyClose');
-      const overlay   = modal?.querySelector('[data-overlay]');
-      const ul        = document.getElementById('historyList');
-      const empty     = document.getElementById('historyEmpty');
-      const loading   = document.getElementById('historyLoading');
-
-      if (!btnOpen || !modal) return;
-
-      const open  = () => modal.classList.remove('hidden');
-      const close = () => modal.classList.add('hidden');
-
-      async function fetchMyRegistrations() {
-        const token = localStorage.getItem('token');
-        const opt = { headers: { Authorization: 'Bearer ' + token }, credentials: 'include' };
-
-        // route ใหม่
-        let res = await fetch(`${API_BASE}/registrations/me`, opt);
-        if (res.ok) { const j = await res.json().catch(()=>({})); return j.items || []; }
-
-        // เผื่อ backend เก่ายังใช้ /auth/my-registrations
-        if (res.status === 404) {
-          res = await fetch(`${API_BASE}/auth/my-registrations`, opt);
-          if (res.ok) { const j = await res.json().catch(()=>({})); return j.items || []; }
-        }
-
-        const t = await res.text().catch(()=> '');
-        throw new Error(`GET failed ${res.status}: ${t || 'unknown error'}`);
-      }
-
-      async function loadHistory() {
-        ul.classList.add('hidden'); ul.innerHTML = '';
-        empty.classList.add('hidden');
-        loading.classList.remove('hidden');
-
-        try {
-          const items = await fetchMyRegistrations();
-          loading.classList.add('hidden');
-
-          if (!items.length) {
-            empty.classList.remove('hidden');
-            return;
-          }
-
-          ul.innerHTML = items.map(it => {
-            const ev = it.event || {};
-            const title   = ev.title || '(ไม่ระบุชื่อกิจกรรม)';
-            const dateTxt = window.formatDateLabel(ev.dateText);
-            const loc     = ev.location || '—';
-            const orphan  = !ev._id; // event ถูกลบ
-
-            return `
-              <li class="rounded-xl border border-slate-200 bg-white/60 p-4">
-                <div class="flex items-start justify-between gap-3">
-                  <div>
-                    <div class="font-semibold text-slate-900">
-                      ${window.escapeHtml(title)}
-                      ${orphan ? '<span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-rose-100 text-rose-600">ถูกลบแล้ว</span>' : ''}
-                    </div>
-                    <div class="text-sm text-slate-500">
-                      ${dateTxt} • ${window.escapeHtml(loc)}
-                    </div>
-                    ${it.address ? `<div class="mt-1 text-xs text-slate-500">address: ${window.escapeHtml(it.address)}</div>` : ''}
-                  </div>
-                  <div class="shrink-0 flex gap-2">
-                    ${orphan
-                      ? `<button data-remove="${it._id}" class="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300">ลบออก</button>`
-                      : `<a href="./event.html?id=${ev._id}" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-700">ดูรายละเอียด</a>`
-                    }
-                  </div>
-                </div>
-              </li>`;
-          }).join('');
-          ul.classList.remove('hidden');
-
-          // ปุ่มลบรายการกำพร้า
-          ul.querySelectorAll('[data-remove]').forEach(btn => {
-            btn.addEventListener('click', async () => {
-              const id = btn.getAttribute('data-remove');
-              try {
-                await fetch(`${API_BASE}/registrations/${id}`, {
-                  method: 'DELETE',
-                  headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-                });
-                loadHistory();
-              } catch {}
-            });
-          });
-
-        } catch (err) {
-          loading.textContent = 'โหลดไม่สำเร็จ: ' + err.message;
-        }
-      }
-
-      btnOpen.addEventListener('click', () => { open(); loadHistory(); });
-      btnClose?.addEventListener('click', close);
-      overlay?.addEventListener('click', close);
-      document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && !modal.classList.contains('hidden')) close();
+    (function wireLogout(){
+      const btn=document.getElementById("logoutBtn"); if(!btn) return;
+      btn.addEventListener("click", async()=>{
+        try{ await fetch(`${API_BASE}/auth/logout`,{method:"POST",credentials:"include"});}catch{}
+        localStorage.removeItem("token"); location.href="./index.html";
       });
     })();
-    </script>
-  </body>
+
+    async function loadEvents(){
+      const res=await fetch(`${API_BASE}/events`);
+      const items=await res.json();
+      if(!Array.isArray(items)||items.length===0){
+        eventList.innerHTML=`<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">ยังไม่มีกิจกรรม</li>`;
+        return;
+      }
+      eventList.innerHTML = items.map(ev=>{
+        const dateTxt = ev.dateText ? `${window.formatDateLabel(ev.dateText)} ` : "";
+        return `<li>
+          <a href="./event.html?id=${ev._id}" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 shadow-md ring-1 ring-white/10 hover:bg-slate-700 transition">
+            <span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span>
+            <span class="font-semibold tracking-wide">${dateTxt}${window.escapeHtml(ev.title||'')}</span>
+          </a>
+        </li>`;
+      }).join("");
+    }
+
+    function openAdd(){ addModal?.classList.remove("hidden"); }
+    function closeAdd(){ addModal?.classList.add("hidden"); addForm?.reset(); }
+
+    addForm?.addEventListener("submit", async(e)=>{
+      e.preventDefault();
+      const fd=new FormData(addForm); const payload=Object.fromEntries(fd.entries());
+      const res=await fetch(`${API_BASE}/events`,{
+        method:"POST", headers:{"Content-Type":"application/json", Authorization:"Bearer "+token},
+        credentials:"include", body:JSON.stringify(payload)
+      });
+      if(!res.ok){ const data=await res.json().catch(()=>({})); alert(`เพิ่มกิจกรรมไม่สำเร็จ: ${data.message||res.status}`); return; }
+      closeAdd(); loadEvents();
+    });
+    addCancel?.addEventListener("click", closeAdd);
+    fab?.addEventListener("click", openAdd);
+    addModal?.querySelector("[data-overlay]")?.addEventListener("click", closeAdd);
+
+    loadMe().then(loadEvents).catch(()=>{ localStorage.removeItem("token"); location.href="./index.html"; });
+  })();
+
+  (function historyModal(){
+    const API_BASE=window.API_BASE;
+    const btnOpen=document.getElementById('historyBtn');
+    const modal=document.getElementById('historyModal');
+    const btnClose=document.getElementById('historyClose');
+    const overlay=modal?.querySelector('[data-overlay]');
+    const ul=document.getElementById('historyList');
+    const empty=document.getElementById('historyEmpty');
+    const loading=document.getElementById('historyLoading');
+    if(!btnOpen||!modal) return;
+
+    const open=()=>modal.classList.remove('hidden');
+    const close=()=>modal.classList.add('hidden');
+
+    async function fetchMyRegistrations(){
+      const token=localStorage.getItem('token');
+      const opt={ headers:{Authorization:'Bearer '+token}, credentials:'include' };
+      let res=await fetch(`${API_BASE}/registrations/me`,opt);
+      if(res.ok){ const j=await res.json().catch(()=>({})); return j.items||[]; }
+      if(res.status===404){
+        res=await fetch(`${API_BASE}/auth/my-registrations`,opt);
+        if(res.ok){ const j=await res.json().catch(()=>({})); return j.items||[]; }
+      }
+      const t=await res.text().catch(()=> ''); throw new Error(`GET failed ${res.status}: ${t||'unknown error'}`);
+    }
+
+    async function loadHistory(){
+      ul.classList.add('hidden'); ul.innerHTML=''; empty.classList.add('hidden'); loading.classList.remove('hidden');
+      try{
+        const items=await fetchMyRegistrations();
+        loading.classList.add('hidden');
+        if(!items.length){ empty.classList.remove('hidden'); return; }
+        ul.innerHTML = items.map(it=>{
+          const ev=it.event||{}; const title=ev.title||'(ไม่ระบุชื่อกิจกรรม)';
+          const dateTxt=window.formatDateLabel(ev.dateText); const loc=ev.location||'—';
+          const orphan=!ev._id;
+          return `<li class="rounded-xl border border-slate-200 bg-white/60 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="font-semibold text-slate-900">
+                  ${window.escapeHtml(title)}
+                  ${orphan?'<span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-rose-100 text-rose-600">ถูกลบแล้ว</span>':''}
+                </div>
+                <div class="text-sm text-slate-500">${dateTxt} • ${window.escapeHtml(loc)}</div>
+                ${it.address?`<div class="mt-1 text-xs text-slate-500">address: ${window.escapeHtml(it.address)}</div>`:''}
+              </div>
+              <div class="shrink-0 flex gap-2">
+                ${orphan
+                  ? `<button data-remove="${it._id}" class="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300">ลบออก</button>`
+                  : `<a href="./event.html?id=${ev._id}" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-700">ดูรายละเอียด</a>`}
+              </div>
+            </div>
+          </li>`;
+        }).join('');
+        ul.classList.remove('hidden');
+
+        ul.querySelectorAll('[data-remove]').forEach(btn=>{
+          btn.addEventListener('click', async()=>{
+            const id=btn.getAttribute('data-remove');
+            try{
+              await fetch(`${API_BASE}/registrations/${id}`,{
+                method:'DELETE', headers:{Authorization:'Bearer '+localStorage.getItem('token')}
+              });
+              loadHistory();
+            }catch{}
+          });
+        });
+      }catch(err){ loading.textContent='โหลดไม่สำเร็จ: '+err.message; }
+    }
+
+    btnOpen.addEventListener('click', ()=>{ open(); loadHistory(); });
+    btnClose?.addEventListener('click', close);
+    overlay?.addEventListener('click', close);
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !modal.classList.contains('hidden')) close(); });
+  })();
+  </script>
+</body>
 </html>
