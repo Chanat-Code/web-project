@@ -518,6 +518,14 @@
         const me=json.user||json;
         currentUser = me;
 
+        // //ซ่อน historyModel ถ้าเป็น admin
+        if(me.role==="admin"){
+          const historyModel = document.getElementById('historyModal');
+          if(historyModel) historyModel.remove();
+          const historyBtn = document.getElementById('historyBtn');
+          if(historyBtn) historyBtn.remove();
+        }
+        
         const id = (x) => document.getElementById(x);
         id("ppName") && (id("ppName").textContent = me.username ?? "—");
         id("ppId") && (id("ppId").textContent = me.idNumber ?? "—");
