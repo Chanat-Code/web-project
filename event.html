@@ -28,12 +28,12 @@
         <div class="pt-2">
           <h2 class="text-xl font-semibold mb-2">ข้อมูลที่ต้องการเพิ่มเติม</h2>
           <input id="address" placeholder="address :"
-                 class="w-full rounded-xl bg-indigo-100 px-4 py-3 outline-none ring-1 ring-indigo-300 focus:ring-2 focus:ring-indigo-500">
+                 class="w-full rounded-xl bg-indigo-100 px-4 py-3 outline-none ring-1 ring-indigo-300 focus:ring-2 focus:ring-indigo-500 hidden">
         </div>
 
         <div class="pt-2 flex justify-end">
           <button id="submitBtn"
-            class="px-6 py-2.5 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-500 active:scale-[.99]">
+            class="px-6 py-2.5 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-500 active:scale-[.99] hidden">
             Submit
           </button>
         </div>
@@ -79,15 +79,46 @@
     location.href = "./HOMEนศทตกลทบ.html";
   }
 
+  // --- ดึง role จาก JWT (ถ้าเป็น opaque token จะได้ {} กลับมา)
+  function parseJwt(t) {
+    try {
+      const payload = t.split(".")[1];
+      if (!payload) return {};
+      const b64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const json = decodeURIComponent(
+        atob(b64).split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")
+      );
+      return JSON.parse(json);
+    } catch {
+      return {};
+    }
+  }
+
+  const claims = token ? parseJwt(token) : {};
+  const role = (claims.role || claims.user?.role || "").toLowerCase();
+
   const modal = document.getElementById("confirmModal");
   const openModal  = () => modal.classList.remove("hidden");
   const closeModal = () => modal.classList.add("hidden");
   document.getElementById("cmClose").onclick  = closeModal;
   document.getElementById("cmCancel").onclick = closeModal;
+  modal.addEventListener('click', (e) => { if (e.target.hasAttribute('data-overlay')) closeModal(); });
 
   const btnSubmit = document.getElementById("submitBtn");
+  const addressInput = document.getElementById("address");
+
+  // ถ้าเป็น admin → ไม่ให้เห็น/กดปุ่ม และซ่อนช่อง address
+  const isAdmin = role === "admin";
+  if (isAdmin) {
+    btnSubmit?.remove();
+    addressInput?.remove();
+  } else {
+    btnSubmit?.classList.remove("hidden");
+    addressInput?.classList.remove("hidden");
+  }
 
   function setBtnRegistered() {
+    if (!btnSubmit) return;
     btnSubmit.disabled = true;
     btnSubmit.textContent = "ลงทะเบียนแล้ว";
     btnSubmit.classList.remove("bg-green-600","hover:bg-green-500");
@@ -95,6 +126,7 @@
   }
 
   function setBtnLoading(on) {
+    if (!btnSubmit) return;
     btnSubmit.disabled = !!on;
     btnSubmit.textContent = on ? "กำลังส่ง..." : "Submit";
   }
@@ -133,9 +165,10 @@
 
   // ===== do register =====
   async function doRegister() {
+    if (isAdmin) { alert("ผู้ดูแลระบบไม่สามารถลงทะเบียนกิจกรรมได้"); return; }
     if (!token) { alert("โปรดเข้าสู่ระบบก่อน"); location.href = "./index.html"; return; }
 
-    const address = (document.getElementById("address").value || "").trim();
+    const address = (addressInput?.value || "").trim();
     setBtnLoading(true);
 
     try {
@@ -173,10 +206,12 @@
   }
 
   // เปิดกล่องยืนยันเมื่อกด Submit (ถ้าลงแล้วจะไม่ให้กด)
-  btnSubmit.addEventListener("click", () => {
-    if (btnSubmit.disabled) return;
-    openModal();
-  });
+  if (btnSubmit && !isAdmin) {
+    btnSubmit.addEventListener("click", () => {
+      if (btnSubmit.disabled) return;
+      openModal();
+    });
+  }
 
   document.getElementById("cmOk").addEventListener("click", doRegister);
 
