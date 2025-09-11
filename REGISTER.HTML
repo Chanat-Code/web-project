@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,36 +9,55 @@
   <link href="https://fonts.googleapis.com/css2?family=Manjari:wght@400;700&display=swap" rel="stylesheet">
   <link rel="icon" href="assets/hero/image.png" sizes="any">
   <style>
-    :root { color-scheme: light only; }
-    .font-manjari { font-family: 'Manjari', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif; }
+    :root {
+      color-scheme: light only;
+    }
+
+    .font-manjari {
+      font-family: 'Manjari', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif;
+    }
   </style>
 </head>
+
 <body class="min-h-screen bg-[#e5e5e6] flex items-center justify-center p-6">
   <!-- Outer card -->
-  <main class="w-full max-w-[1120px] rounded-[36px] bg-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.25)] ring-1 ring-black/10 px-8 sm:px-12 md:px-16 py-12 md:py-14">
+  <main
+    class="w-full max-w-[1120px] rounded-[36px] bg-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.25)] ring-1 ring-black/10 px-8 sm:px-12 md:px-16 py-12 md:py-14">
     <div class="mx-auto w-full max-w-[900px]">
       <!-- Title two rows to match reference -->
-      <h1 class="font-manjari text-[86px] md:text-[92px] leading-[0.9] text-black text-center select-none mb-10 [text-shadow:7px_7px_7px_rgba(0,0,0,0.5)]">
+      <h1
+        class="font-manjari text-[86px] md:text-[92px] leading-[0.9] text-black text-center select-none mb-10 [text-shadow:7px_7px_7px_rgba(0,0,0,0.5)]">
         <span class="font-bold block">CREATE</span>
         <span class="font-bold block">ACCOUNT</span>
       </h1>
 
       <!-- Form grid -->
-     <form id="registerForm" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-       <input id="username" name="username" type="text" placeholder="Username :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400" required>
+      <form id="registerForm" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+        <input id="username" name="username" type="text" placeholder="Username :"
+          class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400"
+          required>
 
-        <input id="idNumber" name="idNumber" type="text" placeholder="ID Number :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400" required>
+        <input id="idNumber" name="idNumber" type="text" placeholder="ID Number :"
+          class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400"
+          required>
 
-        <input id="password" name="password" type="password" placeholder="Password :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400" required>
+        <input id="password" name="password" type="password" placeholder="Password :"
+          class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400"
+          required>
 
-        <input id="email" name="email" type="email" placeholder="Email :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400" required>
+        <input id="email" name="email" type="email" placeholder="Email :"
+          class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400"
+          required>
 
-        <input id="major" name="major" type="text" placeholder="Major :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-sky-400">
+        <input id="major" name="major" type="text" placeholder="Major :"
+          class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-sky-400">
 
-        <input id="phone" name="phone" type="tel" placeholder="Phone Number :" class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400">
+        <input id="phone" name="phone" type="tel" placeholder="Phone Number :"
+          class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400">
 
         <div class="md:col-span-2 flex items-center justify-center pt-2">
-          <button type="submit" class="w-[320px] h-12 rounded-2xl bg-gradient-to-r from-indigo-950 via-indigo-800 to-indigo-700 text-white text-[18px] font-semibold tracking-wide shadow-[0_4px_10px_rgba(0,0,0,0.25)] active:translate-y-[1px] transition">
+          <button type="submit"
+            class="w-[320px] h-12 rounded-2xl bg-gradient-to-r from-indigo-950 via-indigo-800 to-indigo-700 text-white text-[18px] font-semibold tracking-wide shadow-[0_4px_10px_rgba(0,0,0,0.25)] active:translate-y-[1px] transition">
             REGISTER
           </button>
         </div>
@@ -45,47 +65,48 @@
     </div>
   </main>
 
-<script>
-  const isVercel = location.hostname.endsWith('.vercel.app');
-  const API_BASE = isVercel ? '' : 'http://127.0.0.1:4000';
-  const API = `${API_BASE}/api/auth/register`;
+  <script>
+    const isVercel = location.hostname.endsWith('.vercel.app');
+    const API_BASE = isVercel ? '' : 'http://127.0.0.1:4000';
+    const API = `${API_BASE}/api/auth/register`;
 
-  document.getElementById("registerForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
+    document.getElementById("registerForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-    const payload = {
-      username: document.getElementById("username").value.trim(),
-      idNumber: document.getElementById("idNumber").value.trim(),
-      password: document.getElementById("password").value,
-      email: document.getElementById("email").value.trim(),
-      major: document.getElementById("major").value.trim(),
-      phone: document.getElementById("phone").value.trim(),
-    };
+      const payload = {
+        username: document.getElementById("username").value.trim(),
+        idNumber: document.getElementById("idNumber").value.trim(),
+        password: document.getElementById("password").value,
+        email: document.getElementById("email").value.trim(),
+        major: document.getElementById("major").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+      };
 
-    try {
-      const res = await fetch(API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload)
-      });
+      try {
+        const res = await fetch(API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(payload)
+        });
 
-      let data = {};
-      try { data = await res.json(); } catch {}
+        let data = {};
+        try { data = await res.json(); } catch { }
 
-      if (!res.ok) {
-        alert(`Register failed (${res.status}): ${data.message || 'unknown error'}`);
-        return;
+        if (!res.ok) {
+          alert(`Register failed (${res.status}): ${data.message || 'unknown error'}`);
+          return;
+        }
+        alert("Register success!");
+        window.location.href = "./index.html";
+      } catch (err) {
+        console.error(err);
+        alert("Network error");
       }
-      alert("Register success!");
-      window.location.href = "./index.html";
-    } catch (err) {
-      console.error(err);
-      alert("Network error");
-    }
-  });
-</script>
+    });
+  </script>
 
 
 </body>
+
 </html>

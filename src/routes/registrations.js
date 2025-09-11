@@ -18,19 +18,19 @@ router.get("/me", requireAuth, async (req, res) => {
     event:
       (r.event && r.event._id)
         ? {
-            _id: r.event._id,
-            title: r.event.title,
-            dateText: r.event.dateText,
-            location: r.event.location
-          }
+          _id: r.event._id,
+          title: r.event.title,
+          dateText: r.event.dateText,
+          location: r.event.location
+        }
         : (r.eventSnapshot
-            ? {
-                _id: null, // ให้ UI รู้ว่า event ถูกลบแล้ว
-                title: r.eventSnapshot.title,
-                dateText: r.eventSnapshot.dateText,
-                location: r.eventSnapshot.location
-              }
-            : null)
+          ? {
+            _id: null, // ให้ UI รู้ว่า event ถูกลบแล้ว
+            title: r.eventSnapshot.title,
+            dateText: r.eventSnapshot.dateText,
+            location: r.eventSnapshot.location
+          }
+          : null)
   }));
 
   res.json({ items });

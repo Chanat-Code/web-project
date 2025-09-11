@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,14 +9,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Manjari:wght@400;700&display=swap" rel="stylesheet">
   <link rel="icon" href="assets/hero/image.png" sizes="any">
   <style>
-    .font-manjari { font-family: 'Manjari', sans-serif; }
+    .font-manjari {
+      font-family: 'Manjari', sans-serif;
+    }
   </style>
 </head>
+
 <body class="min-h-screen bg-gray-200 flex items-center justify-center p-6">
   <!-- กล่องหลัก -->
   <main class="w-full max-w-2xl rounded-3xl bg-white shadow-lg p-10">
     <div class="mx-auto w-full max-w-md">
-      
+
       <!-- หัวข้อ -->
       <h1 class="font-manjari text-8xl text-black text-center mb-8 font-semibold
            [text-shadow:7px_7px_8px_rgba(0,0,0,0.5),11px_11px_8px_rgba(0,0,0,0.1)]">
@@ -23,10 +27,14 @@
       </h1>
 
       <!-- Username -->
-      <input id="usernameOrEmail" type="text" placeholder="Username :" class="font-bold w-full h-12 rounded-xl bg-gray-200 px-4 mb-4 outline-none focus:ring-2 focus:ring-indigo-400" required>
+      <input id="usernameOrEmail" type="text" placeholder="Username :"
+        class="font-bold w-full h-12 rounded-xl bg-gray-200 px-4 mb-4 outline-none focus:ring-2 focus:ring-indigo-400"
+        required>
 
       <!-- Password -->
-      <input id="loginPassword" type="password" placeholder="Password  :" class="font-bold w-full h-12 rounded-xl bg-gray-200 px-4 mb-2 outline-none focus:ring-2 focus:ring-indigo-400" required>
+      <input id="loginPassword" type="password" placeholder="Password  :"
+        class="font-bold w-full h-12 rounded-xl bg-gray-200 px-4 mb-2 outline-none focus:ring-2 focus:ring-indigo-400"
+        required>
 
       <!-- ลิงก์ Forgot -->
       <div class="text-base mb-4">
@@ -34,53 +42,55 @@
       </div>
 
       <!-- ปุ่ม Login -->
-      <button id="loginBtn" class="w-full h-12 rounded-xl bg-gradient-to-r from-indigo-950 via-indigo-800 to-indigo-700 text-white font-semibold text-lg hover:from-indigo-500 hover:via-indigo-700 hover:to-indigo-950 active:translate-y-[1px] transition">
+      <button id="loginBtn"
+        class="w-full h-12 rounded-xl bg-gradient-to-r from-indigo-950 via-indigo-800 to-indigo-700 text-white font-semibold text-lg hover:from-indigo-500 hover:via-indigo-700 hover:to-indigo-950 active:translate-y-[1px] transition">
         LOGIN
       </button>
-      
+
       <!-- Sign up -->
       <p class="text-center text-lg text-black mt-6">
-        Don’t have an account? 
+        Don’t have an account?
         <a href="/REGISTER.HTML" class="text-indigo-700 hover:underline">Sign up</a>
       </p>
-      
-<script>
-  // ใช้ same-origin บน Vercel, ใช้ :4000 ตอนรัน local
-  const isVercel = location.hostname.endsWith('.vercel.app');
-  const API_BASE = isVercel ? '' : 'http://127.0.0.1:4000';
-  const LOGIN_API = `${API_BASE}/api/auth/login`;
 
-  document.getElementById("loginBtn").addEventListener("click", async () => {
-    const usernameOrEmail = document.getElementById("usernameOrEmail").value.trim();
-    const password = document.getElementById("loginPassword").value;
+      <script>
+        // ใช้ same-origin บน Vercel, ใช้ :4000 ตอนรัน local
+        const isVercel = location.hostname.endsWith('.vercel.app');
+        const API_BASE = isVercel ? '' : 'http://127.0.0.1:4000';
+        const LOGIN_API = `${API_BASE}/api/auth/login`;
 
-    try {
-      const res = await fetch(LOGIN_API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ usernameOrEmail, password })
-      });
+        document.getElementById("loginBtn").addEventListener("click", async () => {
+          const usernameOrEmail = document.getElementById("usernameOrEmail").value.trim();
+          const password = document.getElementById("loginPassword").value;
 
-      let data = {};
-      try { data = await res.json(); } catch {}
+          try {
+            const res = await fetch(LOGIN_API, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({ usernameOrEmail, password })
+            });
 
-      if (!res.ok) {
-        alert(`Login failed (${res.status}): ${data.message || 'unknown error'}`);
-        return;
-      }
+            let data = {};
+            try { data = await res.json(); } catch { }
 
-      if (data.token) localStorage.setItem("token", data.token);
-      alert("Login success!");
-      window.location.href = "./HOMEนศทตกลทบ.html";
-    } catch (err) {
-      console.error(err);
-      alert("Network error");
-    }
-  });
-</script>
+            if (!res.ok) {
+              alert(`Login failed (${res.status}): ${data.message || 'unknown error'}`);
+              return;
+            }
+
+            if (data.token) localStorage.setItem("token", data.token);
+            alert("Login success!");
+            window.location.href = "./HOMEนศทตกลทบ.html";
+          } catch (err) {
+            console.error(err);
+            alert("Network error");
+          }
+        });
+      </script>
 
     </div>
   </main>
 </body>
+
 </html>
