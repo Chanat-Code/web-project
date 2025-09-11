@@ -1,11 +1,14 @@
 <!doctype html>
 <html lang="th">
+
 <head>
   <meta charset="utf-8">
   <title>กิจกรรม</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="assets/hero/image.png" sizes="any">
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="min-h-screen bg-gray-900 text-white">
   <!-- BG -->
   <div id="bg" class="fixed inset-0 -z-10 bg-cover bg-center opacity-50"></div>
@@ -28,12 +31,12 @@
         <div class="pt-2">
           <h2 class="text-xl font-semibold mb-2">ข้อมูลที่ต้องการเพิ่มเติม</h2>
           <input id="address" placeholder="address :"
-                 class="w-full rounded-xl bg-indigo-100 px-4 py-3 outline-none ring-1 ring-indigo-300 focus:ring-2 focus:ring-indigo-500">
+            class="w-full rounded-xl bg-indigo-100 px-4 py-3 outline-none ring-1 ring-indigo-300 focus:ring-2 focus:ring-indigo-500 hidden">
         </div>
 
         <div class="pt-2 flex justify-end">
           <button id="submitBtn"
-            class="px-6 py-2.5 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-500 active:scale-[.99]">
+            class="px-6 py-2.5 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-500 active:scale-[.99] hidden">
             Submit
           </button>
         </div>
@@ -42,7 +45,8 @@
           <div data-overlay class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
           <div class="relative z-10 min-h-full p-4 grid place-items-center">
             <div class="relative w-[560px] max-w-[calc(100vw-2rem)] rounded-2xl bg-white text-slate-900 p-6 shadow-2xl">
-              <button id="cmClose" class="absolute right-3 top-3 h-9 w-9 grid place-items-center rounded-full hover:bg-black/5">
+              <button id="cmClose"
+                class="absolute right-3 top-3 h-9 w-9 grid place-items-center rounded-full hover:bg-black/5">
                 ✕
               </button>
               <p class="text-center text-lg font-semibold mb-6">
@@ -50,7 +54,8 @@
               </p>
               <div class="flex justify-center gap-3">
                 <button id="cmCancel" class="px-5 py-2 rounded-xl bg-slate-200 hover:bg-slate-300">ยกเลิก</button>
-                <button id="cmOk" class="px-6 py-2 rounded-xl bg-green-600 text-white hover:bg-green-500">ยืนยัน</button>
+                <button id="cmOk"
+                  class="px-6 py-2 rounded-xl bg-green-600 text-white hover:bg-green-500">ยืนยัน</button>
               </div>
             </div>
           </div>
@@ -60,130 +65,167 @@
   </main>
 
   <!-- home shortcut -->
-  <a href="./HOMEนศทตกลทบ.html" class="fixed bottom-5 right-5 h-12 w-12 grid place-items-center rounded-full bg-white text-black shadow-xl">🏠</a>
+  <a href="./HOMEนศทตกลทบ.html"
+    class="fixed bottom-5 right-5 h-12 w-12 grid place-items-center rounded-full bg-white text-black shadow-xl">🏠</a>
 
-<script>
-  // ใช้ฐานเดียวกับทุกหน้า: local -> http://localhost:4000/api, prod -> /api
-  const API_BASE =
-    (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-      ? 'http://localhost:4000/api'
-      : '/api';
+  <script>
+    // ใช้ฐานเดียวกับทุกหน้า: local -> http://localhost:4000/api, prod -> /api
+    const API_BASE =
+      (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+        ? 'http://localhost:4000/api'
+        : '/api';
 
-  // ===== utils =====
-  const params = new URLSearchParams(location.search);
-  const id = params.get("id");
-  const token = localStorage.getItem("token") || "";
+    // ===== utils =====
+    const params = new URLSearchParams(location.search);
+    const id = params.get("id");
+    const token = localStorage.getItem("token") || "";
 
-  if (!id) {
-    alert("ไม่พบบัตรกิจกรรม (id)");
-    location.href = "./HOMEนศทตกลทบ.html";
-  }
-
-  const modal = document.getElementById("confirmModal");
-  const openModal  = () => modal.classList.remove("hidden");
-  const closeModal = () => modal.classList.add("hidden");
-  document.getElementById("cmClose").onclick  = closeModal;
-  document.getElementById("cmCancel").onclick = closeModal;
-
-  const btnSubmit = document.getElementById("submitBtn");
-
-  function setBtnRegistered() {
-    btnSubmit.disabled = true;
-    btnSubmit.textContent = "ลงทะเบียนแล้ว";
-    btnSubmit.classList.remove("bg-green-600","hover:bg-green-500");
-    btnSubmit.classList.add("bg-slate-400","cursor-not-allowed");
-  }
-
-  function setBtnLoading(on) {
-    btnSubmit.disabled = !!on;
-    btnSubmit.textContent = on ? "กำลังส่ง..." : "Submit";
-  }
-
-  // ===== load event (public) =====
-  async function loadEvent() {
-    try {
-      const res = await fetch(`${API_BASE}/events/${id}`, { credentials: "include" });
-      if (!res.ok) throw new Error(String(res.status));
-      const ev = await res.json();
-
-      document.getElementById("evTitle").textContent = ev.title || "กิจกรรม";
-      document.getElementById("evDesc").textContent  = ev.description || "—";
-      document.getElementById("evDate").textContent  = ev.dateText || "—";
-      document.getElementById("evLoc").textContent   = ev.location || "—";
-      if (ev.imageUrl) document.getElementById("bg").style.backgroundImage = `url('${ev.imageUrl}')`;
-    } catch (e) {
-      alert("กิจกรรมไม่พบ");
+    if (!id) {
+      alert("ไม่พบบัตรกิจกรรม (id)");
       location.href = "./HOMEนศทตกลทบ.html";
     }
-  }
 
-  // ===== check already registered =====
-  async function checkRegistered() {
-    if (!token) return; // ยังไม่ล็อกอิน ข้าม
-    try {
-      const res = await fetch(`${API_BASE}/events/${id}/registered`, {
-        headers: { Authorization: "Bearer " + token },
-        credentials: "include"
-      });
-      if (res.status === 401) return; // ยังไม่ล็อกอินจริง ๆ
-      const j = await res.json().catch(()=> ({}));
-      if (j.registered) setBtnRegistered();
-    } catch {}
-  }
-
-  // ===== do register =====
-  async function doRegister() {
-    if (!token) { alert("โปรดเข้าสู่ระบบก่อน"); location.href = "./index.html"; return; }
-
-    const address = (document.getElementById("address").value || "").trim();
-    setBtnLoading(true);
-
-    try {
-      const res = await fetch(`${API_BASE}/events/${id}/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token
-        },
-        credentials: "include",
-        body: JSON.stringify({ address })
-      });
-
-      closeModal();
-
-      // กันกรณีลงซ้ำ
-      if (res.status === 409) {
-        alert("คุณลงทะเบียนกิจกรรมนี้แล้ว");
-        setBtnRegistered();
-        return;
+    // --- ดึง role จาก JWT (ถ้าเป็น opaque token จะได้ {} กลับมา)
+    function parseJwt(t) {
+      try {
+        const payload = t.split(".")[1];
+        if (!payload) return {};
+        const b64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+        const json = decodeURIComponent(
+          atob(b64).split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")
+        );
+        return JSON.parse(json);
+      } catch {
+        return {};
       }
-
-      if (!res.ok) {
-        const data = await res.json().catch(()=> ({}));
-        throw new Error(data.message || `HTTP ${res.status}`);
-      }
-
-      alert("ลงทะเบียนสำเร็จ!");
-      setBtnRegistered();
-    } catch (e) {
-      alert("ลงทะเบียนไม่สำเร็จ: " + e.message);
-    } finally {
-      setBtnLoading(false);
     }
-  }
 
-  // เปิดกล่องยืนยันเมื่อกด Submit (ถ้าลงแล้วจะไม่ให้กด)
-  btnSubmit.addEventListener("click", () => {
-    if (btnSubmit.disabled) return;
-    openModal();
-  });
+    const claims = token ? parseJwt(token) : {};
+    const role = (claims.role || claims.user?.role || "").toLowerCase();
 
-  document.getElementById("cmOk").addEventListener("click", doRegister);
+    const modal = document.getElementById("confirmModal");
+    const openModal = () => modal.classList.remove("hidden");
+    const closeModal = () => modal.classList.add("hidden");
+    document.getElementById("cmClose").onclick = closeModal;
+    document.getElementById("cmCancel").onclick = closeModal;
+    modal.addEventListener('click', (e) => { if (e.target.hasAttribute('data-overlay')) closeModal(); });
 
-  // start
-  loadEvent().then(checkRegistered);
-</script>
+    const btnSubmit = document.getElementById("submitBtn");
+    const addressInput = document.getElementById("address");
+
+    // ถ้าเป็น admin → ไม่ให้เห็น/กดปุ่ม และซ่อนช่อง address
+    const isAdmin = role === "admin";
+    if (isAdmin) {
+      btnSubmit?.remove();
+      addressInput?.remove();
+    } else {
+      btnSubmit?.classList.remove("hidden");
+      addressInput?.classList.remove("hidden");
+    }
+
+    function setBtnRegistered() {
+      if (!btnSubmit) return;
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = "ลงทะเบียนแล้ว";
+      btnSubmit.classList.remove("bg-green-600", "hover:bg-green-500");
+      btnSubmit.classList.add("bg-slate-400", "cursor-not-allowed");
+    }
+
+    function setBtnLoading(on) {
+      if (!btnSubmit) return;
+      btnSubmit.disabled = !!on;
+      btnSubmit.textContent = on ? "กำลังส่ง..." : "Submit";
+    }
+
+    // ===== load event (public) =====
+    async function loadEvent() {
+      try {
+        const res = await fetch(`${API_BASE}/events/${id}`, { credentials: "include" });
+        if (!res.ok) throw new Error(String(res.status));
+        const ev = await res.json();
+
+        document.getElementById("evTitle").textContent = ev.title || "กิจกรรม";
+        document.getElementById("evDesc").textContent = ev.description || "—";
+        document.getElementById("evDate").textContent = ev.dateText || "—";
+        document.getElementById("evLoc").textContent = ev.location || "—";
+        if (ev.imageUrl) document.getElementById("bg").style.backgroundImage = `url('${ev.imageUrl}')`;
+      } catch (e) {
+        alert("กิจกรรมไม่พบ");
+        location.href = "./HOMEนศทตกลทบ.html";
+      }
+    }
+
+    // ===== check already registered =====
+    async function checkRegistered() {
+      if (!token) return; // ยังไม่ล็อกอิน ข้าม
+      try {
+        const res = await fetch(`${API_BASE}/events/${id}/registered`, {
+          headers: { Authorization: "Bearer " + token },
+          credentials: "include"
+        });
+        if (res.status === 401) return; // ยังไม่ล็อกอินจริง ๆ
+        const j = await res.json().catch(() => ({}));
+        if (j.registered) setBtnRegistered();
+      } catch { }
+    }
+
+    // ===== do register =====
+    async function doRegister() {
+      if (isAdmin) { alert("ผู้ดูแลระบบไม่สามารถลงทะเบียนกิจกรรมได้"); return; }
+      if (!token) { alert("โปรดเข้าสู่ระบบก่อน"); location.href = "./index.html"; return; }
+
+      const address = (addressInput?.value || "").trim();
+      setBtnLoading(true);
+
+      try {
+        const res = await fetch(`${API_BASE}/events/${id}/register`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token
+          },
+          credentials: "include",
+          body: JSON.stringify({ address })
+        });
+
+        closeModal();
+
+        // กันกรณีลงซ้ำ
+        if (res.status === 409) {
+          alert("คุณลงทะเบียนกิจกรรมนี้แล้ว");
+          setBtnRegistered();
+          return;
+        }
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.message || `HTTP ${res.status}`);
+        }
+
+        alert("ลงทะเบียนสำเร็จ!");
+        setBtnRegistered();
+      } catch (e) {
+        alert("ลงทะเบียนไม่สำเร็จ: " + e.message);
+      } finally {
+        setBtnLoading(false);
+      }
+    }
+
+    // เปิดกล่องยืนยันเมื่อกด Submit (ถ้าลงแล้วจะไม่ให้กด)
+    if (btnSubmit && !isAdmin) {
+      btnSubmit.addEventListener("click", () => {
+        if (btnSubmit.disabled) return;
+        openModal();
+      });
+    }
+
+    document.getElementById("cmOk").addEventListener("click", doRegister);
+
+    // start
+    loadEvent().then(checkRegistered);
+  </script>
 
 
 </body>
+
 </html>

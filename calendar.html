@@ -1,50 +1,104 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>My Event Calendar</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="icon" href="assets/hero/image.png" sizes="any">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
   <style>
-    body{ font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial,'Noto Sans',sans-serif; }
-    .day-cell{ position:relative; }
-    .day-badge{ position:absolute; right:.5rem; top:.5rem; font-size:.75rem; color:rgb(100 116 139); }
-    .dot{ width:6px;height:6px;border-radius:9999px;background:#4f46e5;position:absolute;left:10px;bottom:10px;box-shadow:0 0 0 3px rgba(79,70,229,.15); }
-    .chip{ font-size:.75rem; display:inline-block; padding:.25rem .5rem; border-radius:9999px; background:rgba(79,70,229,.08); color:#111827; border:1px solid rgba(79,70,229,.18) }
-    .skeleton{ background:linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 37%,#f3f4f6 63%); background-size:400% 100%; animation:shimmer 1.2s ease infinite; }
-    @keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
-    .modal-enter{ transform:scale(.98); opacity:0 }
-    .modal-enter-active{ transform:scale(1); opacity:1; transition:all .18s ease }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+    }
+
+    .day-cell {
+      position: relative;
+    }
+
+    .day-badge {
+      position: absolute;
+      right: .5rem;
+      top: .5rem;
+      font-size: .75rem;
+      color: rgb(100 116 139);
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 9999px;
+      background: #4f46e5;
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, .15);
+    }
+
+    .chip {
+      font-size: .75rem;
+      display: inline-block;
+      padding: .25rem .5rem;
+      border-radius: 9999px;
+      background: rgba(79, 70, 229, .08);
+      color: #111827;
+      border: 1px solid rgba(79, 70, 229, .18)
+    }
+
+    .skeleton {
+      background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 37%, #f3f4f6 63%);
+      background-size: 400% 100%;
+      animation: shimmer 1.2s ease infinite;
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 100% 0
+      }
+
+      100% {
+        background-position: -100% 0
+      }
+    }
+
+    .modal-enter {
+      transform: scale(.98);
+      opacity: 0
+    }
+
+    .modal-enter-active {
+      transform: scale(1);
+      opacity: 1;
+      transition: all .18s ease
+    }
   </style>
 </head>
+
 <body class="bg-white text-slate-900">
-<header class="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-slate-200">
-  <div class="max-w-6xl mx-auto px-4 h-16 flex items-center relative">
-    <!-- ซ้าย: โลโก้ -->
-    <a href="./HOMEนศทตกลทบ.html" class="font-extrabold text-xl tracking-tight">RLTG</a>
+  <header class="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-slate-200">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center relative">
+      <!-- ซ้าย: โลโก้ -->
+      <a href="./HOMEนศทตกลทบ.html" class="font-extrabold text-xl tracking-tight">RLTG</a>
 
-    <!-- กลาง: ปุ่ม Prev/เดือน/Next ถูก "จัดกลางทั้งแถบ" ด้วย absolute -->
-    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-      <div class="pointer-events-auto flex items-center gap-2">
-        <button id="btnPrev"
-                class="h-10 px-3 rounded-xl border border-slate-300 hover:bg-slate-50">
-          ← Prev
-        </button>
+      <!-- กลาง: ปุ่ม Prev/เดือน/Next ถูก "จัดกลางทั้งแถบ" ด้วย absolute -->
+      <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div class="pointer-events-auto flex items-center gap-2">
+          <button id="btnPrev" class="h-10 px-3 rounded-xl border border-slate-300 hover:bg-slate-50">
+            ← Prev
+          </button>
 
-        <div id="monthLabel"
-             class="min-w-[10ch] text-center font-semibold tabular-nums"></div>
+          <div id="monthLabel" class="min-w-[10ch] text-center font-semibold tabular-nums"></div>
 
-        <button id="btnNext"
-                class="h-10 px-3 rounded-xl border border-slate-300 hover:bg-slate-50">
-          Next →
-        </button>
+          <button id="btnNext" class="h-10 px-3 rounded-xl border border-slate-300 hover:bg-slate-50">
+            Next →
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-</header>
+  </header>
 
   <!-- Main -->
   <main class="max-w-6xl mx-auto px-4 py-6">
@@ -86,10 +140,10 @@
 
   <!-- FAB: กลับหน้าแรก -->
   <a href="./HOMEนศทตกลทบ.html"
-     class="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-slate-900 text-white grid place-items-center shadow-xl hover:bg-slate-800 active:scale-95 transition"
-     title="กลับหน้าแรก" aria-label="กลับหน้าแรก">
+    class="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-slate-900 text-white grid place-items-center shadow-xl hover:bg-slate-800 active:scale-95 transition"
+    title="กลับหน้าแรก" aria-label="กลับหน้าแรก">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M3 10.5l9-7 9 7V20a2 2 0 01-2 2h-5v-6H10v6H5a2 2 0 01-2-2v-9.5z"/>
+      <path d="M3 10.5l9-7 9 7V20a2 2 0 01-2 2h-5v-6H10v6H5a2 2 0 01-2-2v-9.5z" />
     </svg>
   </a>
 
@@ -97,13 +151,15 @@
   <div id="eventModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/40"></div>
     <div class="relative z-10 min-h-full p-4 grid place-items-center">
-      <div class="modal-enter w-[720px] max-w-[calc(100vw-2rem)] rounded-2xl bg-white text-slate-900 shadow-2xl border border-slate-200">
+      <div
+        class="modal-enter w-[720px] max-w-[calc(100vw-2rem)] rounded-2xl bg-white text-slate-900 shadow-2xl border border-slate-200">
         <div class="flex items-start justify-between px-6 pt-5">
           <div class="pr-10">
             <div id="emTitle" class="text-xl font-bold">—</div>
             <div id="emDate" class="text-sm text-slate-500 mt-1">—</div>
           </div>
-          <button id="emClose" class="h-9 w-9 grid place-items-center rounded-full hover:bg-black/5" aria-label="ปิด">✕</button>
+          <button id="emClose" class="h-9 w-9 grid place-items-center rounded-full hover:bg-black/5"
+            aria-label="ปิด">✕</button>
         </div>
 
         <div class="px-6 pt-3 pb-2 text-sm text-slate-600">
@@ -131,10 +187,12 @@
         </div>
 
         <div class="px-6 pb-6 pt-2 flex items-center justify-end gap-3">
-          <button id="emCancel" class="px-4 py-2 rounded-xl bg-rose-600 text-white hover:bg-rose-500 active:scale-[.99]">
+          <button id="emCancel"
+            class="px-4 py-2 rounded-xl bg-rose-600 text-white hover:bg-rose-500 active:scale-[.99]">
             ยกเลิกการลงทะเบียน
           </button>
-          <button id="emClose2" class="px-4 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 active:scale-[.99]">
+          <button id="emClose2"
+            class="px-4 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 active:scale-[.99]">
             ปิด
           </button>
         </div>
@@ -146,7 +204,8 @@
   <div id="confirmModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-[2px]"></div>
     <div class="relative z-10 min-h-full p-4 grid place-items-center">
-      <div class="w-[540px] max-w-[calc(100vw-2rem)] rounded-2xl bg-white text-slate-900 shadow-2xl border border-slate-200 modal-enter">
+      <div
+        class="w-[540px] max-w-[calc(100vw-2rem)] rounded-2xl bg-white text-slate-900 shadow-2xl border border-slate-200 modal-enter">
         <div class="px-6 py-5">
           <div class="text-lg font-semibold mb-4">คุณต้องการยกเลิกกิจกรรมนี้ใช่หรือไม่</div>
           <div class="text-sm text-slate-600" id="cmEvent">—</div>
@@ -165,23 +224,23 @@
       (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
         ? 'http://localhost:4000/api' : '/api';
 
-    const TH_MONTH = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
-    function pad(n){ return String(n).padStart(2,'0'); }
-    function keyOfDate(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
-    function parseDateLike(s){ if(!s) return null; if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(s+'T00:00:00'); const d=new Date(s); return isNaN(d)?null:d; }
-    function toDisplayDate(d){ const day=d.getDate(); const month=d.getMonth()+1; const y=d.getFullYear()+543; return `${day}/${month}/${String(y).slice(-2)}`; }
+    const TH_MONTH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function keyOfDate(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+    function parseDateLike(s) { if (!s) return null; if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(s + 'T00:00:00'); const d = new Date(s); return isNaN(d) ? null : d; }
+    function toDisplayDate(d) { const day = d.getDate(); const month = d.getMonth() + 1; const y = d.getFullYear() + 543; return `${day}/${month}/${String(y).slice(-2)}`; }
 
     // ==== GLOBAL MODAL HELPERS (ล็อกสกอลล์ + แอนิเมชัน) ====
-    function showModal(wrapper){
+    function showModal(wrapper) {
       wrapper.classList.remove('hidden');
       document.documentElement.classList.add('overflow-hidden');
       const panel = wrapper.querySelector('.modal-enter');
-      if (panel) requestAnimationFrame(()=> panel.classList.add('modal-enter-active'));
+      if (panel) requestAnimationFrame(() => panel.classList.add('modal-enter-active'));
     }
-    function hideModal(wrapper){
+    function hideModal(wrapper) {
       const panel = wrapper.querySelector('.modal-enter');
       if (panel) panel.classList.remove('modal-enter-active');
-      setTimeout(()=>{
+      setTimeout(() => {
         wrapper.classList.add('hidden');
         document.documentElement.classList.remove('overflow-hidden');
       }, 180);
@@ -227,19 +286,19 @@
     };
 
     // ==== FETCH ====
-    async function fetchMyRegistrations(){
+    async function fetchMyRegistrations() {
       const token = localStorage.getItem('token');
-      if (!token){ location.href = './index.html'; return []; }
+      if (!token) { location.href = './index.html'; return []; }
       const opt = { headers: { Authorization: 'Bearer ' + token }, credentials: 'include' };
       let res = await fetch(`${API_BASE}/registrations/me`, opt);
       if (res.status === 404) res = await fetch(`${API_BASE}/auth/my-registrations`, opt);
       if (!res.ok) throw new Error('โหลดรายการไม่สำเร็จ');
-      const j = await res.json().catch(()=> ({}));
+      const j = await res.json().catch(() => ({}));
       return j.items || [];
     }
-    function indexByDate(items){
+    function indexByDate(items) {
       const map = new Map();
-      for (const it of items){
+      for (const it of items) {
         const ev = it.event || {};
         const d = parseDateLike(ev.dateText);
         if (!d) continue;
@@ -251,12 +310,12 @@
     }
 
     // ==== RENDER CALENDAR ====
-    function daysInMonth(y, m){ return new Date(y, m+1, 0).getDate(); }
-    function firstWeekday(y, m){ return new Date(y, m, 1).getDay(); } // 0=Sun
+    function daysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
+    function firstWeekday(y, m) { return new Date(y, m, 1).getDay(); } // 0=Sun
 
-    function drawMonth(y, m){
+    function drawMonth(y, m) {
       viewYear = y; viewMonth = m;
-      $label.textContent = `${TH_MONTH[m]} ${y+543}`;
+      $label.textContent = `${TH_MONTH[m]} ${y + 543}`;
 
       $grid.innerHTML = '';
       const dcount = daysInMonth(y, m);
@@ -265,21 +324,21 @@
       const totalCells = 42;
       const cells = [];
       const prevDays = start;
-      const prevMonthDays = daysInMonth(y, m-1 < 0 ? 11 : m-1);
-      for (let i = prevDays; i > 0; i--){
+      const prevMonthDays = daysInMonth(y, m - 1 < 0 ? 11 : m - 1);
+      for (let i = prevDays; i > 0; i--) {
         const day = prevMonthDays - i + 1;
-        const d = new Date(y, m-1, day);
+        const d = new Date(y, m - 1, day);
         cells.push({ d, muted: true });
       }
-      for (let day = 1; day <= dcount; day++){
+      for (let day = 1; day <= dcount; day++) {
         cells.push({ d: new Date(y, m, day), muted: false });
       }
-      let n=1;
-      while (cells.length < totalCells){
-        cells.push({ d: new Date(y, m+1, n++), muted: true });
+      let n = 1;
+      while (cells.length < totalCells) {
+        cells.push({ d: new Date(y, m + 1, n++), muted: true });
       }
 
-      for (const cell of cells){
+      for (const cell of cells) {
         const k = keyOfDate(cell.d);
         const items = byDate.get(k) || [];
 
@@ -295,28 +354,28 @@
         badge.textContent = cell.d.getDate();
         wrap.appendChild(badge);
 
-        if (items.length){
+        if (items.length) {
           const dot = document.createElement('span');
           dot.className = 'dot';
           wrap.appendChild(dot);
 
           const inner = document.createElement('div');
           inner.className = 'mt-6 space-y-1';
-          items.slice(0,2).forEach(({ev})=>{
+          items.slice(0, 2).forEach(({ ev }) => {
             const chip = document.createElement('div');
             chip.className = 'chip';
             chip.textContent = ev.title || '(ไม่ระบุชื่อกิจกรรม)';
             inner.appendChild(chip);
           });
-          if (items.length > 2){
+          if (items.length > 2) {
             const more = document.createElement('div');
             more.className = 'text-xs text-slate-500';
-            more.textContent = `+${items.length-2} รายการ`;
+            more.textContent = `+${items.length - 2} รายการ`;
             inner.appendChild(more);
           }
           wrap.appendChild(inner);
 
-          wrap.addEventListener('click', ()=> openEventModal(items, 0));
+          wrap.addEventListener('click', () => openEventModal(items, 0));
         }
 
         $grid.appendChild(wrap);
@@ -325,26 +384,26 @@
       drawListForMonth(y, m);
     }
 
-    function drawListForMonth(y, m){
+    function drawListForMonth(y, m) {
       $list.innerHTML = '';
       $list.classList.add('hidden');
       $listEmpty.classList.add('hidden');
       $listLoading.classList.remove('hidden');
 
       const monthItems = [];
-      for (const [k, arr] of byDate.entries()){
+      for (const [k, arr] of byDate.entries()) {
         const [Y, M] = k.split('-').map(Number);
-        if (Y === y && (M-1) === m){
+        if (Y === y && (M - 1) === m) {
           monthItems.push(...arr);
         }
       }
-      monthItems.sort((a,b)=> a.date - b.date);
+      monthItems.sort((a, b) => a.date - b.date);
 
       $listLoading.classList.add('hidden');
-      if (!monthItems.length){ $listEmpty.classList.remove('hidden'); return; }
+      if (!monthItems.length) { $listEmpty.classList.remove('hidden'); return; }
 
       const frag = document.createDocumentFragment();
-      monthItems.forEach(({ev, date, reg})=>{
+      monthItems.forEach(({ ev, date, reg }) => {
         const li = document.createElement('li');
         li.className = 'flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3 hover:bg-slate-50';
         li.innerHTML = `
@@ -357,8 +416,8 @@
           </div>
           <button class="text-sm px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800">ดูรายละเอียด</button>
         `;
-        li.querySelector('button').addEventListener('click', ()=> {
-          openEventModal([ {ev, date, reg} ], 0);
+        li.querySelector('button').addEventListener('click', () => {
+          openEventModal([{ ev, date, reg }], 0);
         });
         frag.appendChild(li);
       });
@@ -368,7 +427,7 @@
     }
 
     // ==== MODALS ====
-    function fillEventModal(){
+    function fillEventModal() {
       const item = currentItems[currentIndex];
       if (!item) return;
 
@@ -380,15 +439,15 @@
       em.addr.textContent = reg.address || '—';
 
       // switcher
-      if (currentItems.length > 1){
+      if (currentItems.length > 1) {
         em.switcherWrap.classList.remove('hidden');
         em.switcher.innerHTML = '';
-        currentItems.forEach((it, i)=>{
+        currentItems.forEach((it, i) => {
           const b = document.createElement('button');
           b.className = 'px-3 py-1.5 rounded-full border ' +
-            (i===currentIndex ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-300 hover:bg-slate-50');
-          b.textContent = it.ev.title || `กิจกรรม ${i+1}`;
-          b.addEventListener('click', ()=>{ currentIndex = i; fillEventModal(); });
+            (i === currentIndex ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-300 hover:bg-slate-50');
+          b.textContent = it.ev.title || `กิจกรรม ${i + 1}`;
+          b.addEventListener('click', () => { currentIndex = i; fillEventModal(); });
           em.switcher.appendChild(b);
         });
       } else {
@@ -396,28 +455,28 @@
       }
 
       // ยกเลิก
-      em.btnCancel.onclick = ()=> openConfirmModal(item);
+      em.btnCancel.onclick = () => openConfirmModal(item);
     }
 
-    function openEventModal(items, index){
+    function openEventModal(items, index) {
       currentItems = items; currentIndex = index || 0;
       fillEventModal(); showModal(em.wrap);
     }
-    em.btnClose.addEventListener('click', ()=> hideModal(em.wrap));
-    em.btnClose2.addEventListener('click', ()=> hideModal(em.wrap));
-    em.wrap.addEventListener('click', (e)=>{ if(e.target === em.wrap) hideModal(em.wrap); });
+    em.btnClose.addEventListener('click', () => hideModal(em.wrap));
+    em.btnClose2.addEventListener('click', () => hideModal(em.wrap));
+    em.wrap.addEventListener('click', (e) => { if (e.target === em.wrap) hideModal(em.wrap); });
 
-    function openConfirmModal(item){
+    function openConfirmModal(item) {
       cm.text.textContent = (item.ev.title || '(ไม่ระบุชื่อกิจกรรม)') + ' • ' + toDisplayDate(item.date);
-      cm.yes.onclick = ()=> doCancel(item);
-      cm.no.onclick = ()=> hideModal(cm.wrap);
+      cm.yes.onclick = () => doCancel(item);
+      cm.no.onclick = () => hideModal(cm.wrap);
       showModal(cm.wrap);
     }
-    cm.wrap.addEventListener('click', (e)=>{ if(e.target === cm.wrap) hideModal(cm.wrap); });
+    cm.wrap.addEventListener('click', (e) => { if (e.target === cm.wrap) hideModal(cm.wrap); });
 
-    async function doCancel(item){
+    async function doCancel(item) {
       cm.yes.disabled = true;
-      try{
+      try {
         const token = localStorage.getItem('token');
         await fetch(`${API_BASE}/registrations/${item.reg._id}`, {
           method: 'DELETE',
@@ -428,32 +487,32 @@
         byDate = indexByDate(allRegs);
         drawMonth(viewYear, viewMonth);
         hideModal(cm.wrap); hideModal(em.wrap);
-      }catch(e){ alert('ยกเลิกไม่สำเร็จ'); }
-      finally{ cm.yes.disabled = false; }
+      } catch (e) { alert('ยกเลิกไม่สำเร็จ'); }
+      finally { cm.yes.disabled = false; }
     }
 
     // ==== INIT ====
-    (async function init(){
+    (async function init() {
       // guard: admin ไม่ให้ใช้หน้า calendar → กลับหน้าแรก
-      try{
+      try {
         const token = localStorage.getItem('token');
-        const meRes = await fetch(`${API_BASE}/auth/me`, { headers:{Authorization:'Bearer '+token}, credentials:'include' });
-        if (meRes.ok){
-          const meJson = await meRes.json().catch(()=>({}));
+        const meRes = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: 'Bearer ' + token }, credentials: 'include' });
+        if (meRes.ok) {
+          const meJson = await meRes.json().catch(() => ({}));
           const me = meJson.user || meJson;
-          if (me?.role === 'admin'){ location.href = './HOMEนศทตกลทบ.html'; return; }
+          if (me?.role === 'admin') { location.href = './HOMEนศทตกลทบ.html'; return; }
         } else {
-          location.href='./index.html'; return;
+          location.href = './index.html'; return;
         }
-      }catch{ location.href='./index.html'; return; }
+      } catch { location.href = './index.html'; return; }
 
       const now = new Date();
       viewYear = now.getFullYear(); viewMonth = now.getMonth();
 
-      try{
+      try {
         allRegs = await fetchMyRegistrations();
         byDate = indexByDate(allRegs);
-      }catch(e){
+      } catch (e) {
         $listLoading.classList.add('hidden');
         $listEmpty.classList.remove('hidden');
         $listEmpty.textContent = 'โหลดข้อมูลไม่สำเร็จ';
@@ -461,20 +520,21 @@
 
       drawMonth(viewYear, viewMonth);
 
-      document.getElementById('btnPrev').addEventListener('click', ()=>{
+      document.getElementById('btnPrev').addEventListener('click', () => {
         const d = new Date(viewYear, viewMonth - 1, 1);
         drawMonth(d.getFullYear(), d.getMonth());
       });
-      document.getElementById('btnNext').addEventListener('click', ()=>{
+      document.getElementById('btnNext').addEventListener('click', () => {
         const d = new Date(viewYear, viewMonth + 1, 1);
         drawMonth(d.getFullYear(), d.getMonth());
       });
 
       // ESC ปิดโมดัล
-      document.addEventListener('keydown', e=>{
-        if (e.key === 'Escape'){ hideModal(em.wrap); hideModal(cm.wrap); }
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { hideModal(em.wrap); hideModal(cm.wrap); }
       });
     })();
   </script>
 </body>
+
 </html>
