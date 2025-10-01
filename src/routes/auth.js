@@ -1,6 +1,8 @@
 import { Router } from "express";
+import crypto from "crypto";
 import bcrypt from "bcryptjs";          // ใช้ bcryptjs
 import User from "../models/User.js";
+import { sendEmail } from "../utils/sendEmail.js";
 import Registration from "../models/Registration.js";
 import {
   signToken,
@@ -137,6 +139,70 @@ router.get("/my-registrations", async (req, res) => {
   } catch (e) {
     console.error(e);
     return res.status(401).json({ message: "invalid token" });
+  }
+});
+
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body || {};
+  if (!email) return res.status(400).json({ message: "email is required" });
+
+  // ส่ง 200 เสมอเพื่อความปลอดภัย ไม่บอกว่าอีเมลมีจริงไหม
+  try {
+    const user = await User.findOne({ email });
+    if (user) {
+      const token = crypto.randomBytes(32).toString("hex");
+      const hash = crypto.createHash("sha256").update(token).digest("hex");
+
+      user.resetPasswordTokenHash = hash;
+      user.resetPasswordExpiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 นาที
+      await user.save({ validateBeforeSave: false });
+
+      const base =
+      process.env.CLIENT_BASE ||           // dev: 5500 (Live Server)
+      process.env.FRONTEND_URL ||          // prod: domain ฝั่งเว็บ (ถ้ามี)
+      'http://127.0.0.1:5500';             // fallback ไม่พาไป 4000
+
+      const resetUrl = `${base}/reset.html?token=${encodeURIComponent(token)}`;
+
+      await sendEmail({
+        to: user.email,
+        subject: "Reset your password",
+        html: `
+          <p>คลิกลิงก์ด้านล่างเพื่อรีเซ็ตรหัสผ่าน (ภายใน 15 นาที)</p>
+          <p><a href="${resetUrl}" target="_blank">${resetUrl}</a></p>
+        `,
+      });
+    }
+    return res.json({ message: "If that email exists, a reset link has been sent." });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// POST /api/auth/reset-password   { token, password }
+router.post("/reset-password", async (req, res) => {
+  const { token, password } = req.body || {};
+  if (!token || !password) return res.status(400).json({ message: "token & password required" });
+
+  try {
+    const hash = crypto.createHash("sha256").update(token).digest("hex");
+    const user = await User.findOne({
+      resetPasswordTokenHash: hash,
+      resetPasswordExpiresAt: { $gt: new Date() },
+    });
+
+    if (!user) return res.status(400).json({ message: "Invalid or expired token" });
+
+    user.passwordHash = await bcrypt.hash(password, 12);
+    user.resetPasswordTokenHash = undefined;
+    user.resetPasswordExpiresAt = undefined;
+    await user.save();
+
+    return res.json({ message: "Password updated. You can sign in now." });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 

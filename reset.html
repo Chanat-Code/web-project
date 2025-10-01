@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Reset password</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-200 flex items-center justify-center p-6">
+  <main class="w-full max-w-lg rounded-3xl bg-white shadow-lg p-8">
+    <h1 class="text-3xl font-bold mb-6 text-center">Reset password</h1>
+    <input id="newPwd" type="password" placeholder="New password"
+           class="w-full h-12 rounded-xl bg-gray-200 px-4 mb-3 outline-none focus:ring-2 focus:ring-indigo-400" required>
+    <input id="newPwd2" type="password" placeholder="Confirm password"
+           class="w-full h-12 rounded-xl bg-gray-200 px-4 mb-4 outline-none focus:ring-2 focus:ring-indigo-400" required>
+    <button id="rpBtn"
+            class="w-full h-12 rounded-xl bg-indigo-700 text-white font-semibold hover:bg-indigo-800">
+      Update password
+    </button>
+    <a href="./index.html" class="block text-center text-indigo-700 mt-4">Back to Sign in</a>
+  </main>
+
+  <script>
+    const isVercel = location.hostname.endsWith('.vercel.app');
+    const API_BASE = isVercel ? '' : 'http://127.0.0.1:4000';
+    const API = `${API_BASE}/api/auth/reset-password`;
+    const token = new URLSearchParams(location.search).get('token');
+
+    document.getElementById('rpBtn').addEventListener('click', async () => {
+      const p1 = document.getElementById('newPwd').value;
+      const p2 = document.getElementById('newPwd2').value;
+      if (!token) return alert('Missing token');
+      if (!p1 || p1.length < 6) return alert('รหัสผ่านอย่างน้อย 6 ตัวอักษร');
+      if (p1 !== p2) return alert('รหัสผ่านไม่ตรงกัน');
+
+      try {
+        const res = await fetch(API, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          credentials: 'include',
+          body: JSON.stringify({ token, password: p1 })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) return alert(data.message || 'Reset failed');
+        alert('อัปเดตรหัสผ่านเรียบร้อย');
+        location.href = './index.html';
+      } catch (e) {
+        console.error(e);
+        alert('Network error');
+      }
+    });
+  </script>
+</body>
+</html>

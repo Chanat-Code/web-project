@@ -8,7 +8,11 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true },
     major: { type: String },
     phone: { type: String },
-    role: { type: String, enum: ["user", "admin"], default: "user" }
+    role: { type: String, enum: ["user", "admin"], default: "user" },
+
+    // 🔽 ใช้สำหรับลืมรหัสผ่าน
+    resetPasswordTokenHash: { type: String, index: true },
+    resetPasswordExpiresAt: { type: Date, index: true },
   },
   { timestamps: true }
 );
