@@ -8,7 +8,9 @@
     { "src": "calendar.html", "use": "@vercel/static" },
     { "src": "event.html", "use": "@vercel/static" },
     { "src": "dist/**", "use": "@vercel/static" },
-    { "src": "assets/**", "use": "@vercel/static" }
+    { "src": "assets/**", "use": "@vercel/static" },
+    { "src": "reset.html", "use": "@vercel/static" },
+    { "src": "forgot.html", "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/index.js" },
