@@ -157,10 +157,13 @@ router.post("/forgot-password", async (req, res) => {
       user.resetPasswordExpiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 นาที
       await user.save({ validateBeforeSave: false });
 
+      const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https').split(',')[0];
+      const host  = req.headers['x-forwarded-host']  || req.get('host');
+
       const base =
-      process.env.CLIENT_BASE ||           // dev: 5500 (Live Server)
-      process.env.FRONTEND_URL ||          // prod: domain ฝั่งเว็บ (ถ้ามี)
-      'http://127.0.0.1:5500';             // fallback ไม่พาไป 4000
+        process.env.CLIENT_BASE ||
+        process.env.FRONTEND_URL ||
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `${proto}://${host}`);
 
       const resetUrl = `${base}/reset.html?token=${encodeURIComponent(token)}`;
 
