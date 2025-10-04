@@ -141,5 +141,25 @@ router.get("/:id/registrations", requireAuth, requireAdmin, async (req, res) => 
     } : null
   })));
 });
+// ---------แก้ไขกิจกรรม---------
+router.patch("/:id", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
 
+    const ev = await Event.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
+
+    if (!ev) return res.status(404).json({ message: "event not found" });
+
+    res.json(ev);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "server error" });
+  }
+});
 export default router;
+
