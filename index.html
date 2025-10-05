@@ -12,6 +12,23 @@
     .font-manjari {
       font-family: 'Manjari', sans-serif;
     }
+
+    /* เพิ่ม animation สำหรับการกด Enter */
+    .enter-hint {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 0.7;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
   </style>
 </head>
 
@@ -49,7 +66,7 @@
 
       <!-- Sign up -->
       <p class="text-center text-lg text-black mt-6">
-        Don’t have an account?
+        Don't have an account?
         <a href="/REGISTER.HTML" class="text-indigo-700 hover:underline">Sign up</a>
       </p>
 
@@ -59,9 +76,16 @@
         const API_BASE = isVercel ? '' : 'http://127.0.0.1:4000';
         const LOGIN_API = `${API_BASE}/api/auth/login`;
 
-        document.getElementById("loginBtn").addEventListener("click", async () => {
+        // ฟังก์ชัน login
+        async function performLogin() {
           const usernameOrEmail = document.getElementById("usernameOrEmail").value.trim();
           const password = document.getElementById("loginPassword").value;
+
+          // ตรวจสอบว่ากรอกข้อมูลครบหรือยัง
+          if (!usernameOrEmail || !password) {
+            alert("กรุณากรอกชื่อผู้ใช้และรหัสผ่าน");
+            return;
+          }
 
           try {
             const res = await fetch(LOGIN_API, {
@@ -86,6 +110,40 @@
             console.error(err);
             alert("Network error");
           }
+        }
+
+        // Event listener สำหรับปุ่ม Login
+        document.getElementById("loginBtn").addEventListener("click", performLogin);
+
+        // Event listener สำหรับการกด Enter ในฟิลด์ input
+        document.getElementById("usernameOrEmail").addEventListener("keypress", function (event) {
+          if (event.key === "Enter") {
+            document.getElementById("loginPassword").focus();
+          }
+        });
+
+        document.getElementById("loginPassword").addEventListener("keypress", function (event) {
+          if (event.key === "Enter") {
+            performLogin();
+          }
+        });
+
+        // Event listener สำหรับการกด Enter ที่ใดก็ได้ในหน้า (optional)
+        document.addEventListener("keypress", function (event) {
+          if (event.key === "Enter") {
+            // ตรวจสอบว่าอยู่ในฟิลด์ input หรือไม่
+            const activeElement = document.activeElement;
+            const isInInput = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA';
+
+            if (!isInInput) {
+              performLogin();
+            }
+          }
+        });
+
+        // โฟกัสที่ฟิลด์ username เมื่อหน้าโหลดเสร็จ
+        window.addEventListener('load', function () {
+          document.getElementById("usernameOrEmail").focus();
         });
       </script>
 
