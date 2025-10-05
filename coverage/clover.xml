@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1759666650803" clover="3.2.0">
-  <project timestamp="1759666650803" name="All files">
     <metrics statements="208" coveredstatements="42" conditionals="135" coveredconditionals="6" methods="35" coveredmethods="3" elements="378" coveredelements="51" complexity="0" loc="208" ncloc="208" packages="5" files="9" classes="9"/>
     <package name="web-project">
       <metrics statements="14" coveredstatements="14" conditionals="6" coveredconditionals="6" methods="3" coveredmethods="3"/>
@@ -11,15 +9,8 @@
         <line num="13" count="1" type="cond" truecount="2" falsecount="0"/>
         <line num="15" count="2" type="stmt"/>
         <line num="19" count="1" type="stmt"/>
-        <line num="22" count="3" type="cond" truecount="4" falsecount="0"/>
-        <line num="25" count="1" type="stmt"/>
         <line num="29" count="1" type="stmt"/>
-        <line num="32" count="1" type="stmt"/>
         <line num="33" count="1" type="stmt"/>
-        <line num="36" count="1" type="stmt"/>
-        <line num="37" count="1" type="stmt"/>
-        <line num="38" count="1" type="stmt"/>
-        <line num="41" count="3" type="stmt"/>
       </file>
     </package>
     <package name="web-project.src.middleware">
