@@ -1,4 +1,4 @@
-// app.js  (ESM)
+// app.js (ESM)
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -15,14 +15,11 @@ const origins = (process.env.CORS_ORIGINS || DEFAULT_ORIGINS.join(","))
   .map((s) => s.trim())
   .filter(Boolean);
 
-// ถ้า origin ไม่อยู่ใน whitelist ให้คืน false (จะไม่มี header CORS) ไม่ต้องโยน error
+// ✅ แบบปลอดภัย — ถ้า origin ไม่อยู่ใน whitelist ก็ไม่ใส่ header CORS
 const corsOptions = {
   origin: (origin, cb) => {
-    // อนุญาตเมื่อไม่มี origin (เช่น supertest/curl) หรืออยู่ใน whitelist
     if (!origin || origins.includes(origin)) return cb(null, true);
-
-    // ❗️ห้าม new Error(...) เพราะจะกลายเป็น 500
-    return cb(null, false);  // ไม่อนุญาต = ไม่ใส่ CORS header เฉย ๆ
+    return cb(null, false); // แค่ไม่อนุญาต (ไม่โยน error)
   },
   credentials: true,
 };
@@ -37,7 +34,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/events", eventsRouter);
 app.use("/api/registrations", registrationsRouter);
 
-// health
+// health check
 app.get("/", (_req, res) => res.send("OK"));
 
 export default app;
