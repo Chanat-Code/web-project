@@ -11,9 +11,6 @@
     "start": "node server.js",
     "type": "module",
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage --runInBand"
-
-
-    
   },
   "keywords": [],
   "author": "",
