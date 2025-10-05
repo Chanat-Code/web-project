@@ -1,0 +1,14 @@
+# dependencies
+node_modules/
+
+# test coverage artifacts
+coverage/
+coverage-*/
+*.lcov
+*.lcov.info
+coverage-final.json
+clover.xml
+
+# env & logs
+.env
+*.log
