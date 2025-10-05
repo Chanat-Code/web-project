@@ -197,10 +197,15 @@
       ['evTitle', 'evDesc', 'evDate', 'evLoc'].forEach(id => {
         const el = document.getElementById(id);
         el.addEventListener('click', () => { el.contentEditable = "true"; el.focus(); el.style.backgroundColor = "#e0f2ff"; });
-        el.addEventListener('blur', () => { el.contentEditable = "false"; el.style.backgroundColor = ""; updateEvent(); });
+        el.addEventListener('blur', () => { el.contentEditable = "false"; el.style.backgroundColor = ""; });
       });
       btnSubmit?.remove();
       addressInput?.remove();
+      const saveBtn = document.createElement("button");
+      saveBtn.textContent = "บันทึก";
+      saveBtn.className ="mt-6 px-6 py-2.5 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-500 active:scale-[.99]";
+      document.querySelector(".space-y-6").appendChild(saveBtn);
+      saveBtn.addEventListener("click", updateEvent);
     }
 
     // เชื่อมปุ่ม
