@@ -7,6 +7,7 @@ import authRouter from "./src/routes/auth.js";
 import eventsRouter from "./src/routes/events.js";
 import registrationsRouter from "./src/routes/registrations.js";
 import { connectDB } from "./src/db.js"; // ✅ ต่อ DB เมื่อรัน local
+import app from "./app.js";
 
 dotenv.config();
 
@@ -60,3 +61,6 @@ if (process.env.VERCEL !== "1") {
     }
   })();
 }
+
+
+
