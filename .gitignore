@@ -1,1 +1,14 @@
-coverage/lcov-report/web-project/src/models/Event.js.html
+# dependencies
+node_modules/
+
+# test coverage artifacts
+coverage/
+coverage-*/
+*.lcov
+*.lcov.info
+coverage-final.json
+clover.xml
+
+# env & logs
+.env
+*.log
