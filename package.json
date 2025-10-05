@@ -8,7 +8,12 @@
     "dev": "nodemon server.js",
     "dev:css": "node node_modules/@tailwindcss/cli/dist/index.mjs -i ./src/input.css -o ./dist/styles.css --watch",
     "build": "node node_modules/@tailwindcss/cli/dist/index.mjs -i ./src/input.css -o ./dist/styles.css",
-    "start": "node server.js"
+    "start": "node server.js",
+    "type": "module",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage --runInBand"
+
+
+    
   },
   "keywords": [],
   "author": "",
@@ -25,8 +30,11 @@
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.12",
+    "jest": "^30.2.0",
     "nodemon": "^3.1.10",
-    "tailwindcss": "^4.1.12"
+    "supertest": "^7.1.4",
+    "tailwindcss": "^4.1.12",
+    "cross-env": "^10.1.0"
   },
   "repository": {
     "type": "git",
