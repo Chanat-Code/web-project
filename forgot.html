@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Forgot password</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="min-h-screen bg-gray-200 flex items-center justify-center p-6">
   <main class="w-full max-w-lg rounded-3xl bg-white shadow-lg p-8">
     <h1 class="text-3xl font-bold mb-6 text-center">Forgot password</h1>
     <p class="text-sm text-gray-600 mb-4">กรอกอีเมลของคุณ แล้วเราจะส่งลิงก์สำหรับรีเซ็ตรหัสผ่านไปให้</p>
     <input id="fpEmail" type="email" placeholder="Email"
-           class="w-full h-12 rounded-xl bg-gray-200 px-4 mb-4 outline-none focus:ring-2 focus:ring-indigo-400" required>
-    <button id="fpBtn"
-            class="w-full h-12 rounded-xl bg-indigo-700 text-white font-semibold hover:bg-indigo-800">
+      class="w-full h-12 rounded-xl bg-gray-200 px-4 mb-4 outline-none focus:ring-2 focus:ring-indigo-400" required>
+    <button id="fpBtn" class="w-full h-12 rounded-xl bg-indigo-700 text-white font-semibold hover:bg-indigo-800">
       Send reset link
     </button>
     <a href="./index.html" class="block text-center text-indigo-700 mt-4">Back to Sign in</a>
@@ -31,7 +32,7 @@
       try {
         const res = await fetch(API, {
           method: 'POST',
-          headers: {'Content-Type':'application/json'},
+          headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({ email })
         });
@@ -44,4 +45,5 @@
     });
   </script>
 </body>
+
 </html>
