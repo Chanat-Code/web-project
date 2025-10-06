@@ -1,6 +1,8 @@
+// src/routes/auth.js
 import { Router } from "express";
 import crypto from "crypto";
-import bcrypt from "bcryptjs";          // ใช้ bcryptjs
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import Registration from "../models/Registration.js";
@@ -10,7 +12,6 @@ import {
   clearAuthCookie,
   getTokenFromReq
 } from "../middleware/auth.js";
-import jwt from "jsonwebtoken";
 
 const router = Router();
 
@@ -19,6 +20,41 @@ const safe = (u) => {
   const { _id, username, email, idNumber, major, phone, role, createdAt, updatedAt } = u;
   return { id: _id, username, email, idNumber, major, phone, role, createdAt, updatedAt };
 };
+
+/* ------------- Rate limiting for forgot-password (simple memory cache) ------------- */
+/**
+ * This is a simple per-email/per-ip limiter for forgot-password.
+ * Production: replace with Redis-backed limiter (e.g. rate-limit-redis) or express-rate-limit.
+ *
+ * Rules:
+ * - maxRequestsPerWindow = 5 per windowMs per email
+ * - windowMs = 60 * 60 * 1000 (1 hour)
+ */
+const forgotLimiter = new Map();
+const MAX_REQS = 5;
+const WINDOW_MS = 60 * 60 * 1000;
+
+function checkForgotLimit(key) {
+  const now = Date.now();
+  const rec = forgotLimiter.get(key);
+  if (!rec) {
+    forgotLimiter.set(key, { count: 1, firstAt: now });
+    return { ok: true };
+  }
+  if (now - rec.firstAt > WINDOW_MS) {
+    // reset window
+    forgotLimiter.set(key, { count: 1, firstAt: now });
+    return { ok: true };
+  }
+  if (rec.count >= MAX_REQS) {
+    return { ok: false, retryAfterMs: WINDOW_MS - (now - rec.firstAt) };
+  }
+  rec.count++;
+  forgotLimiter.set(key, rec);
+  return { ok: true };
+}
+
+/* --------------------------------- Routes --------------------------------- */
 
 // POST /api/auth/register
 router.post("/register", async (req, res) => {
@@ -109,7 +145,6 @@ router.get("/my-registrations", async (req, res) => {
       let event = null;
 
       if (r.event && r.event._id) {
-        // กรณี event ยังอยู่
         event = {
           _id: r.event._id,
           title: r.event.title,
@@ -118,7 +153,6 @@ router.get("/my-registrations", async (req, res) => {
           imageUrl: r.event.imageUrl
         };
       } else if (r.eventSnapshot) {
-        // กรณี event ถูกลบ → ใช้ snapshot
         event = {
           _id: null,
           title: r.eventSnapshot.title,
@@ -142,21 +176,36 @@ router.get("/my-registrations", async (req, res) => {
   }
 });
 
+/* ---------------------------- Forgot password ---------------------------- */
 router.post("/forgot-password", async (req, res) => {
   const { email } = req.body || {};
   if (!email) return res.status(400).json({ message: "email is required" });
 
-  // ส่ง 200 เสมอเพื่อความปลอดภัย ไม่บอกว่าอีเมลมีจริงไหม
   try {
+    // rate-limit by email + ip
+    const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+    const keyEmail = `email:${email}`;
+    const keyIp = `ip:${ip}`;
+
+    const resEmail = checkForgotLimit(keyEmail);
+    const resIp = checkForgotLimit(keyIp);
+
+    if (!resEmail.ok || !resIp.ok) {
+      const retryAfter = (!resEmail.ok ? resEmail.retryAfterMs : resIp.retryAfterMs) || WINDOW_MS;
+      return res.status(429).json({ message: "Too many requests", retryAfterMs: retryAfter });
+    }
+
     const user = await User.findOne({ email });
     if (user) {
+      // create token (random) and store its hash
       const token = crypto.randomBytes(32).toString("hex");
       const hash = crypto.createHash("sha256").update(token).digest("hex");
 
       user.resetPasswordTokenHash = hash;
-      user.resetPasswordExpiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 นาที
+      user.resetPasswordExpiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 minutes
       await user.save({ validateBeforeSave: false });
 
+      // Build client URL
       const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https').split(',')[0];
       const host  = req.headers['x-forwarded-host']  || req.get('host');
 
@@ -165,17 +214,31 @@ router.post("/forgot-password", async (req, res) => {
         process.env.FRONTEND_URL ||
         (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `${proto}://${host}`);
 
-      const resetUrl = `${base}/reset.html?token=${encodeURIComponent(token)}`;
+      const resetUrl = `${base.replace(/\/$/, "")}/reset.html?token=${encodeURIComponent(token)}`;
 
-      await sendEmail({
-        to: user.email,
-        subject: "Reset your password",
-        html: `
-          <p>คลิกลิงก์ด้านล่างเพื่อรีเซ็ตรหัสผ่าน (ภายใน 15 นาที)</p>
-          <p><a href="${resetUrl}" target="_blank">${resetUrl}</a></p>
-        `,
-      });
+      // send email
+      try {
+        const result = await sendEmail({
+          to: user.email,
+          subject: "Reset your password",
+          html: `
+            <p>คลิกลิงก์ด้านล่างเพื่อรีเซ็ตรหัสผ่าน (ภายใน 15 นาที)</p>
+            <p><a href="${resetUrl}" target="_blank">${resetUrl}</a></p>
+          `,
+          text: `Open this link to reset your password: ${resetUrl}`
+        });
+
+        // If dev Ethereal preview provided, log it so developer can open it
+        if (result && result.preview) {
+          console.log("Password reset preview URL:", result.preview);
+        }
+      } catch (sendErr) {
+        console.error("Mail send failed:", sendErr);
+        // Do not reveal mail errors to user — but log for debugging
+      }
     }
+
+    // Always respond 200 to avoid user enumeration
     return res.json({ message: "If that email exists, a reset link has been sent." });
   } catch (e) {
     console.error(e);
@@ -183,7 +246,7 @@ router.post("/forgot-password", async (req, res) => {
   }
 });
 
-// POST /api/auth/reset-password   { token, password }
+/* ---------------------------- Reset password ---------------------------- */
 router.post("/reset-password", async (req, res) => {
   const { token, password } = req.body || {};
   if (!token || !password) return res.status(400).json({ message: "token & password required" });
