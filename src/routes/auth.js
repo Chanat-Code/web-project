@@ -213,31 +213,32 @@ router.post("/forgot-password", async (req, res) => {
         (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `${proto}://${host}`);
       const resetUrl = `${base.replace(/\/$/, "")}/reset.html?token=${encodeURIComponent(token)}`;
 
+      // --- ใช้ template เพื่อสร้าง html + text ---
+      const { html, text } = resetEmailTemplate({
+        resetUrl,
+        logoUrl: process.env.LOGO_URL,   // ถ้ามี
+        appName: process.env.APP_NAME || "RLTG",
+        minutes: 15
+      });
+
       // Respond immediately (avoid waiting for email)
       res.json({ message: "If that email exists, a reset link has been sent." });
 
-      // Send email in background (non-blocking)
-      setImmediate(async () => {
+      // ส่งเมลแบบไม่บล็อก (background)
+      setTimeout(async () => {
         try {
-          const { html, text } = resetEmailTemplate({
-            resetUrl,
-            logoUrl: process.env.LOGO_URL,
-            appName: process.env.APP_NAME || "RLTG",
-            minutes: 15
-          });
-
           const result = await sendEmail({
             to: user.email,
-            subject: `${process.env.APP_NAME || "RLTG"} — Reset your password`,
+            subject: "รีเซ็ตรหัสผ่านของคุณ",
             html,
             text
           });
-
-          console.log("Background reset mail send result:", result && (result.provider || result.data?.messageId) );
+          console.log("Reset email sent:", result);
+          if (result.preview) console.log("Preview URL:", result.preview);
         } catch (err) {
-          console.error("Mail send failed (background):", err?.message || err);
+          console.error("Mail send failed (background):", err && err.message ? err.message : err);
         }
-      });
+      }, 0);
 
       return;
     }
