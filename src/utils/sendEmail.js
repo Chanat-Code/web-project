@@ -1,6 +1,9 @@
 // src/utils/sendEmail.js
 import fetch from "node-fetch";
 import nodemailer from "nodemailer";
+import https from "https";
+
+const brevoAgent = new https.Agent({ keepAlive: true, maxSockets: 10 });
 
 function parseSender(raw) {
   if (!raw) return { email: "no-reply@example.com" };
@@ -54,39 +57,42 @@ export async function sendEmail({ to, subject, html, text }) {
   console.log("[sendEmail] payload:", { from: sender, to: toList, subject });
 
   // 1) Brevo API
-  if (BREVO_API_KEY) {
-    const payload = {
-      sender,
-      to: toList.map(e => ({ email: e })),
-      subject,
-      htmlContent: html,
-      textContent: text || ""
-    };
+    if (BREVO_API_KEY) {
+      const payload = {
+        sender,
+        to: toList.map(e => ({ email: e })),
+        subject,
+        htmlContent: html,
+        textContent: text || ""
+      };
 
-    try {
-      const res = await timeoutFetch("https://api.brevo.com/v3/smtp/email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "api-key": BREVO_API_KEY
-        },
-        body: JSON.stringify(payload)
-      }, 15000);
+      try {
+        // เพิ่ม agent เพื่อให้ keep-alive
+        const res = await timeoutFetch("https://api.brevo.com/v3/smtp/email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "api-key": BREVO_API_KEY
+          },
+          body: JSON.stringify(payload),
+          // node-fetch accepts 'agent' option; if using global fetch (node 18+) use undici/Agent instead
+          agent: brevoAgent
+        }, 10000); // timeout 10s
 
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        console.warn("Brevo API response not ok:", res.status, data);
-        throw new Error(`Brevo API error ${res.status}: ${JSON.stringify(data)}`);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          console.warn("Brevo API response not ok:", res.status, data);
+          throw new Error(`Brevo API error ${res.status}: ${JSON.stringify(data)}`);
+        }
+        console.log("Brevo send success:", data);
+        return { ok: true, provider: "brevo", data };
+      } catch (e) {
+        console.warn("Brevo send failed:", e?.message || e);
+        // fallthrough -> SMTP or Ethereal (ตามโค้ดเดิม)
       }
-      console.log("Brevo send success:", data);
-      return { ok: true, provider: "brevo", data };
-    } catch (e) {
-      console.warn("Brevo send failed:", e?.message || e);
-      // fallthrough to SMTP fallback
+    } else {
+      console.warn("BREVO_API_KEY not configured, skipping Brevo.");
     }
-  } else {
-    console.warn("BREVO_API_KEY not configured, skipping Brevo.");
-  }
 
   // 2) SMTP fallback
   const transporter = getSmtpTransporterFromEnv();
