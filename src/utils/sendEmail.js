@@ -1,167 +1,137 @@
 // src/utils/sendEmail.js
 import fetch from "node-fetch";
 import nodemailer from "nodemailer";
-import http from "http";
-import https from "https";
 
-const BREVO_API_KEY = process.env.BREVO_API_KEY;
-const MAIL_FROM = (process.env.MAIL_FROM || process.env.SMTP_USER || "no-reply@example.com").trim();
+function parseSender(raw) {
+  if (!raw) return { email: "no-reply@example.com" };
+  const m = String(raw).match(/^(.*)<(.+)>$/);
+  if (m) return { name: m[1].trim().replace(/(^"|"$)/g, ""), email: m[2].trim() };
+  return { email: String(raw).replace(/(^"|"$)/g, ""), name: undefined };
+}
 
-// Module-level singletons
-let smtpTransporter = null;
-let etherealAccount = null;
-
-// create a keep-alive agent for fetch (Brevo)
-const httpAgent = new http.Agent({ keepAlive: true });
-const httpsAgent = new https.Agent({ keepAlive: true });
-
-// helper: timeout fetch
-async function fetchWithTimeout(url, opts = {}, timeoutMs = 8000) {
+function timeoutFetch(url, opts = {}, ms = 15000) { // increased timeout
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, { ...opts, signal: controller.signal, agent: (parsedUrl => parsedUrl.protocol === 'https:' ? httpsAgent : httpAgent) });
-    return res;
-  } finally {
-    clearTimeout(id);
-  }
+  const id = setTimeout(() => controller.abort(), ms);
+  return fetch(url, { ...opts, signal: controller.signal }).finally(() => clearTimeout(id));
 }
 
-function parseMailFrom(m) {
-  const mm = String(m || "").match(/^(.*)<(.+@.+)>$/);
-  if (mm) return { name: mm[1].trim().replace(/(^"|"$)/g, ""), email: mm[2].trim() };
-  return { email: m.replace(/(^"|"$)/g, ""), name: undefined };
-}
-
-async function getSmtpTransporter() {
+let smtpTransporter = null;
+function getSmtpTransporterFromEnv() {
   if (smtpTransporter) return smtpTransporter;
-
   const { SMTP_HOST, SMTP_PORT = 587, SMTP_USER, SMTP_PASS } = process.env;
   if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) return null;
 
-  // create transporter once and reuse (pool)
   smtpTransporter = nodemailer.createTransport({
     host: SMTP_HOST,
     port: Number(SMTP_PORT),
     secure: Number(SMTP_PORT) === 465,
     auth: { user: SMTP_USER, pass: SMTP_PASS },
     pool: true,
-    maxConnections: 5,
-    maxMessages: 100,
-    // timeouts
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 20000,
     tls: { rejectUnauthorized: false }
   });
 
-  // verify once (don't throw to avoid breaking app, just warn)
-  smtpTransporter.verify().then(() => {
-    console.log("✅ SMTP transporter verified");
-  }).catch(err => {
-    console.warn("⚠️ SMTP verify failed:", err?.message || err);
-  });
+  smtpTransporter.verify()
+    .then(() => console.log("SMTP transporter ready"))
+    .catch(e => console.warn("SMTP verify warning:", e?.message || e));
 
   return smtpTransporter;
 }
 
-async function getEtherealTransporter() {
-  if (!etherealAccount) {
-    // createTestAccount is slow; only do in development
-    if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") {
-      etherealAccount = await nodemailer.createTestAccount();
-    } else {
-      return null;
-    }
-  }
-  return nodemailer.createTransport({
-    host: "smtp.ethereal.email",
-    port: 587,
-    secure: false,
-    auth: { user: etherealAccount.user, pass: etherealAccount.pass }
-  });
-}
-
 /**
- * Main sendEmail
- * - prefers BREVO API if BREVO_API_KEY present
- * - else uses SMTP (reused transporter)
- * - else in development uses Ethereal
+ * sendEmail tries:
+ * 1) Brevo API (if BREVO_API_KEY)
+ * 2) SMTP fallback (if configured)
+ * 3) Ethereal dev preview
+ *
+ * Returns { ok: true, provider, data } on success or throws Error on final failure.
  */
 export async function sendEmail({ to, subject, html, text }) {
-  // normalize to-array
-  const tos = Array.isArray(to) ? to : [to];
+  const BREVO_API_KEY = process.env.BREVO_API_KEY;
+  const MAIL_FROM_RAW = (process.env.MAIL_FROM || process.env.SMTP_USER || "no-reply@example.com").trim();
+  const sender = parseSender(MAIL_FROM_RAW);
+  const toList = Array.isArray(to) ? to : [to];
 
-  // 1) Brevo API (preferred)
+  console.log("[sendEmail] payload:", { from: sender, to: toList, subject });
+
+  // 1) Brevo API
   if (BREVO_API_KEY) {
-    const sender = parseMailFrom(MAIL_FROM);
     const payload = {
       sender,
-      to: tos.map(email => ({ email })),
+      to: toList.map(e => ({ email: e })),
       subject,
       htmlContent: html,
       textContent: text || ""
     };
 
     try {
-      const res = await fetchWithTimeout("https://api.brevo.com/v3/smtp/email", {
+      const res = await timeoutFetch("https://api.brevo.com/v3/smtp/email", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "api-key": BREVO_API_KEY },
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": BREVO_API_KEY
+        },
         body: JSON.stringify(payload)
-      }, 8000); // 8s timeout
+      }, 15000);
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const errMsg = data?.message || JSON.stringify(data);
-        const e = new Error(`Brevo API error ${res.status}: ${errMsg}`);
-        e.response = data;
-        throw e;
+        console.warn("Brevo API response not ok:", res.status, data);
+        throw new Error(`Brevo API error ${res.status}: ${JSON.stringify(data)}`);
       }
+      console.log("Brevo send success:", data);
       return { ok: true, provider: "brevo", data };
-    } catch (err) {
-      // bubble up — caller can catch and fallback if needed
-      console.error("Brevo API send failed:", err?.message || err);
-      throw err;
+    } catch (e) {
+      console.warn("Brevo send failed:", e?.message || e);
+      // fallthrough to SMTP fallback
     }
+  } else {
+    console.warn("BREVO_API_KEY not configured, skipping Brevo.");
   }
 
-  // 2) SMTP fallback (reused transporter)
-  const transporter = await getSmtpTransporter();
+  // 2) SMTP fallback
+  const transporter = getSmtpTransporterFromEnv();
   if (transporter) {
     try {
       const info = await transporter.sendMail({
-        from: MAIL_FROM,
-        to: tos.join(", "),
+        from: sender.name ? `${sender.name} <${sender.email}>` : sender.email,
+        to: toList.join(", "),
         subject,
         text,
         html
       });
+      console.log("SMTP send success:", info);
       return { ok: true, provider: "smtp", info };
     } catch (err) {
-      console.error("SMTP sendMail failed:", err);
-      throw err;
+      console.error("SMTP sendMail failed:", err?.message || err);
+      // fallthrough to Ethereal
     }
+  } else {
+    console.warn("SMTP not configured or missing credentials for fallback");
   }
 
-  // 3) Dev fallback: Ethereal (only in development/test)
-  const eth = await getEtherealTransporter();
-  if (eth) {
-    try {
-      const info = await eth.sendMail({
-        from: MAIL_FROM,
-        to: tos.join(", "),
-        subject,
-        text,
-        html
-      });
-      const preview = nodemailer.getTestMessageUrl(info);
-      console.log("Ethereal preview URL:", preview);
-      return { ok: true, provider: "ethereal", preview, info };
-    } catch (err) {
-      console.error("Ethereal send failed:", err);
-      throw err;
-    }
-  }
+  // 3) Ethereal dev fallback
+  try {
+    console.log("Using Ethereal dev transport (no BREVO and no working SMTP)");
+    const testAccount = await nodemailer.createTestAccount();
+    const ethTransport = nodemailer.createTransport({
+      host: "smtp.ethereal.email",
+      port: 587,
+      secure: false,
+      auth: { user: testAccount.user, pass: testAccount.pass }
+    });
 
-  throw new Error("No mail provider configured (set BREVO_API_KEY or SMTP_HOST/SMTP_USER/SMTP_PASS)");
+    const info = await ethTransport.sendMail({
+      from: sender.name ? `${sender.name} <${sender.email}>` : sender.email,
+      to: toList.join(", "),
+      subject,
+      text,
+      html
+    });
+    const preview = nodemailer.getTestMessageUrl(info);
+    console.log("Ethereal preview URL:", preview);
+    return { ok: true, provider: "ethereal", preview, info };
+  } catch (err) {
+    console.error("Ethereal send failed:", err?.message || err);
+    throw new Error("All email providers failed: " + (err?.message || err));
+  }
 }

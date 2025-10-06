@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import Registration from "../models/Registration.js";
+import { resetEmailTemplate } from "../templates/resetEmail.js";
 import {
   signToken,
   setAuthCookie,
@@ -182,14 +183,13 @@ router.post("/forgot-password", async (req, res) => {
   if (!email) return res.status(400).json({ message: "email is required" });
 
   try {
-    // rate-limit by email + ip
-    const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
-    const keyEmail = `email:${email}`;
+    // rate-limit
+    const ip = req.ip || (req.headers['x-forwarded-for'] ? String(req.headers['x-forwarded-for']).split(',')[0].trim() : 'unknown');
+    const keyEmail = `email:${String(email).toLowerCase()}`;
     const keyIp = `ip:${ip}`;
 
     const resEmail = checkForgotLimit(keyEmail);
     const resIp = checkForgotLimit(keyIp);
-
     if (!resEmail.ok || !resIp.ok) {
       const retryAfter = (!resEmail.ok ? resEmail.retryAfterMs : resIp.retryAfterMs) || WINDOW_MS;
       return res.status(429).json({ message: "Too many requests", retryAfterMs: retryAfter });
@@ -197,48 +197,52 @@ router.post("/forgot-password", async (req, res) => {
 
     const user = await User.findOne({ email });
     if (user) {
-      // create token (random) and store its hash
+      // create token and store hash
       const token = crypto.randomBytes(32).toString("hex");
       const hash = crypto.createHash("sha256").update(token).digest("hex");
-
       user.resetPasswordTokenHash = hash;
-      user.resetPasswordExpiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 minutes
+      user.resetPasswordExpiresAt = new Date(Date.now() + 1000 * 60 * 15);
       await user.save({ validateBeforeSave: false });
 
-      // Build client URL
+      // build resetUrl
       const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https').split(',')[0];
       const host  = req.headers['x-forwarded-host']  || req.get('host');
-
       const base =
         process.env.CLIENT_BASE ||
         process.env.FRONTEND_URL ||
         (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `${proto}://${host}`);
-
       const resetUrl = `${base.replace(/\/$/, "")}/reset.html?token=${encodeURIComponent(token)}`;
 
-      // send email
-      try {
-        const result = await sendEmail({
-          to: user.email,
-          subject: "Reset your password",
-          html: `
-            <p>คลิกลิงก์ด้านล่างเพื่อรีเซ็ตรหัสผ่าน (ภายใน 15 นาที)</p>
-            <p><a href="${resetUrl}" target="_blank">${resetUrl}</a></p>
-          `,
-          text: `Open this link to reset your password: ${resetUrl}`
-        });
+      // Respond immediately (avoid waiting for email)
+      res.json({ message: "If that email exists, a reset link has been sent." });
 
-        // If dev Ethereal preview provided, log it so developer can open it
-        if (result && result.preview) {
-          console.log("Password reset preview URL:", result.preview);
+      // Send email in background (non-blocking)
+      setImmediate(async () => {
+        try {
+          const { html, text } = resetEmailTemplate({
+            resetUrl,
+            logoUrl: process.env.LOGO_URL,
+            appName: process.env.APP_NAME || "RLTG",
+            minutes: 15
+          });
+
+          const result = await sendEmail({
+            to: user.email,
+            subject: `${process.env.APP_NAME || "RLTG"} — Reset your password`,
+            html,
+            text
+          });
+
+          console.log("Background reset mail send result:", result && (result.provider || result.data?.messageId) );
+        } catch (err) {
+          console.error("Mail send failed (background):", err?.message || err);
         }
-      } catch (sendErr) {
-        console.error("Mail send failed:", sendErr);
-        // Do not reveal mail errors to user — but log for debugging
-      }
+      });
+
+      return;
     }
 
-    // Always respond 200 to avoid user enumeration
+    // user not found: still return 200
     return res.json({ message: "If that email exists, a reset link has been sent." });
   } catch (e) {
     console.error(e);
