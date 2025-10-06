@@ -178,6 +178,7 @@ router.get("/my-registrations", async (req, res) => {
 });
 
 /* ---------------------------- Forgot password ---------------------------- */
+// (เฉพาะฟังก์ชัน router.post("/forgot-password", ...) ให้แทนที่ด้วยโค้ดนี้)
 router.post("/forgot-password", async (req, res) => {
   const { email } = req.body || {};
   if (!email) return res.status(400).json({ message: "email is required" });
@@ -196,60 +197,69 @@ router.post("/forgot-password", async (req, res) => {
     }
 
     const user = await User.findOne({ email });
-    if (user) {
-      // create token and store hash
-      const token = crypto.randomBytes(32).toString("hex");
-      const hash = crypto.createHash("sha256").update(token).digest("hex");
-      user.resetPasswordTokenHash = hash;
-      user.resetPasswordExpiresAt = new Date(Date.now() + 1000 * 60 * 15);
-      await user.save({ validateBeforeSave: false });
-
-      // build resetUrl
-      const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https').split(',')[0];
-      const host  = req.headers['x-forwarded-host']  || req.get('host');
-      const base =
-        process.env.CLIENT_BASE ||
-        process.env.FRONTEND_URL ||
-        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `${proto}://${host}`);
-      const resetUrl = `${base.replace(/\/$/, "")}/reset.html?token=${encodeURIComponent(token)}`;
-
-      // --- ใช้ template เพื่อสร้าง html + text ---
-      const { html, text } = resetEmailTemplate({
-        resetUrl,
-        logoUrl: process.env.LOGO_URL,   // ถ้ามี
-        appName: process.env.APP_NAME || "RLTG",
-        minutes: 15
-      });
-
-      // Respond immediately (avoid waiting for email)
-      res.json({ message: "If that email exists, a reset link has been sent." });
-
-      // ส่งเมลแบบไม่บล็อก (background)
-      setTimeout(async () => {
-        try {
-          const result = await sendEmail({
-            to: user.email,
-            subject: "รีเซ็ตรหัสผ่านของคุณ",
-            html,
-            text
-          });
-          console.log("Reset email sent:", result);
-          if (result.preview) console.log("Preview URL:", result.preview);
-        } catch (err) {
-          console.error("Mail send failed (background):", err && err.message ? err.message : err);
-        }
-      }, 0);
-
-      return;
+    if (!user) {
+      // ไม่บอกว่ามี user หรือไม่ (ป้องกัน enumeration)
+      return res.json({ message: "If that email exists, a reset link has been sent." });
     }
 
-    // user not found: still return 200
+    // สร้าง token + hash เก็บที่ user
+    const token = crypto.randomBytes(32).toString("hex");
+    const hash = crypto.createHash("sha256").update(token).digest("hex");
+    user.resetPasswordTokenHash = hash;
+    user.resetPasswordExpiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 นาที
+    await user.save({ validateBeforeSave: false });
+
+    // สร้าง reset URL
+    const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https').split(',')[0];
+    const host  = req.headers['x-forwarded-host']  || req.get('host');
+    const base =
+      process.env.CLIENT_BASE ||
+      process.env.FRONTEND_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `${proto}://${host}`);
+    const resetUrl = `${base.replace(/\/$/, "")}/reset.html?token=${encodeURIComponent(token)}`;
+
+    // สร้าง email จาก template
+    const { html, text } = resetEmailTemplate({
+      resetUrl,
+      logoUrl: process.env.LOGO_URL,
+      appName: process.env.APP_NAME || "RLTG",
+      minutes: 15
+    });
+
+    // ส่งเมลแบบรอผล แต่มี timeout (เพื่อไม่ให้ request ค้างนานเกินไป)
+    const sendPromise = sendEmail({
+      to: user.email,
+      subject: "รีเซ็ตรหัสผ่านของคุณ",
+      html,
+      text
+    });
+
+    // ถ้าอยากรอได้สูงสุด 10 วินาที:
+    const timeoutMs = 10000;
+    const timed = await Promise.race([
+      sendPromise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error("mail timeout")), timeoutMs))
+    ]).catch(err => {
+      console.error("Mail send failed or timed out:", err && err.message ? err.message : err);
+      return null;
+    });
+
+    if (timed) {
+      console.log("Reset email sent:", timed.provider || timed);
+      if (timed.preview) console.log("Preview URL:", timed.preview);
+    } else {
+      console.warn("Reset email not confirmed (failed or timed out) — still returning 200 to caller.");
+    }
+
+    // ตอบเสมอเพื่อความปลอดภัย (ไม่บอกว่ามี user หรือไม่)
     return res.json({ message: "If that email exists, a reset link has been sent." });
   } catch (e) {
-    console.error(e);
+    console.error("forgot-password error:", e);
+    // ปกป้องรายละเอียดจาก client
     return res.status(500).json({ message: "Server error" });
   }
 });
+
 
 /* ---------------------------- Reset password ---------------------------- */
 router.post("/reset-password", async (req, res) => {
