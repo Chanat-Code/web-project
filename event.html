@@ -111,215 +111,208 @@
   <a href="./HOMEนศทตกลทบ.html"
     class="fixed bottom-5 right-5 h-12 w-12 grid place-items-center rounded-full bg-white text-black shadow-xl">🏠</a>
 
-  <script>
-    const API_BASE =
-      (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-        ? 'http://localhost:4000/api'
-        : '/api';
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- ✅ SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    const params = new URLSearchParams(location.search);
-    const id = params.get("id");
-    const token = localStorage.getItem("token") || "";
+    <script>
+      const API_BASE =
+        (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+          ? 'http://localhost:4000/api'
+          : '/api';
 
-    // ตรวจสอบว่ามาจาก history หรือไม่
-    const fromHistory = document.referrer.includes('HOMEนศทตกลทบ.html') &&
-      sessionStorage.getItem('fromHistory') === 'true';
+      const params = new URLSearchParams(location.search);
+      const id = params.get("id");
+      const token = localStorage.getItem("token") || "";
 
-    if (!id) {
-      alert("ไม่พบบัตรกิจกรรม (id)");
-      location.href = "./HOMEนศทตกลทบ.html";
-    }
+      const fromHistory = document.referrer.includes('HOMEนศทตกลทบ.html') &&
+        sessionStorage.getItem('fromHistory') === 'true';
 
-    // JWT Decode
-    function parseJwt(t) {
-      try {
-        const payload = t.split(".")[1];
-        const b64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-        const json = decodeURIComponent(atob(b64).split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join(""));
-        return JSON.parse(json);
-      } catch {
-        return {};
-      }
-    }
+      // ✅ helper สั้นๆ
+      const swalOK = (title, text = "", icon = "success") =>
+        Swal.fire({ title, text, icon, confirmButtonText: "OK" });
 
-    const claims = token ? parseJwt(token) : {};
-    const role = (claims.role || claims.user?.role || "").toLowerCase();
-    const isAdmin = role === "admin";
-
-    const modal = document.getElementById("confirmModal");
-    const btnSubmit = document.getElementById("submitBtn");
-    const addressInput = document.getElementById("address");
-    const registrationSection = document.getElementById("registrationSection");
-    const alreadyRegistered = document.getElementById("alreadyRegistered");
-    const adminView = document.getElementById("adminView");
-
-    const openModal = () => modal.classList.remove("hidden");
-    const closeModal = () => modal.classList.add("hidden");
-
-    document.getElementById("cmClose").onclick = closeModal;
-    document.getElementById("cmCancel").onclick = closeModal;
-    modal.addEventListener('click', (e) => { if (e.target.hasAttribute('data-overlay')) closeModal(); });
-
-    // ตรวจสอบสถานะการลงทะเบียน
-    async function checkRegistrationStatus() {
-      if (!token) return false;
-
-      try {
-        const res = await fetch(`${API_BASE}/registrations/me`, {
-          headers: { Authorization: 'Bearer ' + token },
-          credentials: 'include'
+      if (!id) {
+        swalOK("ไม่พบบัตรกิจกรรม (id)", "", "error").then(() => {
+          location.href = "./HOMEนศทตกลทบ.html";
         });
+      }
 
-        if (res.ok) {
-          const data = await res.json();
-          const items = data.items || data.registrations || [];
-          return items.some(item => {
-            const eventId = item.event?._id || item.eventId || item.event;
-            return eventId === id;
+      function parseJwt(t) {
+        try {
+          const payload = t.split(".")[1];
+          const b64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+          const json = decodeURIComponent(atob(b64).split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join(""));
+          return JSON.parse(json);
+        } catch {
+          return {};
+        }
+      }
+
+      const claims = token ? parseJwt(token) : {};
+      const role = (claims.role || claims.user?.role || "").toLowerCase();
+      const isAdmin = role === "admin";
+
+      const modal = document.getElementById("confirmModal");
+      const btnSubmit = document.getElementById("submitBtn");
+      const addressInput = document.getElementById("address");
+      const registrationSection = document.getElementById("registrationSection");
+      const alreadyRegistered = document.getElementById("alreadyRegistered");
+      const adminView = document.getElementById("adminView");
+
+      const openModal = () => modal.classList.remove("hidden");
+      const closeModal = () => modal.classList.add("hidden");
+
+      document.getElementById("cmClose").onclick = closeModal;
+      document.getElementById("cmCancel").onclick = closeModal;
+      modal.addEventListener('click', (e) => { if (e.target.hasAttribute('data-overlay')) closeModal(); });
+
+      async function checkRegistrationStatus() {
+        if (!token) return false;
+        try {
+          const res = await fetch(`${API_BASE}/registrations/me`, {
+            headers: { Authorization: 'Bearer ' + token },
+            credentials: 'include'
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const items = data.items || data.registrations || [];
+            return items.some(item => {
+              const eventId = item.event?._id || item.eventId || item.event;
+              return eventId === id;
+            });
+          }
+        } catch (error) {
+          console.error('Error checking registration:', error);
+        }
+        return false;
+      }
+
+      async function loadEvent() {
+        try {
+          const res = await fetch(`${API_BASE}/events/${id}`, { credentials: "include" });
+          if (!res.ok) throw new Error(String(res.status));
+          const ev = await res.json();
+
+          document.getElementById("evTitle").textContent = ev.title || "กิจกรรม";
+          document.getElementById("evDesc").textContent = ev.description || "—";
+          document.getElementById("evDate").textContent = ev.dateText || "—";
+          document.getElementById("evLoc").textContent = ev.location || "—";
+          if (ev.imageUrl) document.getElementById("bg").style.backgroundImage = `url('${ev.imageUrl}')`;
+
+          if (isAdmin) {
+            registrationSection.classList.add("hidden");
+            alreadyRegistered.classList.add("hidden");
+            adminView.classList.remove("hidden");
+            return;
+          }
+
+          const isRegistered = await checkRegistrationStatus();
+
+          if (fromHistory || isRegistered) {
+            registrationSection.classList.add("hidden");
+            alreadyRegistered.classList.remove("hidden");
+            sessionStorage.removeItem('fromHistory');
+          }
+
+        } catch (e) {
+          swalOK("กิจกรรมไม่พบ", "", "error").then(() => {
+            location.href = "./HOMEนศทตกลทบ.html";
           });
         }
-      } catch (error) {
-        console.error('Error checking registration:', error);
       }
-      return false;
-    }
 
-    // โหลดข้อมูลกิจกรรม
-    async function loadEvent() {
-      try {
-        const res = await fetch(`${API_BASE}/events/${id}`, { credentials: "include" });
-        if (!res.ok) throw new Error(String(res.status));
-        const ev = await res.json();
-
-        document.getElementById("evTitle").textContent = ev.title || "กิจกรรม";
-        document.getElementById("evDesc").textContent = ev.description || "—";
-        document.getElementById("evDate").textContent = ev.dateText || "—";
-        document.getElementById("evLoc").textContent = ev.location || "—";
-        if (ev.imageUrl) document.getElementById("bg").style.backgroundImage = `url('${ev.imageUrl}')`;
-
-        // สำหรับ Admin: แสดงโหมดดูข้อมูล (ไม่มีปุ่มลงทะเบียน)
-        if (isAdmin) {
-          registrationSection.classList.add("hidden");
-          alreadyRegistered.classList.add("hidden");
-          adminView.classList.remove("hidden");
+      async function doRegister() {
+        if (!token) {
+          swalOK("โปรดเข้าสู่ระบบก่อน", "", "warning").then(() => {
+            location.href = "./index.html";
+          });
           return;
         }
+        const address = (addressInput?.value || "").trim();
 
-        // สำหรับ User: ตรวจสอบสถานะการลงทะเบียน
-        const isRegistered = await checkRegistrationStatus();
+        try {
+          const res = await fetch(`${API_BASE}/events/${id}/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+            credentials: "include",
+            body: JSON.stringify({ address })
+          });
 
-        // ถ้ามาจาก history หรือเคยลงทะเบียนแล้ว ให้ซ่อนปุ่มลงทะเบียน
-        if (fromHistory || isRegistered) {
+          closeModal();
+
+          if (res.status === 409) {
+            await swalOK("คุณลงทะเบียนกิจกรรมนี้แล้ว", "", "info");
+            registrationSection.classList.add("hidden");
+            alreadyRegistered.classList.remove("hidden");
+            return;
+          }
+
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.message || `HTTP ${res.status}`);
+          }
+
+          await swalOK("✅ ลงทะเบียนสำเร็จ!", "", "success");
           registrationSection.classList.add("hidden");
           alreadyRegistered.classList.remove("hidden");
-          // ล้าง sessionStorage
-          sessionStorage.removeItem('fromHistory');
+        } catch (e) {
+          swalOK("❌ ลงทะเบียนไม่สำเร็จ", e.message || "", "error");
         }
-
-      } catch (e) {
-        alert("กิจกรรมไม่พบ");
-        location.href = "./HOMEนศทตกลทบ.html";
       }
-    }
 
-    // ลงทะเบียนกิจกรรม (สำหรับ user เท่านั้น)
-    async function doRegister() {
-      if (!token) {
-        alert("โปรดเข้าสู่ระบบก่อน");
-        location.href = "./index.html";
-        return;
-      }
-      const address = (addressInput?.value || "").trim();
+      async function updateEvent() {
+        const title = document.getElementById("evTitle").textContent.trim();
+        const description = document.getElementById("evDesc").textContent.trim();
+        const dateText = document.getElementById("evDate").textContent.trim();
+        const location = document.getElementById("evLoc").textContent.trim();
 
-      try {
-        const res = await fetch(`${API_BASE}/events/${id}/register`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-          credentials: "include",
-          body: JSON.stringify({ address })
-        });
+        try {
+          const res = await fetch(`${API_BASE}/events/${id}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer " + token
+            },
+            credentials: "include",
+            body: JSON.stringify({ title, description, dateText, location })
+          });
 
-        closeModal();
-
-        if (res.status === 409) {
-          alert("คุณลงทะเบียนกิจกรรมนี้แล้ว");
-          // อัปเดต UI ให้แสดงว่าลงทะเบียนแล้ว
-          registrationSection.classList.add("hidden");
-          alreadyRegistered.classList.remove("hidden");
-          return;
+          if (!res.ok) throw new Error((await res.json()).message || "อัปเดตล้มเหลว");
+          swalOK("✅ อัปเดตกิจกรรมเรียบร้อยแล้ว");
+        } catch (e) {
+          swalOK("❌ ไม่สามารถอัปเดตได้", e.message || "", "error");
         }
-
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.message || `HTTP ${res.status}`);
-        }
-
-        alert("✅ ลงทะเบียนสำเร็จ!");
-        // อัปเดต UI หลังลงทะเบียนสำเร็จ
-        registrationSection.classList.add("hidden");
-        alreadyRegistered.classList.remove("hidden");
-      } catch (e) {
-        alert("❌ ลงทะเบียนไม่สำเร็จ: " + e.message);
       }
-    }
 
-    // อัปเดตกิจกรรม (เฉพาะแอดมิน)
-    async function updateEvent() {
-      const title = document.getElementById("evTitle").textContent.trim();
-      const description = document.getElementById("evDesc").textContent.trim();
-      const dateText = document.getElementById("evDate").textContent.trim();
-      const location = document.getElementById("evLoc").textContent.trim();
-
-      try {
-        const res = await fetch(`${API_BASE}/events/${id}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + token
-          },
-          credentials: "include",
-          body: JSON.stringify({ title, description, dateText, location })
+      if (isAdmin) {
+        ['evTitle', 'evDesc', 'evDate', 'evLoc'].forEach(id => {
+          const el = document.getElementById(id);
+          el.addEventListener('click', () => {
+            el.contentEditable = "true";
+            el.focus();
+            el.style.backgroundColor = "#e0f2ff";
+          });
+          el.addEventListener('blur', () => {
+            el.contentEditable = "false";
+            el.style.backgroundColor = "";
+          });
         });
 
-        if (!res.ok) throw new Error((await res.json()).message || "อัปเดตล้มเหลว");
-        alert("✅ อัปเดตกิจกรรมเรียบร้อยแล้ว");
-      } catch (e) {
-        alert("❌ ไม่สามารถอัปเดตได้: " + e.message);
+        const saveBtn = document.createElement("button");
+        saveBtn.textContent = "บันทึกการแก้ไข";
+        saveBtn.className = "mt-6 px-6 py-2.5 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-500 active:scale-[.99]";
+        document.querySelector(".space-y-6").appendChild(saveBtn);
+        saveBtn.addEventListener("click", updateEvent);
       }
-    }
 
-    // โหมด Admin - ทำให้สามารถแก้ไขข้อมูลได้
-    if (isAdmin) {
-      ['evTitle', 'evDesc', 'evDate', 'evLoc'].forEach(id => {
-        const el = document.getElementById(id);
-        el.addEventListener('click', () => {
-          el.contentEditable = "true";
-          el.focus();
-          el.style.backgroundColor = "#e0f2ff";
-        });
-        el.addEventListener('blur', () => {
-          el.contentEditable = "false";
-          el.style.backgroundColor = "";
-        });
-      });
+      if (!isAdmin) {
+        btnSubmit?.addEventListener("click", openModal);
+        document.getElementById("cmOk").addEventListener("click", doRegister);
+      }
 
-      // ปุ่มบันทึกการแก้ไขสำหรับ admin
-      const saveBtn = document.createElement("button");
-      saveBtn.textContent = "บันทึกการแก้ไข";
-      saveBtn.className = "mt-6 px-6 py-2.5 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-500 active:scale-[.99]";
-      document.querySelector(".space-y-6").appendChild(saveBtn);
-      saveBtn.addEventListener("click", updateEvent);
-    }
-
-    // เชื่อมปุ่ม (สำหรับ user เท่านั้น)
-    if (!isAdmin) {
-      btnSubmit?.addEventListener("click", openModal);
-      document.getElementById("cmOk").addEventListener("click", doRegister);
-    }
-
-    // เริ่มต้น
-    loadEvent();
-  </script>
+      loadEvent();
+    </script>
 
   <!-- Service Worker -->
   <script>
@@ -330,5 +323,6 @@
     }
   </script>
 </body>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </html>

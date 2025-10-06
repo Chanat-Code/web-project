@@ -70,85 +70,76 @@
         <a href="/REGISTER.HTML" class="text-indigo-700 hover:underline">Sign up</a>
       </p>
 
-      <script>
-        // ใช้ same-origin บน Vercel, ใช้ :4000 ตอนรัน local
-        const isVercel = location.hostname.endsWith('.vercel.app');
-        const API_BASE = isVercel ? '' : 'http://127.0.0.1:4000';
-        const LOGIN_API = `${API_BASE}/api/auth/login`;
+    <!-- ✅ SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+      const isVercel = location.hostname.endsWith('.vercel.app');
+      const API_BASE = isVercel ? '' : 'http://127.0.0.1:4000';
+      const LOGIN_API = `${API_BASE}/api/auth/login`;
 
-        // ฟังก์ชัน login
-        async function performLogin() {
-          const usernameOrEmail = document.getElementById("usernameOrEmail").value.trim();
-          const password = document.getElementById("loginPassword").value;
+      async function performLogin() {
+        const usernameOrEmail = document.getElementById("usernameOrEmail").value.trim();
+        const password = document.getElementById("loginPassword").value;
 
-          // ตรวจสอบว่ากรอกข้อมูลครบหรือยัง
-          if (!usernameOrEmail || !password) {
-            alert("กรุณากรอกชื่อผู้ใช้และรหัสผ่าน");
-            return;
-          }
-
-          try {
-            const res = await fetch(LOGIN_API, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify({ usernameOrEmail, password })
-            });
-
-            let data = {};
-            try { data = await res.json(); } catch { }
-
-            if (!res.ok) {
-              alert(`Login failed (${res.status}): ${data.message || 'unknown error'}`);
-              return;
-            }
-
-            if (data.token) localStorage.setItem("token", data.token);
-            alert("Login success!");
-            window.location.href = "./HOMEนศทตกลทบ.html";
-          } catch (err) {
-            console.error(err);
-            alert("Network error");
-          }
+        if (!usernameOrEmail || !password) {
+          return Swal.fire({ title: 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน', icon: 'warning', confirmButtonText: 'OK' });
         }
 
-        // Event listener สำหรับปุ่ม Login
-        document.getElementById("loginBtn").addEventListener("click", performLogin);
+        try {
+          const res = await fetch(LOGIN_API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ usernameOrEmail, password })
+          });
 
-        // Event listener สำหรับการกด Enter ในฟิลด์ input
-        document.getElementById("usernameOrEmail").addEventListener("keypress", function (event) {
-          if (event.key === "Enter") {
-            document.getElementById("loginPassword").focus();
+          let data = {};
+          try { data = await res.json(); } catch { }
+
+          if (!res.ok) {
+            return Swal.fire({
+              title: `Login failed (${res.status})`,
+              text: data.message || 'unknown error',
+              icon: 'error',
+              confirmButtonText: 'OK'
+            });
           }
-        });
 
-        document.getElementById("loginPassword").addEventListener("keypress", function (event) {
-          if (event.key === "Enter") {
-            performLogin();
-          }
-        });
+          if (data.token) localStorage.setItem("token", data.token);
+          Swal.fire({
+            title: 'Login success!',
+            icon: 'success',
+            confirmButtonText: 'OK'
+          }).then(() => window.location.href = "./HOMEนศทตกลทบ.html");
 
-        // Event listener สำหรับการกด Enter ที่ใดก็ได้ในหน้า (optional)
-        document.addEventListener("keypress", function (event) {
-          if (event.key === "Enter") {
-            // ตรวจสอบว่าอยู่ในฟิลด์ input หรือไม่
-            const activeElement = document.activeElement;
-            const isInInput = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA';
+        } catch (err) {
+          console.error(err);
+          Swal.fire({ title: 'Network error', icon: 'error', confirmButtonText: 'OK' });
+        }
+      }
 
-            if (!isInInput) {
-              performLogin();
-            }
-          }
-        });
-
-        // โฟกัสที่ฟิลด์ username เมื่อหน้าโหลดเสร็จ
-        window.addEventListener('load', function () {
-          document.getElementById("usernameOrEmail").focus();
-        });
-      </script>
+      document.getElementById("loginBtn").addEventListener("click", performLogin);
+      document.getElementById("usernameOrEmail").addEventListener("keypress", function (event) {
+        if (event.key === "Enter") document.getElementById("loginPassword").focus();
+      });
+      document.getElementById("loginPassword").addEventListener("keypress", function (event) {
+        if (event.key === "Enter") performLogin();
+      });
+      document.addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+          const a = document.activeElement;
+          const isInInput = a.tagName === 'INPUT' || a.tagName === 'TEXTAREA';
+          if (!isInInput) performLogin();
+        }
+      });
+      window.addEventListener('load', function () {
+        document.getElementById("usernameOrEmail").focus();
+      });
+    </script>
 
     </div>
   </main>
 </body>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </html>

@@ -65,48 +65,60 @@
     </div>
   </main>
 
-  <script>
-    const isVercel = location.hostname.endsWith('.vercel.app');
-    const API_BASE = isVercel ? '' : 'http://127.0.0.1:4000';
-    const API = `${API_BASE}/api/auth/register`;
+    <!-- ✅ SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+      const isVercel = location.hostname.endsWith('.vercel.app');
+      const API_BASE = isVercel ? '' : 'http://127.0.0.1:4000';
+      const API = `${API_BASE}/api/auth/register`;
 
-    document.getElementById("registerForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
+      document.getElementById("registerForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-      const payload = {
-        username: document.getElementById("username").value.trim(),
-        idNumber: document.getElementById("idNumber").value.trim(),
-        password: document.getElementById("password").value,
-        email: document.getElementById("email").value.trim(),
-        major: document.getElementById("major").value.trim(),
-        phone: document.getElementById("phone").value.trim(),
-      };
+        const payload = {
+          username: document.getElementById("username").value.trim(),
+          idNumber: document.getElementById("idNumber").value.trim(),
+          password: document.getElementById("password").value,
+          email: document.getElementById("email").value.trim(),
+          major: document.getElementById("major").value.trim(),
+          phone: document.getElementById("phone").value.trim(),
+        };
 
-      try {
-        const res = await fetch(API, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(payload)
-        });
+        try {
+          const res = await fetch(API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(payload)
+          });
 
-        let data = {};
-        try { data = await res.json(); } catch { }
+          let data = {};
+          try { data = await res.json(); } catch { }
 
-        if (!res.ok) {
-          alert(`Register failed (${res.status}): ${data.message || 'unknown error'}`);
-          return;
+          if (!res.ok) {
+            return Swal.fire({
+              title: `Register failed (${res.status})`,
+              text: data.message || 'unknown error',
+              icon: 'error',
+              confirmButtonText: 'OK'
+            });
+          }
+
+          Swal.fire({
+            title: 'Register success!',
+            icon: 'success',
+            confirmButtonText: 'OK'
+          }).then(() => window.location.href = "./index.html");
+
+        } catch (err) {
+          console.error(err);
+          Swal.fire({ title: 'Network error', icon: 'error', confirmButtonText: 'OK' });
         }
-        alert("Register success!");
-        window.location.href = "./index.html";
-      } catch (err) {
-        console.error(err);
-        alert("Network error");
-      }
-    });
-  </script>
+      });
+    </script>
 
 
 </body>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </html>

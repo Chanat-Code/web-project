@@ -764,7 +764,16 @@
           method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
           credentials: "include", body: JSON.stringify(payload)
         });
-        if (!res.ok) { const data = await res.json().catch(() => ({})); alert(`เพิ่มกิจกรรมไม่สำเร็จ: ${data.message || res.status}`); return; }
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          await Swal.fire({
+            title: 'เพิ่มกิจกรรมไม่สำเร็จ',
+            text: data.message || String(res.status),
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
+          return;
+        }
         closeAdd(); loadEvents();
       });
       addCancel?.addEventListener("click", closeAdd);
@@ -1021,7 +1030,18 @@
             const id = btn.getAttribute('data-del');
             const ev = EVENTS_CACHE.find(e => e._id === id);
             const name = ev?.title || '';
-            if (!confirm(`ยืนยันลบกิจกรรมนี้?\n\n${name}`)) return;
+
+            const c = await Swal.fire({
+              title: 'ยืนยันลบกิจกรรมนี้?',
+              text: name,
+              icon: 'question',
+              showCancelButton: true,
+              confirmButtonText: 'ลบ',
+              cancelButtonText: 'ยกเลิก',
+              confirmButtonColor: '#e11d48'
+            });
+            if (!c.isConfirmed) return;
+
             btn.disabled = true;
             try {
               const r = await fetch(`${API_BASE}/events/${id}`, {
@@ -1040,9 +1060,9 @@
                 delUI.scroll.classList.add('hidden');
                 delUI.empty.classList.remove('hidden');
               }
-              alert('ลบสำเร็จ');
+              await Swal.fire({ title: 'ลบสำเร็จ', icon: 'success', confirmButtonText: 'OK' });
             } catch (e) {
-              alert('ลบไม่สำเร็จ: ' + e.message);
+              await Swal.fire({ title: 'ลบไม่สำเร็จ', text: e.message || '', icon: 'error', confirmButtonText: 'OK' });
             } finally {
               btn.disabled = false;
             }
@@ -1246,5 +1266,6 @@
     }
   </script>
 </body>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </html>
