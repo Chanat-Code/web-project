@@ -128,17 +128,19 @@ router.get("/admin/summary", requireAuth, requireAdmin, async (_req, res) => {
 router.get("/:id/registrations", requireAuth, requireAdmin, async (req, res) => {
   const regs = await Registration.find({ event: req.params.id })
     .sort({ createdAt: 1 })
-    .populate({ path: "user", select: "username idNumber email phone" })
+    .populate({ path: "user", select: "firstName lastName studentId major email phone" })
     .lean();
 
   res.json(regs.map(r => ({
     _id: r._id,
     address: r.address || "",
     user: r.user ? {
-      username: r.user.username,
-      idNumber: r.user.idNumber,
-      email: r.user.email,
-      phone: r.user.phone
+      firstName: r.user.firstName,
+      lastName:  r.user.lastName,
+      studentId: r.user.studentId,
+      major:     r.user.major,
+      email:     r.user.email,
+      phone:     r.user.phone,
     } : null
   })));
 });

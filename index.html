@@ -44,7 +44,7 @@
       </h1>
 
       <!-- Username -->
-      <input id="usernameOrEmail" type="text" placeholder="Username :"
+      <input id="identifier" type="text" placeholder="Student ID หรือ Email :"
         class="font-bold w-full h-12 rounded-xl bg-gray-200 px-4 mb-4 outline-none focus:ring-2 focus:ring-indigo-400"
         required>
 
@@ -72,79 +72,59 @@
 
     <!-- ✅ SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-      const hostname = (location.hostname || "").toLowerCase();
+<script>
+  const hostname = (location.hostname || "").toLowerCase();
+  const PROD_HOSTS = [(h) => h.endsWith('.vercel.app'), (h) => h === 'rltg.online', (h) => h === 'www.rltg.online'];
+  const isProd = PROD_HOSTS.some(fn => fn(hostname));
+  const API_BASE = isProd ? '' : 'http://127.0.0.1:4000';
+  const LOGIN_API = `${API_BASE}/api/auth/login`;
 
-      // ตั้งรายการโดเมน production ที่รับรองได้ที่นี่
-      const PROD_HOSTS = [
-        (h) => h.endsWith('.vercel.app'), // ทุก project บน vercel
-        (h) => h === 'rltg.online',
-        (h) => h === 'www.rltg.online'
-      ];
+  async function performLogin() {
+    const identifier = document.getElementById("identifier").value.trim();  // <-- ใช้ identifier
+    const password = document.getElementById("loginPassword").value;
 
-      const isProd = PROD_HOSTS.some(fn => fn(hostname));
-      const API_BASE = isProd ? '' : 'http://127.0.0.1:4000';
-      const LOGIN_API = `${API_BASE}/api/auth/login`;
+    if (!identifier || !password) {
+      return Swal.fire({ title: 'กรุณากรอกข้อมูลให้ครบ', icon: 'warning', confirmButtonText: 'OK' });
+    }
 
-      async function performLogin() {
-        const usernameOrEmail = document.getElementById("usernameOrEmail").value.trim();
-        const password = document.getElementById("loginPassword").value;
+    try {
+      const res = await fetch(LOGIN_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ identifier, password }) // <-- ส่ง identifier
+      });
 
-        if (!usernameOrEmail || !password) {
-          return Swal.fire({ title: 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน', icon: 'warning', confirmButtonText: 'OK' });
-        }
+      const data = await res.json().catch(() => ({}));
 
-        try {
-          const res = await fetch(LOGIN_API, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ usernameOrEmail, password })
-          });
-
-          let data = {};
-          try { data = await res.json(); } catch { }
-
-          if (!res.ok) {
-            return Swal.fire({
-              title: `Login failed (${res.status})`,
-              text: data.message || 'unknown error',
-              icon: 'error',
-              confirmButtonText: 'OK'
-            });
-          }
-
-          if (data.token) localStorage.setItem("token", data.token);
-          Swal.fire({
-            title: 'Login success!',
-            icon: 'success',
-            confirmButtonText: 'OK'
-          }).then(() => window.location.href = "./HOMEนศทตกลทบ.html");
-
-        } catch (err) {
-          console.error(err);
-          Swal.fire({ title: 'Network error', icon: 'error', confirmButtonText: 'OK' });
-        }
+      if (!res.ok) {
+        return Swal.fire({
+          title: `Login failed (${res.status})`,
+          text: data.message || 'unknown error',
+          icon: 'error',
+          confirmButtonText: 'OK'
+        });
       }
 
-      document.getElementById("loginBtn").addEventListener("click", performLogin);
-      document.getElementById("usernameOrEmail").addEventListener("keypress", function (event) {
-        if (event.key === "Enter") document.getElementById("loginPassword").focus();
-      });
-      document.getElementById("loginPassword").addEventListener("keypress", function (event) {
-        if (event.key === "Enter") performLogin();
-      });
-      document.addEventListener("keypress", function (event) {
-        if (event.key === "Enter") {
-          const a = document.activeElement;
-          const isInInput = a.tagName === 'INPUT' || a.tagName === 'TEXTAREA';
-          if (!isInInput) performLogin();
-        }
-      });
-      window.addEventListener('load', function () {
-        document.getElementById("usernameOrEmail").focus();
-      });
-    </script>
+      if (data.token) localStorage.setItem("token", data.token);
+      Swal.fire({ title: 'Login success!', icon: 'success', confirmButtonText: 'OK' })
+        .then(() => window.location.href = "./HOMEนศทตกลทบ.html");
+    } catch (err) {
+      console.error(err);
+      Swal.fire({ title: 'Network error', icon: 'error', confirmButtonText: 'OK' });
+    }
+  }
+
+  // ปุ่ม + Enter
+  document.getElementById("loginBtn").addEventListener("click", performLogin);
+  document.getElementById("identifier").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") document.getElementById("loginPassword").focus();
+  });
+  document.getElementById("loginPassword").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") performLogin();
+  });
+  window.addEventListener('load', () => document.getElementById("identifier").focus());
+</script>
 
     </div>
   </main>
