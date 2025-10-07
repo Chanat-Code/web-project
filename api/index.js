@@ -1,14 +1,20 @@
-// api/index.js  (Vercel serverless entry)
-import { connectDB } from "../src/db.js";
-import app from "../server.js";
+// server.js (หรือ api/index.js)
+import 'dotenv/config'; // โหลด .env อัตโนมัติ (ถ้ามีไฟล์ .env ที่ project root)
+import express from "express";
+import connect from "./src/db.js";
 
-export default async function handler(req, res) {
+// เรียก connect เมื่อ app เริ่ม (catch error)
+(async () => {
   try {
-    await connectDB(); // ต่อ Mongo ก่อนทุก req (มี cache ใน src/db.js)
+    await connect(); // ถ้า MONGO_URI ไม่มี จะเป็น no-op (แต่ log ไว้)
   } catch (e) {
-    console.error("DB connect error:", e);
-    res.status(500).json({ message: "db connection failed" });
-    return;
+    console.error("Failed to init DB:", e);
+    // ถ้าต้องการให้ process หยุดเมื่อ DB connect ล้มเหลว ให้ uncomment:
+    // process.exit(1);
   }
-  return app(req, res); // ส่ง req/res เข้าตัว express app
-}
+
+  const app = express();
+  // ... bootstrap server (middlewares, routes)
+  const PORT = process.env.PORT || 4000;
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+})();

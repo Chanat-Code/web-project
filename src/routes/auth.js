@@ -177,14 +177,12 @@ router.get("/my-registrations", async (req, res) => {
   }
 });
 
-/* ---------------------------- Forgot password ---------------------------- */
-// (เฉพาะฟังก์ชัน router.post("/forgot-password", ...) ให้แทนที่ด้วยโค้ดนี้)
 router.post("/forgot-password", async (req, res) => {
   const { email } = req.body || {};
   if (!email) return res.status(400).json({ message: "email is required" });
 
   try {
-    // rate-limit
+    // rate-limit by email + ip
     const ip = req.ip || (req.headers['x-forwarded-for'] ? String(req.headers['x-forwarded-for']).split(',')[0].trim() : 'unknown');
     const keyEmail = `email:${String(email).toLowerCase()}`;
     const keyIp = `ip:${ip}`;
@@ -197,19 +195,19 @@ router.post("/forgot-password", async (req, res) => {
     }
 
     const user = await User.findOne({ email });
+    // Respond 200 even if user not found (avoid enumeration)
     if (!user) {
-      // ไม่บอกว่ามี user หรือไม่ (ป้องกัน enumeration)
       return res.json({ message: "If that email exists, a reset link has been sent." });
     }
 
-    // สร้าง token + hash เก็บที่ user
+    // create token + store hash
     const token = crypto.randomBytes(32).toString("hex");
     const hash = crypto.createHash("sha256").update(token).digest("hex");
     user.resetPasswordTokenHash = hash;
-    user.resetPasswordExpiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 นาที
+    user.resetPasswordExpiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 minutes
     await user.save({ validateBeforeSave: false });
 
-    // สร้าง reset URL
+    // build reset url
     const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https').split(',')[0];
     const host  = req.headers['x-forwarded-host']  || req.get('host');
     const base =
@@ -218,7 +216,7 @@ router.post("/forgot-password", async (req, res) => {
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `${proto}://${host}`);
     const resetUrl = `${base.replace(/\/$/, "")}/reset.html?token=${encodeURIComponent(token)}`;
 
-    // สร้าง email จาก template
+    // build email from template
     const { html, text } = resetEmailTemplate({
       resetUrl,
       logoUrl: process.env.LOGO_URL,
@@ -226,7 +224,9 @@ router.post("/forgot-password", async (req, res) => {
       minutes: 15
     });
 
-    // ส่งเมลแบบรอผล แต่มี timeout (เพื่อไม่ให้ request ค้างนานเกินไป)
+    // send email but only wait up to timeoutMs (so client isn't held too long)
+    const timeoutMs = Number(process.env.MAIL_SEND_TIMEOUT_MS || 3000);
+
     const sendPromise = sendEmail({
       to: user.email,
       subject: "รีเซ็ตรหัสผ่านของคุณ",
@@ -234,32 +234,28 @@ router.post("/forgot-password", async (req, res) => {
       text
     });
 
-    // ถ้าอยากรอได้สูงสุด 10 วินาที:
-    const timeoutMs = 10000;
     const timed = await Promise.race([
       sendPromise,
       new Promise((_, reject) => setTimeout(() => reject(new Error("mail timeout")), timeoutMs))
     ]).catch(err => {
-      console.error("Mail send failed or timed out:", err && err.message ? err.message : err);
+      console.warn("[forgot-password] mail send failed/timed out:", err?.message || err);
       return null;
     });
 
     if (timed) {
-      console.log("Reset email sent:", timed.provider || timed);
-      if (timed.preview) console.log("Preview URL:", timed.preview);
+      console.log("[forgot-password] mail send result:", timed.provider || timed?.info || timed?.data);
+      if (timed.preview) console.log("[forgot-password] preview:", timed.preview);
     } else {
-      console.warn("Reset email not confirmed (failed or timed out) — still returning 200 to caller.");
+      console.warn("[forgot-password] mail not confirmed (timed out or failed)");
     }
 
-    // ตอบเสมอเพื่อความปลอดภัย (ไม่บอกว่ามี user หรือไม่)
+    // Always respond 200 to avoid user enumeration
     return res.json({ message: "If that email exists, a reset link has been sent." });
   } catch (e) {
-    console.error("forgot-password error:", e);
-    // ปกป้องรายละเอียดจาก client
+    console.error("forgot-password error:", e && e.message ? e.message : e);
     return res.status(500).json({ message: "Server error" });
   }
 });
-
 
 /* ---------------------------- Reset password ---------------------------- */
 router.post("/reset-password", async (req, res) => {

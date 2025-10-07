@@ -1,9 +1,9 @@
 // src/utils/sendEmail.js
+import https from "https";
 import fetch from "node-fetch";
 import nodemailer from "nodemailer";
-import https from "https";
 
-const brevoAgent = new https.Agent({ keepAlive: true, maxSockets: 10 });
+const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 10 });
 
 function parseSender(raw) {
   if (!raw) return { email: "no-reply@example.com" };
@@ -12,7 +12,7 @@ function parseSender(raw) {
   return { email: String(raw).replace(/(^"|"$)/g, ""), name: undefined };
 }
 
-function timeoutFetch(url, opts = {}, ms = 15000) { // increased timeout
+function timeoutFetch(url, opts = {}, ms = 15000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), ms);
   return fetch(url, { ...opts, signal: controller.signal }).finally(() => clearTimeout(id));
@@ -30,69 +30,64 @@ function getSmtpTransporterFromEnv() {
     secure: Number(SMTP_PORT) === 465,
     auth: { user: SMTP_USER, pass: SMTP_PASS },
     pool: true,
+    maxConnections: 5,
+    maxMessages: 100,
+    keepAlive: true,
     tls: { rejectUnauthorized: false }
   });
 
   smtpTransporter.verify()
-    .then(() => console.log("SMTP transporter ready"))
-    .catch(e => console.warn("SMTP verify warning:", e?.message || e));
+    .then(() => console.log("[sendEmail] SMTP transporter ready"))
+    .catch(e => console.warn("[sendEmail] SMTP verify warning:", e?.message || e));
 
   return smtpTransporter;
 }
 
-/**
- * sendEmail tries:
- * 1) Brevo API (if BREVO_API_KEY)
- * 2) SMTP fallback (if configured)
- * 3) Ethereal dev preview
- *
- * Returns { ok: true, provider, data } on success or throws Error on final failure.
- */
 export async function sendEmail({ to, subject, html, text }) {
   const BREVO_API_KEY = process.env.BREVO_API_KEY;
-  const MAIL_FROM_RAW = (process.env.MAIL_FROM || process.env.SMTP_USER || "no-reply@example.com").trim();
-  const sender = parseSender(MAIL_FROM_RAW);
+  const RAW_FROM = (process.env.MAIL_FROM || process.env.SMTP_USER || "no-reply@example.com").trim();
+  const sender = parseSender(RAW_FROM);
   const toList = Array.isArray(to) ? to : [to];
 
-  console.log("[sendEmail] payload:", { from: sender, to: toList, subject });
+  console.log("[sendEmail] start", { providerPrefer: !!BREVO_API_KEY, to: toList, subject });
 
   // 1) Brevo API
-    if (BREVO_API_KEY) {
-      const payload = {
-        sender,
-        to: toList.map(e => ({ email: e })),
-        subject,
-        htmlContent: html,
-        textContent: text || ""
-      };
+  if (BREVO_API_KEY) {
+    const payload = {
+      sender,
+      to: toList.map(e => ({ email: e })),
+      subject,
+      htmlContent: html,
+      textContent: text || ""
+    };
 
-      try {
-        // เพิ่ม agent เพื่อให้ keep-alive
-        const res = await timeoutFetch("https://api.brevo.com/v3/smtp/email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "api-key": BREVO_API_KEY
-          },
-          body: JSON.stringify(payload),
-          // node-fetch accepts 'agent' option; if using global fetch (node 18+) use undici/Agent instead
-          agent: brevoAgent
-        }, 10000); // timeout 10s
+    try {
+      const t0 = Date.now();
+      const res = await timeoutFetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": BREVO_API_KEY
+        },
+        body: JSON.stringify(payload),
+        agent: httpsAgent
+      }, 15000);
 
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          console.warn("Brevo API response not ok:", res.status, data);
-          throw new Error(`Brevo API error ${res.status}: ${JSON.stringify(data)}`);
-        }
-        console.log("Brevo send success:", data);
-        return { ok: true, provider: "brevo", data };
-      } catch (e) {
-        console.warn("Brevo send failed:", e?.message || e);
-        // fallthrough -> SMTP or Ethereal (ตามโค้ดเดิม)
+      const t1 = Date.now();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        console.warn("[sendEmail] Brevo API not ok", res.status, data);
+        throw new Error(`Brevo API error ${res.status}`);
       }
-    } else {
-      console.warn("BREVO_API_KEY not configured, skipping Brevo.");
+      console.log(`[sendEmail] Brevo responded (${t1 - t0}ms)`, data);
+      return { ok: true, provider: "brevo", data };
+    } catch (e) {
+      console.warn("[sendEmail] Brevo send failed:", e?.message || e);
+      // fallthrough to SMTP/Ethereal
     }
+  } else {
+    console.warn("[sendEmail] BREVO_API_KEY not configured, skip Brevo");
+  }
 
   // 2) SMTP fallback
   const transporter = getSmtpTransporterFromEnv();
@@ -105,19 +100,19 @@ export async function sendEmail({ to, subject, html, text }) {
         text,
         html
       });
-      console.log("SMTP send success:", info);
+      console.log("[sendEmail] SMTP send success:", info && info.messageId);
       return { ok: true, provider: "smtp", info };
     } catch (err) {
-      console.error("SMTP sendMail failed:", err?.message || err);
-      // fallthrough to Ethereal
+      console.error("[sendEmail] SMTP send failed:", err?.message || err);
+      // fallthrough
     }
   } else {
-    console.warn("SMTP not configured or missing credentials for fallback");
+    console.warn("[sendEmail] SMTP not configured");
   }
 
   // 3) Ethereal dev fallback
   try {
-    console.log("Using Ethereal dev transport (no BREVO and no working SMTP)");
+    console.log("[sendEmail] Using Ethereal dev transport");
     const testAccount = await nodemailer.createTestAccount();
     const ethTransport = nodemailer.createTransport({
       host: "smtp.ethereal.email",
@@ -134,10 +129,10 @@ export async function sendEmail({ to, subject, html, text }) {
       html
     });
     const preview = nodemailer.getTestMessageUrl(info);
-    console.log("Ethereal preview URL:", preview);
+    console.log("[sendEmail] Ethereal preview:", preview);
     return { ok: true, provider: "ethereal", preview, info };
   } catch (err) {
-    console.error("Ethereal send failed:", err?.message || err);
-    throw new Error("All email providers failed: " + (err?.message || err));
+    console.error("[sendEmail] Ethereal send failed:", err?.message || err);
+    throw new Error("All email providers failed");
   }
 }
