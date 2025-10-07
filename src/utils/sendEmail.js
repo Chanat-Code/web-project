@@ -1,36 +1,138 @@
 // src/utils/sendEmail.js
+import https from "https";
+import fetch from "node-fetch";
 import nodemailer from "nodemailer";
 
-export async function sendEmail({ to, subject, html, text }) {
-  const { SMTP_HOST, SMTP_PORT = "587", SMTP_USER, SMTP_PASS, MAIL_FROM } = process.env;
+const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 10 });
 
-  // โหมด dev: ถ้าไม่ตั้ง SMTP ให้ log ออกแทน (จะเห็นลิงก์ reset ใน console)
-  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
-    console.log("\n[DEV EMAIL]");
-    console.log("To:", to);
-    console.log("Subject:", subject);
-    console.log("HTML:", html, "\n");
-    return;
-  }
+function parseSender(raw) {
+  if (!raw) return { email: "no-reply@example.com" };
+  const m = String(raw).match(/^(.*)<(.+)>$/);
+  if (m) return { name: m[1].trim().replace(/(^"|"$)/g, ""), email: m[2].trim() };
+  return { email: String(raw).replace(/(^"|"$)/g, ""), name: undefined };
+}
 
-  const transporter = nodemailer.createTransport({
+function timeoutFetch(url, opts = {}, ms = 15000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  return fetch(url, { ...opts, signal: controller.signal }).finally(() => clearTimeout(id));
+}
+
+let smtpTransporter = null;
+function getSmtpTransporterFromEnv() {
+  if (smtpTransporter) return smtpTransporter;
+  const { SMTP_HOST, SMTP_PORT = 587, SMTP_USER, SMTP_PASS } = process.env;
+  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) return null;
+
+  smtpTransporter = nodemailer.createTransport({
     host: SMTP_HOST,
     port: Number(SMTP_PORT),
-    secure: Number(SMTP_PORT) === 465,    // 465 = SSL, 587 = STARTTLS
+    secure: Number(SMTP_PORT) === 465,
     auth: { user: SMTP_USER, pass: SMTP_PASS },
-    pool: true,                           // ต่อซ้ำได้ (ประหยัด)
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 100,
+    keepAlive: true,
+    tls: { rejectUnauthorized: false }
   });
 
-  // เช็ค config
-  await transporter.verify().catch((e) => {
-    console.warn("SMTP verify failed:", e?.message || e);
-  });
+  smtpTransporter.verify()
+    .then(() => console.log("[sendEmail] SMTP transporter ready"))
+    .catch(e => console.warn("[sendEmail] SMTP verify warning:", e?.message || e));
 
-  await transporter.sendMail({
-    from: MAIL_FROM || `"RLTG" <${SMTP_USER}>`, // จากใคร
-    to,
-    subject,
-    text,
-    html,
-  });
+  return smtpTransporter;
+}
+
+export async function sendEmail({ to, subject, html, text }) {
+  const BREVO_API_KEY = process.env.BREVO_API_KEY;
+  const RAW_FROM = (process.env.MAIL_FROM || process.env.SMTP_USER || "no-reply@example.com").trim();
+  const sender = parseSender(RAW_FROM);
+  const toList = Array.isArray(to) ? to : [to];
+
+  console.log("[sendEmail] start", { providerPrefer: !!BREVO_API_KEY, to: toList, subject });
+
+  // 1) Brevo API
+  if (BREVO_API_KEY) {
+    const payload = {
+      sender,
+      to: toList.map(e => ({ email: e })),
+      subject,
+      htmlContent: html,
+      textContent: text || ""
+    };
+
+    try {
+      const t0 = Date.now();
+      const res = await timeoutFetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": BREVO_API_KEY
+        },
+        body: JSON.stringify(payload),
+        agent: httpsAgent
+      }, 15000);
+
+      const t1 = Date.now();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        console.warn("[sendEmail] Brevo API not ok", res.status, data);
+        throw new Error(`Brevo API error ${res.status}`);
+      }
+      console.log(`[sendEmail] Brevo responded (${t1 - t0}ms)`, data);
+      return { ok: true, provider: "brevo", data };
+    } catch (e) {
+      console.warn("[sendEmail] Brevo send failed:", e?.message || e);
+      // fallthrough to SMTP/Ethereal
+    }
+  } else {
+    console.warn("[sendEmail] BREVO_API_KEY not configured, skip Brevo");
+  }
+
+  // 2) SMTP fallback
+  const transporter = getSmtpTransporterFromEnv();
+  if (transporter) {
+    try {
+      const info = await transporter.sendMail({
+        from: sender.name ? `${sender.name} <${sender.email}>` : sender.email,
+        to: toList.join(", "),
+        subject,
+        text,
+        html
+      });
+      console.log("[sendEmail] SMTP send success:", info && info.messageId);
+      return { ok: true, provider: "smtp", info };
+    } catch (err) {
+      console.error("[sendEmail] SMTP send failed:", err?.message || err);
+      // fallthrough
+    }
+  } else {
+    console.warn("[sendEmail] SMTP not configured");
+  }
+
+  // 3) Ethereal dev fallback
+  try {
+    console.log("[sendEmail] Using Ethereal dev transport");
+    const testAccount = await nodemailer.createTestAccount();
+    const ethTransport = nodemailer.createTransport({
+      host: "smtp.ethereal.email",
+      port: 587,
+      secure: false,
+      auth: { user: testAccount.user, pass: testAccount.pass }
+    });
+
+    const info = await ethTransport.sendMail({
+      from: sender.name ? `${sender.name} <${sender.email}>` : sender.email,
+      to: toList.join(", "),
+      subject,
+      text,
+      html
+    });
+    const preview = nodemailer.getTestMessageUrl(info);
+    console.log("[sendEmail] Ethereal preview:", preview);
+    return { ok: true, provider: "ethereal", preview, info };
+  } catch (err) {
+    console.error("[sendEmail] Ethereal send failed:", err?.message || err);
+    throw new Error("All email providers failed");
+  }
 }

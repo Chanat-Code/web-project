@@ -1,4 +1,5 @@
-import dotenv from "dotenv";
+// server.js (entry)
+import 'dotenv/config';        // <<== ต้องอยู่บรรทัดแรก — โหลด .env ทันที
 import { connectDB } from "./src/db.js";
 import express from "express";
 // สมมติใช้ MongoDB collection ชื่อ Notification
@@ -6,20 +7,14 @@ import Notification from "./src/models/Notification.js";
 
 import app from "./app.js";
 
-dotenv.config();
-
 const isVercel = process.env.VERCEL === "1";
 
 async function startServer() {
   try {
-    await connectDB(); // เชื่อม DB ทั้ง local และ Vercel
-
+    await connectDB();
     if (!isVercel) {
-      // รัน local
       const port = process.env.PORT || 4000;
-      app.listen(port, () =>
-        console.log(`Server running on http://localhost:${port}`)
-      );
+      app.listen(port, () => console.log(`Server running on http://localhost:${port}`));
     }
   } catch (err) {
     console.error("DB connect error:", err);
@@ -43,5 +38,4 @@ app.get("/api/notifications", async (req, res) => {
 
 startServer();
 
-// ✅ สำหรับ Vercel: export app ให้ serverless function handle request
-export default app;
+export default app; // สำหรับ Vercel (serverless)

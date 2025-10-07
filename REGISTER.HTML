@@ -68,8 +68,17 @@
     <!-- ✅ SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-      const isVercel = location.hostname.endsWith('.vercel.app');
-      const API_BASE = isVercel ? '' : 'http://127.0.0.1:4000';
+      const hostname = (location.hostname || "").toLowerCase();
+
+      // ตั้งรายการโดเมน production ที่รับรองได้ที่นี่
+      const PROD_HOSTS = [
+        (h) => h.endsWith('.vercel.app'), // ทุก project บน vercel
+        (h) => h === 'rltg.online',
+        (h) => h === 'www.rltg.online'
+      ];
+
+      const isProd = PROD_HOSTS.some(fn => fn(hostname));
+      const API_BASE = isProd ? '' : 'http://127.0.0.1:4000';
       const API = `${API_BASE}/api/auth/register`;
 
       document.getElementById("registerForm").addEventListener("submit", async (e) => {

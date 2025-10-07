@@ -111,7 +111,7 @@
   <a href="./HOMEนศทตกลทบ.html"
     class="fixed bottom-5 right-5 h-12 w-12 grid place-items-center rounded-full bg-white text-black shadow-xl">🏠</a>
 
-    <script src="https://cdn.tailwindcss.com"></script>
+      <script src="https://cdn.tailwindcss.com"></script>
     <!-- ✅ SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -285,43 +285,31 @@
         }
       }
 
-     // ...existing code...
-if (isAdmin) {
-  ['evTitle', 'evDesc', 'evDate', 'evLoc'].forEach(id => {
-    const el = document.getElementById(id);
-    el.addEventListener('click', () => {
-      el.contentEditable = "true";
-      el.focus();
-      el.style.backgroundColor = "#e0f2ff";
-    });
-    el.addEventListener('blur', () => {
-      el.contentEditable = "false";
-      el.style.backgroundColor = "";
-    });
-  });
+      if (isAdmin) {
+        ['evTitle', 'evDesc', 'evDate', 'evLoc'].forEach(id => {
+          const el = document.getElementById(id);
+          el.addEventListener('click', () => {
+            el.contentEditable = "true";
+            el.focus();
+            el.style.backgroundColor = "#e0f2ff";
+          });
+          el.addEventListener('blur', () => {
+            el.contentEditable = "false";
+            el.style.backgroundColor = "";
+          });
+        });
 
-  const saveBtn = document.createElement("button");
-  saveBtn.textContent = "บันทึกการแก้ไข";
-  saveBtn.className = "mt-6 px-6 py-2.5 rounded-xl bg-gray-400 text-white font-semibold cursor-not-allowed";
-  saveBtn.disabled = true;
-  document.querySelector(".space-y-6").appendChild(saveBtn);
-
-  // เมื่อมีการแก้ไขข้อมูล ให้ enable ปุ่มและเปลี่ยนสี
-  let isEdited = false;
-  ['evTitle', 'evDesc', 'evDate', 'evLoc'].forEach(id => {
-    const el = document.getElementById(id);
-    el.addEventListener('input', () => {
-      if (!isEdited) {
-        saveBtn.disabled = false;
+        const saveBtn = document.createElement("button");
+        saveBtn.textContent = "บันทึกการแก้ไข";
         saveBtn.className = "mt-6 px-6 py-2.5 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-500 active:scale-[.99]";
-        isEdited = true;
+        document.querySelector(".space-y-6").appendChild(saveBtn);
+        saveBtn.addEventListener("click", updateEvent);
       }
-    });
-  });
 
-  saveBtn.addEventListener("click", updateEvent);
-}
-// ...existing code...
+      if (!isAdmin) {
+        btnSubmit?.addEventListener("click", openModal);
+        document.getElementById("cmOk").addEventListener("click", doRegister);
+      }
 
       loadEvent();
     </script>
