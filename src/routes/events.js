@@ -1,5 +1,6 @@
 import { Router } from "express";
 import Event from "../models/Event.js";
+import Notification from "../models/Notification.js";
 import Registration from "../models/Registration.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
 
@@ -161,5 +162,44 @@ router.patch("/:id", requireAuth, requireAdmin, async (req, res) => {
     res.status(500).json({ message: "server error" });
   }
 });
+
+// เพิ่มกิจกรรมใหม่
+router.post("/", requireAuth, async (req, res) => {
+  const event = await Event.create({ ...req.body, createdBy: req.user.sub });
+
+  // สร้าง notification
+  await Notification.create({
+    type: "new",
+    eventId: event._id,
+    title: event.title,
+    description: event.description,
+    dateText: event.dateText,
+    imageUrl: event.imageUrl,
+    location: event.location,
+    createdBy: req.user.sub,
+  });
+
+  res.status(201).json(event);
+});
+
+// แก้ไขกิจกรรม
+router.put("/:id", requireAuth, async (req, res) => {
+  const event = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
+
+  // สร้าง notification
+  await Notification.create({
+    type: "edit",
+    eventId: event._id,
+    title: event.title,
+    description: event.description,
+    dateText: event.dateText,
+    imageUrl: event.imageUrl,
+    location: event.location,
+    createdBy: req.user.sub,
+  });
+
+  res.json(event);
+});
+
 export default router;
 
