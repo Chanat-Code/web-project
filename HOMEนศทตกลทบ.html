@@ -189,6 +189,16 @@
         </div>
       </div>
 
+      <!-- Notification Button -->
+      <button id="notifBtn"
+        class="shrink-0 h-12 w-12 rounded-full bg-slate-700 grid place-items-center ring-1 ring-white/10 hover:ring-indigo-400 transition relative"
+        aria-label="Notifications">
+        <svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 22a2 2 0 002-2H10a2 2 0 002 2zm6-6V11a6 6 0 10-12 0v5l-2 2v1h16v-1l-2-2z"/>
+        </svg>
+        <span id="notifBadge" class="absolute top-2 right-2 bg-rose-600 text-white text-xs rounded-full px-2 py-0.5 hidden">0</span>
+      </button>
+
       <button
         class="shrink-0 h-12 w-12 rounded-full bg-slate-700 grid place-items-center ring-1 ring-white/10 hover:ring-indigo-400 transition"
         id="profileBtn" aria-label="โปรไฟล์">
@@ -470,6 +480,23 @@
 
   <!-- Footer -->
   <footer class="py-6 text-center text-sm text-white/70">© 2025 RLTG</footer>
+  
+  <!-- Modal Notifications -->
+  <div id="notifModal" class="fixed inset-0 z-[85] hidden" role="dialog" aria-modal="true">
+    <div data-overlay class="absolute inset-0 bg-black/50"></div>
+    <div class="relative z-10 min-h-full p-4 grid place-items-center">
+      <div class="w-[400px] max-w-[calc(100vw-2rem)] rounded-2xl bg-white text-slate-900 shadow-2xl border border-slate-200">
+        <div class="flex items-center justify-between px-6 py-5 border-b">
+          <h3 class="text-xl font-bold">Notifications</h3>
+          <button id="notifClose" class="h-9 w-9 grid place-items-center rounded-full hover:bg-black/5">✕</button>
+        </div>
+        <div class="p-6 max-h-[60vh] overflow-y-auto">
+          <ul id="notifList" class="space-y-4"></ul>
+          <div id="notifEmpty" class="text-slate-500 hidden">No notifications.</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ===== Globals / Utils ===== -->
   <script>
@@ -861,8 +888,8 @@
     })();
   </script>
 
+  <!-- ===== Admin Registrations Modal (Fixed v2) ===== -->
   <script>
-    /* ===== Admin Registrations Modal (Fixed v2) ===== */
     (function () {
       const API_BASE = window.API_BASE;
       const token = localStorage.getItem("token");
@@ -1267,5 +1294,73 @@
   </script>
 </body>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+(function () {
+  const API_BASE = window.API_BASE;
+  const token = localStorage.getItem("token");
+  let notifications = [];
+
+  const notifBtn = document.getElementById('notifBtn');
+  const notifModal = document.getElementById('notifModal');
+  const notifClose = document.getElementById('notifClose');
+  const notifList = document.getElementById('notifList');
+  const notifEmpty = document.getElementById('notifEmpty');
+  const notifBadge = document.getElementById('notifBadge');
+  const overlay = notifModal?.querySelector('[data-overlay]');
+
+  // ดึง notification จาก backend
+  async function fetchNotifications() {
+    try {
+      const res = await fetch(`${API_BASE}/notifications`, {
+        headers: { Authorization: "Bearer " + token },
+        credentials: "include"
+      });
+      if (!res.ok) throw new Error("ไม่สามารถโหลด notification");
+      const data = await res.json();
+      notifications = Array.isArray(data.items) ? data.items : [];
+      renderNotifications();
+    } catch {
+      // fallback: ไม่แสดง notification
+    }
+  }
+
+  function renderNotifications() {
+    if (!notifications.length) {
+      notifList.innerHTML = '';
+      notifEmpty.classList.remove('hidden');
+      notifBadge.classList.add('hidden');
+      return;
+    }
+    notifList.innerHTML = notifications.map(n =>
+      `<li class="rounded-lg bg-slate-100 px-4 py-3 text-slate-900 border-l-4 ${n.type === 'new' ? 'border-indigo-500' : 'border-amber-500'}">
+        <div class="font-medium">${n.text}</div>
+        <div class="text-xs text-slate-500 mt-1">${n.time}</div>
+      </li>`
+    ).join('');
+    notifEmpty.classList.add('hidden');
+    notifBadge.textContent = notifications.length;
+    notifBadge.classList.remove('hidden');
+  }
+
+  function openModal() {
+    notifModal.classList.remove('hidden');
+    renderNotifications();
+  }
+  function closeModal() {
+    notifModal.classList.add('hidden');
+  }
+
+  notifBtn?.addEventListener('click', openModal);
+  notifClose?.addEventListener('click', closeModal);
+  overlay?.addEventListener('click', closeModal);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !notifModal.classList.contains('hidden')) closeModal();
+  });
+
+  // Polling ทุก 30 วินาที
+  fetchNotifications();
+  setInterval(fetchNotifications, 30000);
+})();
+</script>
 
 </html>
