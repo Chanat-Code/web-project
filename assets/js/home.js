@@ -430,6 +430,7 @@
 
     const esc = window.escapeHtml ?? (s => s);
     const fmt = window.formatDateLabel ?? (s => s);
+    let RD_CURRENT_ROWS = [];
 
     function toDisplayDate(s) {
       if (!s) return '—';
@@ -696,58 +697,107 @@
       });
     }
 
-    async function openRegDetail(ev) {
-      regUI.detailWrap.classList.remove('hidden');
-      regUI.sumWrap.classList.add('hidden');
-      regUI.dScroll?.scrollTo?.(0, 0);
-      regUI.dTitle.textContent = ev.title || '(ไม่ระบุชื่อกิจกรรม)';
-      regUI.dDate.textContent = toDisplayDate(ev.dateText);
-      regUI.dLoading.classList.remove('hidden');
-      regUI.dEmpty.classList.add('hidden');
-      regUI.dTable.classList.add('hidden');
-      regUI.dTbody.innerHTML = '';
-
-      let regs = await fetchRegistrationsByEvent(ev._id);
-      if (!regs.length) {
-        const all = await fetchAllRegistrations();
-        if (Array.isArray(all)) {
-          regs = all.filter(r => getRegEventId(r) === ev._id);
-        }
-      }
-
-      regUI.dLoading.classList.add('hidden');
-      if (!regs.length) {
-        regUI.dEmpty.classList.remove('hidden');
-        return;
-      }
-
-      regUI.dTbody.innerHTML = regs.map(r => {
-        const u = r.user || r.profile || r.account || {};
-        const name = u.username || u.fullName || u.name || r.name || r.username || '—';
-        const idnum = u.idNumber || u.studentId || r.idNumber || r.studentId || r.sid || '—';
-        const email = u.email || r.email || '—';
-        const phone = u.phone || u.tel || r.phone || r.tel || '—';
-        const addr = r.address || r.addr || r.registrationAddress || r.contactAddress || '—';
-        return `<tr class="border-t">
-          <td class="py-2 pr-3">${esc(String(name))}</td>
-          <td class="py-2 pr-3">${esc(String(idnum))}</td>
-          <td class="py-2 pr-3">${esc(String(email))}</td>
-          <td class="py-2 pr-3">${esc(String(phone))}</td>
-          <td class="py-2 pr-3">${esc(String(addr))}</td>
-        </tr>`;
-      }).join('');
-      regUI.dTable.classList.remove('hidden');
+    function sanitizeFilename(s = '') {
+      return String(s).replace(/[\/\\?%*:|"<>]/g, '_').trim() || 'export';
     }
 
-    fabReg?.addEventListener('click', openRegModal);
-    regUI.overlay?.addEventListener('click', () => hideModal(regUI.wrap));
-    regUI.close?.addEventListener('click', () => hideModal(regUI.wrap));
-    regUI.close2?.addEventListener('click', () => hideModal(regUI.wrap));
-    regUI.dBack?.addEventListener('click', () => {
-      regUI.detailWrap.classList.add('hidden');
-      regUI.sumWrap.classList.remove('hidden');
-      regUI.sumScroll?.scrollTo?.(0, 0);
-    });
+    function toCSV(rows) {
+      const header = ['ชื่อ', 'รหัส', 'E-mail', 'โทร', 'ที่อยู่ (ตอนลงทะเบียน)'];
+      const esc = (v) => {
+        const t = String(v ?? '');
+        return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+      };
+      const lines = [header.map(esc).join(',')];
+      for (const r of rows) lines.push([r.name, r.idnum, r.email, r.phone, r.addr].map(esc).join(','));
+      return lines.join('\n');
+    }
+
+    function downloadCSVFile(filename, csvText) {
+      const BOM = '\uFEFF'; // ให้ Excel อ่านไทยถูก
+      const blob = new Blob([BOM + csvText], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename.endsWith('.csv') ? filename : filename + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+
+async function openRegDetail(ev) {
+  regUI.detailWrap.classList.remove('hidden');
+  regUI.sumWrap.classList.add('hidden');
+  regUI.dScroll?.scrollTo?.(0, 0);
+  regUI.dTitle.textContent = ev.title || '(ไม่ระบุชื่อกิจกรรม)';
+  regUI.dDate.textContent = toDisplayDate(ev.dateText);
+  regUI.dLoading.classList.remove('hidden');
+  regUI.dEmpty.classList.add('hidden');
+  regUI.dTable.classList.add('hidden');
+  regUI.dTbody.innerHTML = '';
+  RD_CURRENT_ROWS = [];
+  document.getElementById('rdExport')?.setAttribute('disabled', 'true');
+
+  let regs = await fetchRegistrationsByEvent(ev._id);
+  if (!regs.length) {
+    const all = await fetchAllRegistrations();
+    if (Array.isArray(all)) regs = all.filter(r => getRegEventId(r) === ev._id);
+  }
+
+  regUI.dLoading.classList.add('hidden');
+  if (!regs.length) { regUI.dEmpty.classList.remove('hidden'); return; }
+
+  // วาดตาราง
+  regUI.dTbody.innerHTML = regs.map(r => {
+    const u = r.user || r.profile || r.account || {};
+    const name  = u.username || u.fullName || u.name || r.name || r.username || '—';
+    const idnum = u.idNumber || u.studentId || r.idNumber || r.studentId || r.sid || '—';
+    const email = u.email || r.email || '—';
+    const phone = u.phone || u.tel || r.phone || r.tel || '—';
+    const addr  = r.address || r.addr || r.registrationAddress || r.contactAddress || '—';
+    return `<tr class="border-t">
+      <td class="py-2 pr-3">${esc(String(name))}</td>
+      <td class="py-2 pr-3">${esc(String(idnum))}</td>
+      <td class="py-2 pr-3">${esc(String(email))}</td>
+      <td class="py-2 pr-3">${esc(String(phone))}</td>
+      <td class="py-2 pr-3">${esc(String(addr))}</td>
+    </tr>`;
+  }).join('');
+
+  // เตรียมข้อมูลสำหรับส่งออก
+  RD_CURRENT_ROWS = regs.map(r => {
+    const u = r.user || r.profile || r.account || {};
+    const name  = u.username || u.fullName || u.name || r.name || r.username || '—';
+    const idnum = u.idNumber || u.studentId || r.idNumber || r.studentId || r.sid || '—';
+    const email = u.email || r.email || '—';
+    const phone = u.phone || u.tel || r.phone || r.tel || '—';
+    const addr  = r.address || r.addr || r.registrationAddress || r.contactAddress || '—';
+    return { name: String(name), idnum: String(idnum), email: String(email), phone: String(phone), addr: String(addr) };
+  });
+
+  regUI.dTable.classList.remove('hidden');
+  document.getElementById('rdExport')?.removeAttribute('disabled');
+}
+
+  fabReg?.addEventListener('click', openRegModal);
+  regUI.overlay?.addEventListener('click', () => hideModal(regUI.wrap));
+  regUI.close?.addEventListener('click', () => hideModal(regUI.wrap));
+  regUI.close2?.addEventListener('click', () => hideModal(regUI.wrap));
+  regUI.dBack?.addEventListener('click', () => {
+    regUI.detailWrap.classList.add('hidden');
+    regUI.sumWrap.classList.remove('hidden');
+    regUI.sumScroll?.scrollTo?.(0, 0);
+  });
+
+  document.getElementById('rdExport')?.addEventListener('click', () => {
+    if (!RD_CURRENT_ROWS.length) return;
+    const title = document.getElementById('rdTitle')?.textContent || 'export';
+    const date  = document.getElementById('rdDate')?.textContent || '';
+    const filename = sanitizeFilename(`${title} ${date}`.trim());
+    const csv = toCSV(RD_CURRENT_ROWS);
+    downloadCSVFile(filename, csv);
+  });
 
     Promise.allSettled([loadMe(), loadEvents()]).catch(() => { });
   })();

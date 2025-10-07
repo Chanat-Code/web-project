@@ -369,8 +369,18 @@
               <div id="rdTitle" class="font-semibold text-lg">—</div>
               <div id="rdDate" class="text-sm text-slate-500">—</div>
             </div>
-            <button id="rdBack" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50">←
-              ย้อนกลับ</button>
+
+            <div class="flex items-center gap-2">
+              <!-- ปุ่มส่งออก Excel (.csv) -->
+              <button id="rdExport"
+                class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                ส่งออก Excel
+              </button>
+
+              <button id="rdBack" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50">
+                ← ย้อนกลับ
+              </button>
+            </div>
           </div>
 
           <div id="rdLoading" class="h-10 rounded-lg bg-slate-100 animate-pulse"></div>
