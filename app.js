@@ -1,40 +1,28 @@
-// app.js (ESM)
-import express from "express";
-import cors from "cors";
-import cookieParser from "cookie-parser";
-import authRouter from "./src/routes/auth.js";
-import eventsRouter from "./src/routes/events.js";
-import registrationsRouter from "./src/routes/registrations.js";
+import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+
+// Import all routes
+import authRoutes from './src/routes/auth.js';
+import eventRoutes from './src/routes/events.js';
+import registrationRoutes from './src/routes/registrations.js';
+import notificationRoutes from './src/routes/notifications.js'; // <-- Import ที่นี่
 
 const app = express();
 
-// ===== CORS =====
-const DEFAULT_ORIGINS = ["http://localhost:5500", "http://127.0.0.1:5500"];
-const origins = (process.env.CORS_ORIGINS || DEFAULT_ORIGINS.join(","))
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
-
-// ✅ แบบปลอดภัย — ถ้า origin ไม่อยู่ใน whitelist ก็ไม่ใส่ header CORS
-const corsOptions = {
-  origin: (origin, cb) => {
-    if (!origin || origins.includes(origin)) return cb(null, true);
-    return cb(null, false); // แค่ไม่อนุญาต (ไม่โยน error)
-  },
+// Middleware
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:5173', process.env.CLIENT_URL],
   credentials: true,
-};
-app.use(cors(corsOptions));
-
-// ===== parsers =====
+}));
 app.use(express.json());
 app.use(cookieParser());
 
-// ===== routes =====
-app.use("/api/auth", authRouter);
-app.use("/api/events", eventsRouter);
-app.use("/api/registrations", registrationsRouter);
-
-// health check
-app.get("/", (_req, res) => res.send("OK"));
+// === Register all API routes here ===
+app.get('/api', (req, res) => res.json({ message: 'API is running' }));
+app.use('/api/auth', authRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/registrations', registrationRoutes);
+app.use('/api/notifications', notificationRoutes); // <-- ลงทะเบียน Route ที่นี่
 
 export default app;
