@@ -1,25 +1,13 @@
 {
   "version": 2,
   "cleanUrls": true,
-  "builds": [
-    { "src": "api/index.js", "use": "@vercel/node" },
-    { "src": "index.html", "use": "@vercel/static" },
-    { "src": "reset.html", "use": "@vercel/static" },
-    { "src": "forgot.html", "use": "@vercel/static" },
-    { "src": "REGISTER.HTML", "use": "@vercel/static" },
-    { "src": "HOMEนศทตกลทบ.html", "use": "@vercel/static" },
-    { "src": "calendar.html", "use": "@vercel/static" },
-    { "src": "event.html", "use": "@vercel/static" },
-    { "src": "dist/**", "use": "@vercel/static" },
-    { "src": "assets/**", "use": "@vercel/static" }
-  ],
   "headers": [
     {
-      "source": "/(.*\\.(js|css|png|jpg|svg))",
+      "source": "/assets/(.*)",
       "headers": [
-        { 
-          "key": "Cache-Control", 
-          "value": "public, max-age=31536000, immutable" 
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
         }
       ]
     }
