@@ -163,42 +163,8 @@ router.patch("/:id", requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// เพิ่มกิจกรรมใหม่
-router.post("/", requireAuth, async (req, res) => {
-  const event = await Event.create({ ...req.body, createdBy: req.user.sub });
-
-  // สร้าง notification
-  await Notification.create({
-    type: "new",
-    eventId: event._id,
-    title: event.title,
-    description: event.description,
-    dateText: event.dateText,
-    imageUrl: event.imageUrl,
-    location: event.location,
-    createdBy: req.user.sub,
-  });
-
-  res.status(201).json(event);
 });
 
-// แก้ไขกิจกรรม
-router.put("/:id", requireAuth, async (req, res) => {
-  const event = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
-
-  // สร้าง notification
-  await Notification.create({
-    type: "edit",
-    eventId: event._id,
-    title: event.title,
-    description: event.description,
-    dateText: event.dateText,
-    imageUrl: event.imageUrl,
-    location: event.location,
-    createdBy: req.user.sub,
-  });
-
-  res.json(event);
 });
 
 export default router;
