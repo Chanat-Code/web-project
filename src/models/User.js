@@ -2,15 +2,15 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    username: { type: String, required: true, unique: true, trim: true },
-    idNumber: { type: String, required: true, trim: true },
+    firstName: { type: String, required: true, trim: true },
+    lastName: { type: String, required: true, trim: true },
+    studentId: { type: String, required: true, match: /^\d{8}$/ },
     passwordHash: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true },
-    major: { type: String },
-    phone: { type: String },
+    major: { type: String, required: true },
+    phone: { type: String, match: /^\d{10}$/ },
     role: { type: String, enum: ["user", "admin"], default: "user" },
 
-    // 🔽 ใช้สำหรับลืมรหัสผ่าน
     resetPasswordTokenHash: { type: String, index: true },
     resetPasswordExpiresAt: { type: Date, index: true },
   },
