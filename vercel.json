@@ -14,18 +14,13 @@
     { "src": "assets/**", "use": "@vercel/static" }
   ],
   "headers": [
-    {
-      "source": "/:all*\\.(?:js|css|png|jpg|svg)$",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-cache" }
-      ]
-    }
+    { "source": "/:all*\\.js",  "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
+    { "source": "/:all*\\.css", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
+    { "source": "/:all*\\.png", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
+    { "source": "/:all*\\.jpg", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
+    { "source": "/:all*\\.svg", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
+
+    { "source": "/(.*)", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
   ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index.js" }
