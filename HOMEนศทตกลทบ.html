@@ -7,14 +7,12 @@
   <title>RLTG</title>
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="icon" href="assets/hero/image.png" sizes="any">
   <link href="https://fonts.googleapis.com/css2?family=Manjari:wght@700&family=Inter:wght@400;600;800&display=swap"
     rel="stylesheet" />
 
-  <!-- พรีโหลดรูป hero แรก -->
   <link rel="preload" as="image" href="assets/hero/IMG_20250807_143556.jpg">
 
   <style>
@@ -147,7 +145,6 @@
       }
     }
 
-    /* === Hero controls always on top (ลดการซ้ำ) === */
     #tvPrev,
     #tvNext,
     #tvToggle,
@@ -156,7 +153,6 @@
       pointer-events: auto;
     }
 
-    /* รูปไม่กินคลิกทับคอนโทรล */
     .tv-slide {
       pointer-events: none;
     }
@@ -164,7 +160,6 @@
 </head>
 
 <body class="bg-slate-900 text-slate-100">
-  <!-- Header -->
   <header
     class="fixed inset-x-0 top-0 z-50 bg-slate-800/95 backdrop-blur supports-[backdrop-filter]:bg-slate-800/80 border-b border-white/10">
     <div class="mx-auto max-w-none px-4 sm:px-6 lg:px-8 h-[var(--header-h)] flex items-center gap-4 w-full">
@@ -188,6 +183,15 @@
           </button>
         </div>
       </div>
+      
+      <button
+        class="relative shrink-0 h-12 w-12 rounded-full bg-slate-700 grid place-items-center ring-1 ring-white/10 hover:ring-indigo-400 transition"
+        id="notifBtn" aria-label="แจ้งเตือน">
+        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
+        </svg>
+        <span id="notifBadge" class="absolute top-2 right-2 h-4 w-4 rounded-full bg-rose-500 text-white text-xs font-bold grid place-items-center hidden"></span>
+      </button>
 
       <button
         class="shrink-0 h-12 w-12 rounded-full bg-slate-700 grid place-items-center ring-1 ring-white/10 hover:ring-indigo-400 transition"
@@ -200,12 +204,9 @@
     </div>
   </header>
 
-  <!-- ===== MAIN ===== -->
   <main class="pt-[var(--header-h)]">
-    <!-- Hero (Full-bleed) -->
     <section class="relative mx-[calc(50%-50vw)] w-screen">
       <div id="tvStage" class="relative">
-        <!-- Edge fades -->
         <div
           class="pointer-events-none absolute inset-y-0 left-0 w-[7vw] max-w-32 bg-gradient-to-r from-black/30 to-transparent z-20">
         </div>
@@ -213,7 +214,6 @@
           class="pointer-events-none absolute inset-y-0 right-0 w-[7vw] max-w-32 bg-gradient-to-l from-black/30 to-transparent z-20">
         </div>
 
-        <!-- Arrows -->
         <button id="tvPrev"
           class="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-30 h-10 w-10 grid place-items-center rounded-full bg-black/45 text-white ring-1 ring-white/30 hover:bg-black/60">
           <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
@@ -227,25 +227,21 @@
           </svg>
         </button>
 
-        <!-- Dots + Pause -->
         <div id="tvDotsWrap"
           class="absolute bottom-2 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-3 pointer-events-auto">
           <div id="tvDots" class="flex items-center gap-2"></div>
         </div>
         <button id="tvToggle"
           class="absolute bottom-2 right-3 md:right-6 z-30 h-8 w-8 grid place-items-center rounded-full bg-white/90 text-slate-900 hover:bg-white invisible pointer-events-none">⏸</button>
-      </div> <!-- ✅ ปิด tvStage -->
-    </section>
+      </div> </section>
 
-    <!-- รายการกิจกรรม -->
     <section class="relative z-10 w-full max-w-3xl px-4 mx-auto mt-14 md:mt-20">
       <div class="rounded-2xl bg-white/30 backdrop-blur shadow-2xl ring-1 ring-white/40 p-6 sm:p-8">
-        <ul id="eventList" class="space-y-4"><!-- เติมด้วย JS --></ul>
+        <ul id="eventList" class="space-y-4"></ul>
       </div>
     </section>
   </main>
 
-  <!-- FAB: admin only -->
   <button id="fabAdd"
     class="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-indigo-600 shadow-xl text-white text-3xl leading-none grid place-items-center hover:bg-indigo-500 active:scale-95 transition hidden"
     title="เพิ่มกิจกรรม">+</button>
@@ -259,7 +255,6 @@
     </svg>
   </button>
 
-  <!-- ปุ่มลอย: ลบกิจกรรม (เฉพาะ admin) -->
   <button id="fabDel"
     class="fixed bottom-40 right-6 h-14 w-14 rounded-full bg-rose-600 text-white grid place-items-center shadow-xl hover:bg-rose-500 active:scale-95 transition hidden"
     title="ลบกิจกรรม">
@@ -269,7 +264,6 @@
     </svg>
   </button>
 
-  <!-- Modal จัดการลบ -->
   <div id="delModal" class="fixed inset-0 z-[75] hidden" role="dialog" aria-modal="true">
     <div data-overlay class="absolute inset-0 bg-black/50"></div>
     <div class="relative z-10 min-h-full p-4 grid place-items-center">
@@ -293,7 +287,6 @@
     </div>
   </div>
 
-  <!-- ปุ่มไปหน้า Calendar (เฉพาะ user) -->
   <a id="calendarFab" href="./calendar.html"
     class="hidden fixed bottom-6 right-6 h-14 w-14 rounded-full bg-indigo-600 text-white grid place-items-center shadow-xl hover:bg-indigo-500 active:scale-95 transition"
     title="Calendar" aria-label="Calendar">
@@ -303,7 +296,6 @@
     </svg>
   </a>
 
-  <!-- Modal เพิ่มกิจกรรม -->
   <div id="addModal" class="fixed inset-0 z-[70] hidden">
     <div data-overlay class="absolute inset-0 bg-black/50 z-10"></div>
     <div class="relative z-20 min-h-full p-4 grid place-items-center">
@@ -342,7 +334,6 @@
             aria-label="ปิด">✕</button>
         </div>
 
-        <!-- สรุปต่อกิจกรรม -->
         <div id="regSummary" class="p-6 flex-1 min-h-0">
           <div id="regLoading" class="h-10 rounded-lg bg-slate-100 animate-pulse"></div>
           <div id="regEmpty" class="hidden text-slate-500">ยังไม่มีกิจกรรมหรือไม่พบข้อมูลผู้ลงทะเบียน</div>
@@ -362,7 +353,6 @@
           </div>
         </div>
 
-        <!-- รายชื่อภายในกิจกรรม -->
         <div id="regDetail" class="hidden p-6 border-t flex-1 min-h-0">
           <div class="flex items-center justify-between mb-4">
             <div>
@@ -371,7 +361,6 @@
             </div>
 
             <div class="flex items-center gap-2">
-              <!-- ปุ่มส่งออก Excel (.csv) -->
               <button id="rdExport"
                 class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed">
                 ส่งออก Excel
@@ -410,7 +399,6 @@
     </div>
   </div>
 
-  <!-- ===== Profile modal (z สูงสุด) ===== -->
   <div id="profileModal" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true">
     <div data-overlay class="absolute inset-0 bg-black/50 backdrop-blur-sm z-10"></div>
     <div class="relative z-20 min-h-full p-4">
@@ -459,7 +447,6 @@
     </div>
   </div>
 
-  <!-- ===== History modal ===== -->
   <div id="historyModal" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true">
     <div data-overlay class="absolute inset-0 bg-black/60 backdrop-blur-sm z-10"></div>
     <div class="relative z-20 min-h-full p-4 grid place-items-center">
@@ -479,7 +466,23 @@
     </div>
   </div>
 
-  <!-- Footer -->
+  <div id="notifModal" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true">
+    <div data-overlay class="absolute inset-0 bg-black/50 backdrop-blur-sm z-10"></div>
+    <div class="relative z-20 min-h-full p-4">
+      <div id="notifCard"
+        class="fixed z-20 w-80 sm:w-96 max-h-[70vh] flex flex-col rounded-2xl bg-white text-slate-900 shadow-2xl border border-black/5">
+        <div class="absolute -top-2 right-28 w-4 h-4 bg-white rotate-45 shadow ring-1 ring-black/5"></div>
+        <div class="p-4 border-b flex items-center justify-between">
+            <h3 class="font-bold text-lg">การแจ้งเตือน</h3>
+            <button data-close class="h-8 w-8 grid place-items-center rounded-full hover:bg-black/5 text-slate-900" aria-label="ปิด">✕</button>
+        </div>
+        <div id="notifList" class="flex-1 overflow-y-auto p-2 space-y-1">
+          <div id="notifEmpty" class="p-8 text-center text-slate-500">ไม่มีการแจ้งเตือน</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <footer class="py-6 text-center text-sm text-white/70">© 2025 RLTG</footer>
 
 

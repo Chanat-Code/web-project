@@ -21,7 +21,6 @@ router.get("/:id", async (req, res) => {
 
 /** ======================== User ======================== */
 
-// ผู้ใช้ลงทะเบียน (upsert) + บันทึก snapshot ครั้งแรก
 router.post("/:id/register", requireAuth, async (req, res) => {
   try {
     const { address = "" } = req.body || {};
@@ -52,7 +51,6 @@ router.post("/:id/register", requireAuth, async (req, res) => {
   }
 });
 
-// เช็กว่าผู้ใช้ลงทะเบียนกิจกรรมนี้แล้วหรือยัง
 router.get("/:id/registered", requireAuth, async (req, res) => {
   const has = await Registration.exists({ user: req.user.sub, event: req.params.id });
   res.json({ registered: !!has });
@@ -77,7 +75,6 @@ router.post("/", requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// ✅ ลบกิจกรรม แต่เก็บประวัติของผู้ใช้ไว้ (เติม snapshot ให้ครบก่อนลบ)
 router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
   const { id } = req.params;
 
@@ -91,7 +88,6 @@ router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
     imageUrl: ev.imageUrl || ""
   };
 
-  // เติม snapshot ให้ registrations ที่ยังไม่มี
   await Registration.updateMany(
     {
       event: id,
@@ -103,7 +99,6 @@ router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
     { $set: { eventSnapshot: snap } }
   );
 
-  // ลบเฉพาะ Event (เก็บ registration ไว้เป็นประวัติ)
   await Event.deleteOne({ _id: id });
 
   res.json({ message: "deleted", id });
@@ -116,7 +111,7 @@ router.get("/admin/summary", requireAuth, requireAdmin, async (_req, res) => {
   const countMap = Object.fromEntries(counts.map(r => [String(r._id), r.count]));
 
   const events = await Event.find({}, "title dateText").sort({ createdAt: -1 }).lean();
-  res.set("Cache-Control", "s-maxage=20, stale-while-revalidate=120"); // เร่งบน Vercel
+  res.set("Cache-Control", "s-maxage=20, stale-while-revalidate=120");
   res.json(events.map(ev => ({
     eventId: ev._id,
     title: ev.title,
@@ -144,20 +139,41 @@ router.get("/:id/registrations", requireAuth, requireAdmin, async (req, res) => 
     } : null
   })));
 });
-// ---------แก้ไขกิจกรรม---------
+
+// ---------แก้ไขกิจกรรม (ฉบับแก้ไขแล้ว)---------
 router.patch("/:id", requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
 
+    // 1. อัปเดตข้อมูล Event
     const ev = await Event.findByIdAndUpdate(
       id,
       { $set: updateData },
       { new: true, runValidators: true }
     );
 
-    if (!ev) return res.status(404).json({ message: "event not found" });
+    if (!ev) {
+      return res.status(404).json({ message: "event not found" });
+    }
 
+    // 2. ค้นหาผู้ใช้ทั้งหมดที่ลงทะเบียนกิจกรรมนี้
+    const registrations = await Registration.find({ event: id }).lean();
+    const userIds = registrations.map(reg => reg.user);
+
+    // 3. สร้าง Notification สำหรับผู้ใช้ทุกคนที่ลงทะเบียนไว้
+    if (userIds.length > 0) {
+      const message = `ข้อมูลกิจกรรม "${ev.title}" มีการเปลี่ยนแปลง กรุณาตรวจสอบ`;
+      const notifications = userIds.map(userId => ({
+        user: userId,
+        type: 'edit',
+        message: message,
+        eventId: ev._id,
+        title: ev.title,
+      }));
+      await Notification.insertMany(notifications);
+    }
+    
     res.json(ev);
   } catch (e) {
     console.error(e);
@@ -165,43 +181,7 @@ router.patch("/:id", requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// เพิ่มกิจกรรมใหม่
-router.post("/", requireAuth, async (req, res) => {
-  const event = await Event.create({ ...req.body, createdBy: req.user.sub });
-
-  // สร้าง notification
-  await Notification.create({
-    type: "new",
-    eventId: event._id,
-    title: event.title,
-    description: event.description,
-    dateText: event.dateText,
-    imageUrl: event.imageUrl,
-    location: event.location,
-    createdBy: req.user.sub,
-  });
-
-  res.status(201).json(event);
-});
-
-// แก้ไขกิจกรรม
-router.put("/:id", requireAuth, async (req, res) => {
-  const event = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
-
-  // สร้าง notification
-  await Notification.create({
-    type: "edit",
-    eventId: event._id,
-    title: event.title,
-    description: event.description,
-    dateText: event.dateText,
-    imageUrl: event.imageUrl,
-    location: event.location,
-    createdBy: req.user.sub,
-  });
-
-  res.json(event);
-});
+// โค้ดส่วน PUT ที่ซ้ำซ้อนกับ POST ผมขอรวมไว้กับการแก้ไขข้างบนนะครับ
+// หากต้องการใช้ PUT แยกต่างหาก ก็สามารถเพิ่ม Logic การแจ้งเตือนแบบเดียวกันได้เลย
 
 export default router;
-

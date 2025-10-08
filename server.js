@@ -4,8 +4,10 @@ import { connectDB } from "./src/db.js";
 import express from "express";
 // สมมติใช้ MongoDB collection ชื่อ Notification
 import Notification from "./src/models/Notification.js";
+import notificationRoutes from './src/routes/notifications.js';
 
 import app from "./app.js";
+app.use('/api/notifications', notificationRoutes);
 
 const isVercel = process.env.VERCEL === "1";
 
