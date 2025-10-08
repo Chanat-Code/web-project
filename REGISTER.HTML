@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8" />
@@ -14,54 +14,46 @@
     }
 
     .font-manjari {
-      font-family: 'Manjari', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+      font-family: 'Manjari', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif;
     }
   </style>
 </head>
 
 <body class="min-h-screen bg-[#e5e5e6] flex items-center justify-center p-6">
-  <main class="w-full max-w-[1120px] rounded-[36px] bg-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.25)] ring-1 ring-black/10 px-8 sm:px-12 md:px-16 py-12 md:py-14">
+  <!-- Outer card -->
+  <main
+    class="w-full max-w-[1120px] rounded-[36px] bg-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.25)] ring-1 ring-black/10 px-8 sm:px-12 md:px-16 py-12 md:py-14">
     <div class="mx-auto w-full max-w-[900px]">
-      <h1 class="font-manjari text-[86px] md:text-[92px] leading-[0.9] text-black text-center mb-10 [text-shadow:7px_7px_7px_rgba(0,0,0,0.5)]">
+      <!-- Title two rows to match reference -->
+      <h1
+        class="font-manjari text-[86px] md:text-[92px] leading-[0.9] text-black text-center select-none mb-10 [text-shadow:7px_7px_7px_rgba(0,0,0,0.5)]">
         <span class="font-bold block">CREATE</span>
         <span class="font-bold block">ACCOUNT</span>
       </h1>
 
+      <!-- Form grid -->
       <form id="registerForm" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-        <input id="firstName" name="firstName" type="text" placeholder="ชื่อ :" required
-          class="h-14 rounded-[14px] bg-neutral-200/80 text-neutral-800 px-6 shadow-inner focus:ring-2 focus:ring-indigo-400">
+        <input id="username" name="username" type="text" placeholder="Username :"
+          class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400"
+          required>
 
-        <input id="lastName" name="lastName" type="text" placeholder="นามสกุล :" required
-          class="h-14 rounded-[14px] bg-neutral-200/80 text-neutral-800 px-6 shadow-inner focus:ring-2 focus:ring-indigo-400">
+        <input id="idNumber" name="idNumber" type="text" placeholder="ID Number :"
+          class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400"
+          required>
 
-        <input id="studentId" name="studentId"
-          type="text" inputmode="numeric" maxlength="8"
-          pattern="^[0-9]{8}$" title="กรอกตัวเลข 8 หลักเท่านั้น"
-          placeholder="รหัสนักศึกษา (8 หลัก):" required
-          class="h-14 rounded-[14px] bg-neutral-200/80 text-neutral-800 px-6 shadow-inner focus:ring-2 focus:ring-indigo-400">
+        <input id="password" name="password" type="password" placeholder="Password :"
+          class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400"
+          required>
 
+        <input id="email" name="email" type="email" placeholder="Email :"
+          class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400"
+          required>
 
-        <input id="password" name="password" type="password" placeholder="Password :" required
-          class="h-14 rounded-[14px] bg-neutral-200/80 text-neutral-800 px-6 shadow-inner focus:ring-2 focus:ring-indigo-400">
+        <input id="major" name="major" type="text" placeholder="Major :"
+          class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-sky-400">
 
-        <input id="email" name="email" type="email" placeholder="Email :" required
-          class="h-14 rounded-[14px] bg-neutral-200/80 text-neutral-800 px-6 shadow-inner focus:ring-2 focus:ring-indigo-400">
-
-        <select id="major" name="major" required
-          class="h-14 rounded-[14px] bg-neutral-200/80 text-neutral-800 px-6 shadow-inner focus:ring-2 focus:ring-sky-400">
-          <option value="" disabled selected>เลือกคณะ :</option>
-          <option value="วิศวกรรมศาสตร์">วิศวกรรมศาสตร์</option>
-          <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-          <option value="เทคโนโลยีสารสนเทศ">เทคโนโลยีสารสนเทศ</option>
-          <option value="บริหารธุรกิจ">บริหารธุรกิจ</option>
-          <option value="อุตสาหกรรมเกษตร">อุตสาหกรรมเกษตร</option>
-        </select>
-
-        <input id="phone" name="phone"
-          type="tel" inputmode="numeric" maxlength="10"
-          pattern="^[0-9]{10}$" title="กรอกตัวเลข 10 หลักเท่านั้น"
-          placeholder="เบอร์โทรศัพท์ (10 หลัก):"
-          class="h-14 rounded-[14px] bg-neutral-200/80 text-neutral-800 px-6 shadow-inner focus:ring-2 focus:ring-indigo-400">
+        <input id="phone" name="phone" type="tel" placeholder="Phone Number :"
+          class="h-14 rounded-[14px] bg-neutral-200/80 placeholder:text-neutral-600/90 text-neutral-800 px-6 outline-none shadow-inner shadow-black/10 focus:ring-2 focus:ring-indigo-400">
 
         <div class="md:col-span-2 flex items-center justify-center pt-2">
           <button type="submit"
@@ -73,62 +65,69 @@
     </div>
   </main>
 
-  <!-- SweetAlert2 -->
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script>
-    const hostname = (location.hostname || "").toLowerCase();
-    const PROD_HOSTS = [(h) => h.endsWith('.vercel.app'), (h) => h === 'rltg.online', (h) => h === 'www.rltg.online'];
-    const isProd = PROD_HOSTS.some(fn => fn(hostname));
-    const API_BASE = isProd ? '' : 'http://127.0.0.1:4000';
-    const API = `${API_BASE}/api/auth/register`;
+    <!-- ✅ SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+      const hostname = (location.hostname || "").toLowerCase();
 
-    document.getElementById("registerForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
+      // ตั้งรายการโดเมน production ที่รับรองได้ที่นี่
+      const PROD_HOSTS = [
+        (h) => h.endsWith('.vercel.app'), // ทุก project บน vercel
+        (h) => h === 'rltg.online',
+        (h) => h === 'www.rltg.online'
+      ];
 
-      const studentId = document.getElementById("studentId").value.trim();
-      const phone = document.getElementById("phone").value.trim();
+      const isProd = PROD_HOSTS.some(fn => fn(hostname));
+      const API_BASE = isProd ? '' : 'http://127.0.0.1:4000';
+      const API = `${API_BASE}/api/auth/register`;
 
-      if (!/^\d{8}$/.test(studentId)) {
-        return Swal.fire('รหัสนักศึกษาต้องมี 8 ตัวเลขเท่านั้น', '', 'warning');
-      }
-      if (phone && !/^\d{10}$/.test(phone)) {
-        return Swal.fire('เบอร์โทรศัพท์ต้องมี 10 ตัวเลขเท่านั้น', '', 'warning');
-      }
+      document.getElementById("registerForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-      const payload = {
-        firstName: document.getElementById("firstName").value.trim(),
-        lastName: document.getElementById("lastName").value.trim(),
-        studentId,
-        password: document.getElementById("password").value,
-        email: document.getElementById("email").value.trim(),
-        major: document.getElementById("major").value,
-        phone
-      };
+        const payload = {
+          username: document.getElementById("username").value.trim(),
+          idNumber: document.getElementById("idNumber").value.trim(),
+          password: document.getElementById("password").value,
+          email: document.getElementById("email").value.trim(),
+          major: document.getElementById("major").value.trim(),
+          phone: document.getElementById("phone").value.trim(),
+        };
 
-      try {
-        const res = await fetch(API, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(payload)
-        });
-
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          return Swal.fire({
-            title: `Register failed (${res.status})`,
-            text: data.message || 'unknown error',
-            icon: 'error'
+        try {
+          const res = await fetch(API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(payload)
           });
+
+          let data = {};
+          try { data = await res.json(); } catch { }
+
+          if (!res.ok) {
+            return Swal.fire({
+              title: `Register failed (${res.status})`,
+              text: data.message || 'unknown error',
+              icon: 'error',
+              confirmButtonText: 'OK'
+            });
+          }
+
+          Swal.fire({
+            title: 'Register success!',
+            icon: 'success',
+            confirmButtonText: 'OK'
+          }).then(() => window.location.href = "./index.html");
+
+        } catch (err) {
+          console.error(err);
+          Swal.fire({ title: 'Network error', icon: 'error', confirmButtonText: 'OK' });
         }
+      });
+    </script>
 
-        Swal.fire({ title: 'Register success!', icon: 'success' })
-          .then(() => window.location.href = "./index.html");
 
-      } catch (err) {
-        Swal.fire({ title: 'Network error', icon: 'error' });
-      }
-    });
-  </script>
 </body>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </html>

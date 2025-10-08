@@ -221,9 +221,8 @@
       }
 
       const id = (x) => document.getElementById(x);
-      const fullName = [me.firstName, me.lastName].filter(Boolean).join(" ").trim();
-      id("ppName") && (id("ppName").textContent = fullName || "—");
-      id("ppId")   && (id("ppId").textContent   = me.studentId ?? "—");
+      id("ppName") && (id("ppName").textContent = me.username ?? "—");
+      id("ppId") && (id("ppId").textContent = me.idNumber ?? "—");
       id("ppEmail") && (id("ppEmail").textContent = me.email ?? "—");
       id("ppMajor") && (id("ppMajor").textContent = me.major ?? "—");
       id("ppPhone") && (id("ppPhone").textContent = me.phone ?? "—");
@@ -703,15 +702,13 @@
     }
 
     function toCSV(rows) {
-      const header = ['ชื่อ', 'รหัสนักศึกษา', 'คณะ', 'E-mail', 'เบอร์โทรศัพท์', 'ที่อยู่ (ตอนลงทะเบียน)'];
+      const header = ['ชื่อ', 'รหัส', 'E-mail', 'โทร', 'ที่อยู่ (ตอนลงทะเบียน)'];
       const esc = (v) => {
         const t = String(v ?? '');
         return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
       };
       const lines = [header.map(esc).join(',')];
-      for (const r of rows) {
-        lines.push([r.name, r.idnum, r.faculty, r.email, r.phone, r.addr].map(esc).join(','));
-      }
+      for (const r of rows) lines.push([r.name, r.idnum, r.email, r.phone, r.addr].map(esc).join(','));
       return lines.join('\n');
     }
 
@@ -728,13 +725,6 @@
       URL.revokeObjectURL(url);
     }
 
-// helper: คืนค่าตัวแรกที่ไม่ว่าง/ไม่เป็นสตริงว่าง
-const coalesce = (...vals) => {
-  for (const v of vals) {
-    if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim();
-  }
-  return undefined;
-};
 
 async function openRegDetail(ev) {
   regUI.detailWrap.classList.remove('hidden');
@@ -758,85 +748,37 @@ async function openRegDetail(ev) {
   regUI.dLoading.classList.add('hidden');
   if (!regs.length) { regUI.dEmpty.classList.remove('hidden'); return; }
 
-  // === วาดตาราง (ใช้ coalesce ครอบจักรวาล) ===
+  // วาดตาราง
   regUI.dTbody.innerHTML = regs.map(r => {
     const u = r.user || r.profile || r.account || {};
-
-    const first = coalesce(
-      u.firstName, u.firstname, u.first_name, u.givenName, u.given_name,
-      r.firstName, r.firstname, r.first_name, r.givenName, r.given_name
-    );
-    const last = coalesce(
-      u.lastName, u.lastname, u.last_name, u.familyName, u.family_name,
-      r.lastName, r.lastname, r.last_name, r.familyName, r.family_name
-    );
-    const fullFromParts = [first, last].filter(Boolean).join(' ').trim();
-    const name = coalesce(
-      fullFromParts,
-      u.fullName, u.fullname, u.name,
-      r.fullName, r.fullname, r.name,
-      u.username, r.username,
-      '—'
-    );
-
-    const idnum   = coalesce(u.studentId, u.idNumber, r.studentId, r.idNumber, r.sid, '—');
-    const faculty = coalesce(
-      u.faculty, u.fac, u.facultyName, u.department, u.major, u.school, u.college,
-      r.faculty, r.fac, r.facultyName, r.department, r.major, r.school, r.college,
-      '—'
-    );
-    const email   = coalesce(u.email, r.email, '—');
-    const phone   = coalesce(u.phone, u.tel, r.phone, r.tel, '—');
-    const addr    = coalesce(r.address, r.addr, r.registrationAddress, r.contactAddress, '—');
-
+    const name  = u.username || u.fullName || u.name || r.name || r.username || '—';
+    const idnum = u.idNumber || u.studentId || r.idNumber || r.studentId || r.sid || '—';
+    const email = u.email || r.email || '—';
+    const phone = u.phone || u.tel || r.phone || r.tel || '—';
+    const addr  = r.address || r.addr || r.registrationAddress || r.contactAddress || '—';
     return `<tr class="border-t">
-      <td class="py-2 pr-3">${esc(name)}</td>
-      <td class="py-2 pr-3">${esc(idnum)}</td>
-      <td class="py-2 pr-3">${esc(faculty)}</td>
-      <td class="py-2 pr-3">${esc(email)}</td>
-      <td class="py-2 pr-3">${esc(phone)}</td>
-      <td class="py-2 pr-3">${esc(addr)}</td>
+      <td class="py-2 pr-3">${esc(String(name))}</td>
+      <td class="py-2 pr-3">${esc(String(idnum))}</td>
+      <td class="py-2 pr-3">${esc(String(email))}</td>
+      <td class="py-2 pr-3">${esc(String(phone))}</td>
+      <td class="py-2 pr-3">${esc(String(addr))}</td>
     </tr>`;
   }).join('');
 
-  // === เตรียมข้อมูลสำหรับส่งออก (ต้องใช้ key: name,idnum,faculty,email,phone,addr) ===
+  // เตรียมข้อมูลสำหรับส่งออก
   RD_CURRENT_ROWS = regs.map(r => {
     const u = r.user || r.profile || r.account || {};
-
-    const first = coalesce(
-      u.firstName, u.firstname, u.first_name, u.givenName, u.given_name,
-      r.firstName, r.firstname, r.first_name, r.givenName, r.given_name
-    );
-    const last = coalesce(
-      u.lastName, u.lastname, u.last_name, u.familyName, u.family_name,
-      r.lastName, r.lastname, r.last_name, r.familyName, r.family_name
-    );
-    const fullFromParts = [first, last].filter(Boolean).join(' ').trim();
-    const name = coalesce(
-      fullFromParts,
-      u.fullName, u.fullname, u.name,
-      r.fullName, r.fullname, r.name,
-      u.username, r.username,
-      '—'
-    );
-
-    const idnum   = coalesce(u.studentId, u.idNumber, r.studentId, r.idNumber, r.sid, '—');
-    const faculty = coalesce(
-      u.faculty, u.fac, u.facultyName, u.department, u.major, u.school, u.college,
-      r.faculty, r.fac, r.facultyName, r.department, r.major, r.school, r.college,
-      '—'
-    );
-    const email   = coalesce(u.email, r.email, '—');
-    const phone   = coalesce(u.phone, u.tel, r.phone, r.tel, '—');
-    const addr    = coalesce(r.address, r.addr, r.registrationAddress, r.contactAddress, '—');
-
-    return { name, idnum, faculty, email, phone, addr };
+    const name  = u.username || u.fullName || u.name || r.name || r.username || '—';
+    const idnum = u.idNumber || u.studentId || r.idNumber || r.studentId || r.sid || '—';
+    const email = u.email || r.email || '—';
+    const phone = u.phone || u.tel || r.phone || r.tel || '—';
+    const addr  = r.address || r.addr || r.registrationAddress || r.contactAddress || '—';
+    return { name: String(name), idnum: String(idnum), email: String(email), phone: String(phone), addr: String(addr) };
   });
 
   regUI.dTable.classList.remove('hidden');
   document.getElementById('rdExport')?.removeAttribute('disabled');
 }
-
 
   fabReg?.addEventListener('click', openRegModal);
   regUI.overlay?.addEventListener('click', () => hideModal(regUI.wrap));

@@ -24,10 +24,8 @@
     <!-- ✅ SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-      const hostname = (location.hostname || "").toLowerCase();
-      const PROD_HOSTS = [(h) => h.endsWith('.vercel.app'), (h) => h === 'rltg.online', (h) => h === 'www.rltg.online'];
-      const isProd = PROD_HOSTS.some(fn => fn(hostname));
-      const API_BASE = isProd ? '' : 'http://127.0.0.1:4000';
+      const isVercel = location.hostname.endsWith('.vercel.app');
+      const API_BASE = isVercel ? '' : 'http://127.0.0.1:4000';
       const API = `${API_BASE}/api/auth/reset-password`;
       const token = new URLSearchParams(location.search).get('token');
 
