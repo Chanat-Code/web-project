@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import compression from 'compression';
 
 // routes
 import authRoutes from './src/routes/auth.js';
@@ -8,7 +9,6 @@ import eventRoutes from './src/routes/events.js';
 import registrationRoutes from './src/routes/registrations.js';
 import notificationRoutes from './src/routes/notifications.js';
 import cronRoutes from './api/cron.js';
-import compression from 'compression';
 import helmet from 'helmet';
 
 const app = express();
@@ -57,6 +57,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 /** ---------- Routes ---------- */
+app.use(compression());
 app.get('/api', (req, res) => res.json({ message: 'API is running' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
@@ -64,6 +65,5 @@ app.use('/api/registrations', registrationRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/cron', cronRoutes);
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(compression());
 
 export default app;
