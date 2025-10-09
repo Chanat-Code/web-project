@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Verify OTP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manjari:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="assets/hero/image.png" sizes="any">
+    <style>
+        .font-manjari { font-family: 'Manjari', sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen bg-[#e5e5e6] flex items-center justify-center p-6">
+    <main class="w-full max-w-lg rounded-[36px] bg-white shadow-lg px-8 sm:px-12 py-12">
+        <div class="mx-auto w-full text-center">
+            <h1 class="font-manjari text-5xl font-bold text-black mb-4">ยืนยันอีเมลของคุณ</h1>
+            <p id="otp-message" class="text-neutral-600 mb-8">เราได้ส่งรหัส OTP 6 หลักไปที่อีเมลของคุณแล้ว กรุณากรอกรหัสด้านล่าง</p>
+            
+            <form id="otpForm">
+                <input id="otp" type="text" inputmode="numeric" maxlength="6" required
+                  class="w-full h-16 text-center text-3xl tracking-[10px] rounded-xl bg-neutral-200/80 px-4 mb-6 outline-none focus:ring-2 focus:ring-indigo-400">
+                
+                <button type="submit"
+                  class="w-full h-12 rounded-xl bg-gradient-to-r from-indigo-950 via-indigo-800 to-indigo-700 text-white font-semibold tracking-wide">
+                  ยืนยัน
+                </button>
+            </form>
+        </div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+
+        const host = (location.hostname || "").toLowerCase();
+        const isProd =
+            host.endsWith(".vercel.app") ||
+            host === "rltg.online" ||
+            host === "www.rltg.online";
+
+        // ตัวแปรนี้ต้องใช้แบบ global
+        window.API_BASE = isProd ? "" : "http://127.0.0.1:4000";
+
+        const email = localStorage.getItem('registrationEmail');
+        if (!email) {
+            alert('ไม่พบอีเมล กรุณากลับไปขั้นตอนแรก');
+            window.location.href = './register-step1.html';
+        } else {
+            document.getElementById('otp-message').textContent = `เราได้ส่งรหัส OTP 6 หลักไปที่ ${email} แล้ว กรุณากรอกรหัสด้านล่าง`;
+        }
+
+        document.getElementById("otpForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const otp = document.getElementById("otp").value.trim();
+
+            if (otp.length !== 6) {
+                return Swal.fire('ข้อผิดพลาด', 'กรุณากรอก OTP 6 หลักให้ถูกต้อง', 'warning');
+            }
+
+            Swal.fire({
+                title: 'กำลังตรวจสอบ OTP...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading() }
+            });
+
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/register-verify-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ email, otp })
+                });
+                
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    throw new Error(data.message || 'OTP ไม่ถูกต้องหรือหมดอายุ');
+                }
+
+                Swal.close();
+                localStorage.setItem('tempRegToken', data.tempToken);
+                window.location.href = './register-step2.html';
+
+            } catch (error) {
+                Swal.fire('เกิดข้อผิดพลาด', error.message, 'error');
+            }
+        });
+    </script>
+</body>
+</html>
