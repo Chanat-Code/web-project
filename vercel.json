@@ -11,7 +11,7 @@
     { "src": "register-step1-verify.html", "use": "@vercel/static" },
     { "src": "register-step1.html", "use": "@vercel/static" },
     { "src": "register-step2.html", "use": "@vercel/static" },
-    { "src": "HOMEนศทตกลทบ.html", "use": "@vercel/static" },
+    { "src": "home.html", "use": "@vercel/static" },
     { "src": "calendar.html", "use": "@vercel/static" },
     { "src": "event.html", "use": "@vercel/static" },
     { "src": "dist/**", "use": "@vercel/static" },
