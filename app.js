@@ -7,7 +7,7 @@ import authRoutes from './src/routes/auth.js';
 import eventRoutes from './src/routes/events.js';
 import registrationRoutes from './src/routes/registrations.js';
 import notificationRoutes from './src/routes/notifications.js';
-import cronRoutes from './api/cron.js';
+import cronRoutes from './src/routes/cron.js';
 
 const app = express();
 

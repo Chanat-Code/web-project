@@ -1,11 +1,13 @@
-import 'dotenv/config';
-import connectDB from '../src/db.js';
-import Event from '../src/models/Event.js';
-import Registration from '../src/models/Registration.js';
-import Notification from '../src/models/Notification.js';
+// src/routes/cron.js
+import { Router } from 'express';
+import Event from '../models/Event.js';
+import Registration from '../models/Registration.js';
+import Notification from '../models/Notification.js';
 
-// ฟังก์ชันหลักที่จะทำงานเมื่อ Vercel เรียก Endpoint นี้
-export default async function handler(request, response) {
+const router = Router();
+
+// เราจะสร้าง Endpoint ที่ path /send-reminders
+router.get('/send-reminders', async (request, response) => {
   // 1. ตรวจสอบรหัสลับ (เพื่อความปลอดภัย)
   const cronSecret = process.env.CRON_SECRET;
   if (request.headers.authorization !== `Bearer ${cronSecret}`) {
@@ -13,7 +15,7 @@ export default async function handler(request, response) {
   }
 
   try {
-    await connectDB(); // เชื่อมต่อฐานข้อมูล
+    // connectDB() จะถูกเรียกจากไฟล์ server.js หรือ app.js อยู่แล้ว ไม่ต้องเรียกซ้ำที่นี่
 
     // 2. คำนวณวันที่ "วันพรุ่งนี้"
     const tomorrow = new Date();
@@ -31,7 +33,6 @@ export default async function handler(request, response) {
 
     // 4. วนลูปทุกกิจกรรมที่ใกล้จะถึง
     for (const event of upcomingEvents) {
-      // ค้นหาผู้ใช้ที่ลงทะเบียนกิจกรรมนี้
       const registrations = await Registration.find({ event: event._id }).lean();
       const userIds = registrations.map(reg => reg.user);
 
@@ -39,7 +40,7 @@ export default async function handler(request, response) {
         const message = `แจ้งเตือน: กิจกรรม "${event.title}" จะเริ่มในวันพรุ่งนี้!`;
         const notifications = userIds.map(userId => ({
           user: userId,
-          type: 'reminder', // ประเภทใหม่: แจ้งเตือนล่วงหน้า
+          type: 'reminder',
           message: message,
           eventId: event._id,
           title: event.title,
@@ -59,4 +60,6 @@ export default async function handler(request, response) {
     console.error('Cron job failed:', error);
     return response.status(500).json({ message: 'Cron job failed', error: error.message });
   }
-}
+});
+
+export default router;
