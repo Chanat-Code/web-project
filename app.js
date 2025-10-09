@@ -1,25 +1,15 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
-// Import all routes
+// Import routes ทั้งหมด
 import authRoutes from './src/routes/auth.js';
 import eventRoutes from './src/routes/events.js';
 import registrationRoutes from './src/routes/registrations.js';
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 import notificationRoutes from './src/routes/notifications.js';
-import cronRoutes from './src/routes/cron.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import cronRoutes from './api/cron.js';
 
 const app = express();
-
 
 // --- 1. สร้าง Whitelist ของ URL ที่อนุญาต ---
 // เราจะรวบรวม URL ทั้งหมดที่ใช้ในการพัฒนาและ URL จริงตอนใช้งาน
@@ -46,70 +36,15 @@ const corsOptions = {
 
 // --- 3. เรียกใช้ Middleware ---
 app.use(cors(corsOptions)); // <-- ใช้ corsOptions ที่เราตั้งค่า
-=======
-import notificationRoutes from './src/routes/notifications.js'; // <-- Import ที่นี่
-
-const app = express();
-
-=======
-import notificationRoutes from './src/routes/notifications.js'; // <-- Import ที่นี่
-
-const app = express();
-
->>>>>>> parent of f5a9cd5 (add vertify OTP)
-=======
-import notificationRoutes from './src/routes/notifications.js'; // <-- Import ที่นี่
-
-const app = express();
-
->>>>>>> parent of f5a9cd5 (add vertify OTP)
-=======
-import notificationRoutes from './src/routes/notifications.js'; // <-- Import ที่นี่
-
-const app = express();
-
->>>>>>> parent of f5a9cd5 (add vertify OTP)
-// Middleware
-app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173', process.env.CLIENT_URL],
-  credentials: true,
-}));
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> parent of f5a9cd5 (add vertify OTP)
-=======
->>>>>>> parent of f5a9cd5 (add vertify OTP)
-=======
->>>>>>> parent of f5a9cd5 (add vertify OTP)
-=======
->>>>>>> parent of f5a9cd5 (add vertify OTP)
 app.use(express.json());
 app.use(cookieParser());
 
-// === Register all API routes here ===
+// === ลงทะเบียน API routes ทั้งหมด ===
 app.get('/api', (req, res) => res.json({ message: 'API is running' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/registrations', registrationRoutes);
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/cron', cronRoutes); // อย่าลืมเพิ่ม cron route ที่สร้างไว้
-app.use(express.static(path.join(__dirname, 'public')));
-=======
-app.use('/api/notifications', notificationRoutes); // <-- ลงทะเบียน Route ที่นี่
->>>>>>> parent of f5a9cd5 (add vertify OTP)
-=======
-app.use('/api/notifications', notificationRoutes); // <-- ลงทะเบียน Route ที่นี่
->>>>>>> parent of f5a9cd5 (add vertify OTP)
-=======
-app.use('/api/notifications', notificationRoutes); // <-- ลงทะเบียน Route ที่นี่
->>>>>>> parent of f5a9cd5 (add vertify OTP)
-=======
-app.use('/api/notifications', notificationRoutes); // <-- ลงทะเบียน Route ที่นี่
->>>>>>> parent of f5a9cd5 (add vertify OTP)
 
 export default app;
