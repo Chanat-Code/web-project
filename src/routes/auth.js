@@ -112,12 +112,6 @@ router.post('/register-send-otp', async (req, res) => {
       html: emailHtml,
     });
 
-    await sendEmail({
-      to: user.email,
-      subject: 'รหัส OTP สำหรับยืนยันอีเมล RLTG',
-      html: emailHtml,
-    });
-
     res.status(200).json({ message: 'OTP has been sent to your email.' });
   } catch (err) {
     console.error("[register-send-otp] error:", err);

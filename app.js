@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 
-// Import routes ทั้งหมด
+// routes
 import authRoutes from './src/routes/auth.js';
 import eventRoutes from './src/routes/events.js';
 import registrationRoutes from './src/routes/registrations.js';
@@ -11,40 +11,55 @@ import cronRoutes from './api/cron.js';
 
 const app = express();
 
-// --- 1. สร้าง Whitelist ของ URL ที่อนุญาต ---
-// เราจะรวบรวม URL ทั้งหมดที่ใช้ในการพัฒนาและ URL จริงตอนใช้งาน
-const allowedOrigins = [
-  'http://localhost:3000',      // สำหรับ React dev server
-  'http://localhost:5173',      // สำหรับ Vite dev server
-  'http://127.0.0.1:5500',      // <-- เพิ่ม URL ของคุณที่นี่
-  process.env.CLIENT_URL        // สำหรับ URL จริงบน Vercel (เช่น https://rltg.online)
-];
+/** ---------- CORS allowlist ---------- */
+function isOriginAllowed(origin) {
+  // อนุญาตคำขอที่ไม่มี origin (เช่น curl, mobile app, same-origin บางกรณี)
+  if (!origin) return true;
 
-// --- 2. ตั้งค่า CORS Options ---
+  try {
+    const url = new URL(origin);
+    const host = url.hostname.toLowerCase();
+
+    // localhost/dev
+    if (host === 'localhost' || host === '127.0.0.1') return true;
+
+    // โปรดักชันของคุณ
+    if (host === 'rltg.online' || host === 'www.rltg.online') return true;
+
+    // อนุญาตทุกโปรเจกต์บน vercel ของคุณ (เช่น preview)
+    if (host.endsWith('.vercel.app')) return true;
+
+    // ถ้าตั้งค่า CLIENT_URL ไว้ ให้ผ่านตาม origin เต็ม ๆ
+    const client = (process.env.CLIENT_URL || '').trim();
+    if (client && client === origin) return true;
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 const corsOptions = {
-  origin: function (origin, callback) {
-    // อนุญาต request ที่มาจาก URL ใน `allowedOrigins`
-    // หรือ request ที่ไม่มี `origin` (เช่น จาก Postman, mobile app)
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+  origin: (origin, cb) => {
+    if (isOriginAllowed(origin)) return cb(null, true);
+    cb(new Error('Not allowed by CORS'));
   },
-  credentials: true, // <-- สำคัญมาก! เพื่ออนุญาตการส่ง Cookie ข้าม Origin
+  credentials: true, // ต้องมีถ้าจะส่ง cookie
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
-// --- 3. เรียกใช้ Middleware ---
-app.use(cors(corsOptions)); // <-- ใช้ corsOptions ที่เราตั้งค่า
+/** ---------- Middlewares ---------- */
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
-// === ลงทะเบียน API routes ทั้งหมด ===
+/** ---------- Routes ---------- */
 app.get('/api', (req, res) => res.json({ message: 'API is running' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/registrations', registrationRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/cron', cronRoutes); // อย่าลืมเพิ่ม cron route ที่สร้างไว้
+app.use('/api/cron', cronRoutes);
 
 export default app;
