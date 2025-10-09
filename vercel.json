@@ -3,6 +3,8 @@
   "cleanUrls": true,
   "builds": [
     { "src": "api/index.js", "use": "@vercel/node" },
+    { "src": "api/cron.js",  "use": "@vercel/node" },
+
     { "src": "index.html", "use": "@vercel/static" },
     { "src": "reset.html", "use": "@vercel/static" },
     { "src": "forgot.html", "use": "@vercel/static" },
@@ -19,13 +21,9 @@
     { "source": "/:all*\\.png", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
     { "source": "/:all*\\.jpg", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
     { "source": "/:all*\\.svg", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
-
     { "source": "/(.*)", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
   ],
   "crons": [
-    {
-      "path": "/api/cron",
-      "schedule": "0 0 * * *"
-    }
+    { "path": "/api/cron", "schedule": "0 0 * * *" }
   ]
 }
