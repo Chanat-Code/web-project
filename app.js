@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Import routes ทั้งหมด
 import authRoutes from './src/routes/auth.js';
@@ -9,7 +11,11 @@ import registrationRoutes from './src/routes/registrations.js';
 import notificationRoutes from './src/routes/notifications.js';
 import cronRoutes from './src/routes/cron.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
+
 
 // --- 1. สร้าง Whitelist ของ URL ที่อนุญาต ---
 // เราจะรวบรวม URL ทั้งหมดที่ใช้ในการพัฒนาและ URL จริงตอนใช้งาน
@@ -46,5 +52,6 @@ app.use('/api/events', eventRoutes);
 app.use('/api/registrations', registrationRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/cron', cronRoutes); // อย่าลืมเพิ่ม cron route ที่สร้างไว้
+app.use(express.static(path.join(__dirname, 'public')));
 
 export default app;
