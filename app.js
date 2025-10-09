@@ -4,10 +4,11 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Import routes ทั้งหมด
+// Import all routes
 import authRoutes from './src/routes/auth.js';
 import eventRoutes from './src/routes/events.js';
 import registrationRoutes from './src/routes/registrations.js';
+<<<<<<< HEAD
 import notificationRoutes from './src/routes/notifications.js';
 import cronRoutes from './src/routes/cron.js';
 
@@ -42,16 +43,31 @@ const corsOptions = {
 
 // --- 3. เรียกใช้ Middleware ---
 app.use(cors(corsOptions)); // <-- ใช้ corsOptions ที่เราตั้งค่า
+=======
+import notificationRoutes from './src/routes/notifications.js'; // <-- Import ที่นี่
+
+const app = express();
+
+// Middleware
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:5173', process.env.CLIENT_URL],
+  credentials: true,
+}));
+>>>>>>> parent of f5a9cd5 (add vertify OTP)
 app.use(express.json());
 app.use(cookieParser());
 
-// === ลงทะเบียน API routes ทั้งหมด ===
+// === Register all API routes here ===
 app.get('/api', (req, res) => res.json({ message: 'API is running' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/registrations', registrationRoutes);
+<<<<<<< HEAD
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/cron', cronRoutes); // อย่าลืมเพิ่ม cron route ที่สร้างไว้
 app.use(express.static(path.join(__dirname, 'public')));
+=======
+app.use('/api/notifications', notificationRoutes); // <-- ลงทะเบียน Route ที่นี่
+>>>>>>> parent of f5a9cd5 (add vertify OTP)
 
 export default app;
