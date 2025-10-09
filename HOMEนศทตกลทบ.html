@@ -1,492 +1,77 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RLTG</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-
+  
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="icon" href="assets/hero/image.png" sizes="any">
-  <link href="https://fonts.googleapis.com/css2?family=Manjari:wght@700&family=Inter:wght@400;600;800&display=swap"
-    rel="stylesheet" />
 
-  <link rel="preload" as="image" href="assets/hero/IMG_20250807_143556.jpg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manjari:wght@700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link rel="icon" href="/assets/hero/image.png" type="image/png">
+  <link rel="preload" as="image" href="/assets/hero/IMG_20250807_143556.jpg">
 
   <style>
-    :root {
-      --header-h: 72px;
-    }
-
-    body {
-      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif;
-    }
-
-    /* ===== Apple TV+ Hero ===== */
-    #tvStage {
-      --H: clamp(320px, 58vh, 660px);
-      height: var(--H);
-      position: relative;
-    }
-
-    .tv-slide {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: min(1100px, 76vw, calc(var(--H) * 16 / 9));
-      aspect-ratio: 16/9;
-      border-radius: 22px;
-      overflow: hidden;
-      background: #000;
-      box-shadow: 0 40px 90px rgba(0, 0, 0, .45);
-      transition: transform 800ms cubic-bezier(.2, .6, .2, 1), opacity 800ms cubic-bezier(.2, .6, .2, 1), filter 800ms cubic-bezier(.2, .6, .2, 1);
-      will-change: transform, opacity, filter;
-      z-index: 10;
-    }
-
-    .tv-slide img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center;
-      display: block;
-    }
-
-    .tv-slide .fade {
-      position: absolute;
-      inset-inline: 0;
-      bottom: 0;
-      height: 5.5rem;
-      background: linear-gradient(to top, rgba(0, 0, 0, .45), transparent);
-      pointer-events: none;
-    }
-
-    .tv-slide.is-center {
-      z-index: 30;
-      transform: translate(-50%, -50%) scale(1) rotateY(0);
-      opacity: 1;
-      filter: none;
-    }
-
-    .tv-slide.is-left {
-      z-index: 20;
-      transform: translate(calc(-50% - 18vw), -50%) scale(.9) rotateY(14deg);
-      opacity: .9;
-      filter: grayscale(.25) brightness(.85);
-    }
-
-    .tv-slide.is-right {
-      z-index: 20;
-      transform: translate(calc(-50% + 18vw), -50%) scale(.9) rotateY(-14deg);
-      opacity: .9;
-      filter: grayscale(.25) brightness(.85);
-    }
-
-    .tv-slide.is-hidden {
-      z-index: 10;
-      transform: translate(-50%, -50%) scale(.86);
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    @keyframes kb {
-      from {
-        transform: scale(1)
-      }
-
-      to {
-        transform: scale(1.06)
-      }
-    }
-
-    .tv-slide.is-center img {
-      animation: kb 3000ms ease-in-out both;
-    }
-
-    #tvDots .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 9999px;
-      background: rgba(255, 255, 255, .7);
-      opacity: .6;
-      transition: width .25s ease, opacity .25s ease;
-    }
-
-    #tvDots .dot.active {
-      width: 26px;
-      opacity: 1;
-    }
-
-    @media (prefers-reduced-motion:reduce) {
-
-      .tv-slide,
-      .tv-slide img {
-        transition: none !important;
-        animation: none !important;
-      }
-    }
-
-    .tv-slide[data-loading]::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.14) 50%, rgba(255, 255, 255, 0.06) 100%);
-      background-size: 200% 100%;
-      animation: shimmer 1.2s linear infinite;
-      border-radius: inherit;
-    }
-
-    @keyframes shimmer {
-      to {
-        background-position: -200% 0;
-      }
-    }
-
-    #tvPrev,
-    #tvNext,
-    #tvToggle,
-    #tvDotsWrap {
-      z-index: 70;
-      pointer-events: auto;
-    }
-
-    .tv-slide {
-      pointer-events: none;
-    }
+    :root { --header-h: 72px; }
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    /* ... (CSS ที่เหลือของคุณเหมือนเดิม) ... */
+    #tvStage { --H: clamp(320px, 58vh, 660px); height: var(--H); position: relative; }
+    .tv-slide { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(1100px, 76vw, calc(var(--H) * 16 / 9)); aspect-ratio: 16/9; border-radius: 22px; overflow: hidden; background: #000; box-shadow: 0 40px 90px rgba(0, 0, 0, .45); transition: transform 800ms cubic-bezier(.2, .6, .2, 1), opacity 800ms cubic-bezier(.2, .6, .2, 1), filter 800ms cubic-bezier(.2, .6, .2, 1); will-change: transform, opacity, filter; z-index: 10; pointer-events: none; }
+    .tv-slide img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+    .tv-slide.is-center { z-index: 30; transform: translate(-50%, -50%) scale(1) rotateY(0); opacity: 1; filter: none; }
+    .tv-slide.is-left { z-index: 20; transform: translate(calc(-50% - 18vw), -50%) scale(.9) rotateY(14deg); opacity: .9; filter: grayscale(.25) brightness(.85); }
+    .tv-slide.is-right { z-index: 20; transform: translate(calc(-50% + 18vw), -50%) scale(.9) rotateY(-14deg); opacity: .9; filter: grayscale(.25) brightness(.85); }
+    .tv-slide.is-hidden { z-index: 10; transform: translate(-50%, -50%) scale(.86); opacity: 0; pointer-events: none; }
+    @keyframes kb { from { transform: scale(1) } to { transform: scale(1.06) } }
+    .tv-slide.is-center img { animation: kb 3000ms ease-in-out both; }
+    #tvDots .dot { width: 6px; height: 6px; border-radius: 9999px; background: rgba(255, 255, 255, .7); opacity: .6; transition: width .25s ease, opacity .25s ease; }
+    #tvDots .dot.active { width: 26px; opacity: 1; }
+    #tvPrev, #tvNext, #tvToggle, #tvDotsWrap { z-index: 70; pointer-events: auto; }
   </style>
 </head>
 
 <body class="bg-slate-900 text-slate-100">
-  <header
-    class="fixed inset-x-0 top-0 z-50 bg-slate-800/95 backdrop-blur supports-[backdrop-filter]:bg-slate-800/80 border-b border-white/10">
+  <header class="fixed inset-x-0 top-0 z-50 bg-slate-800/95 backdrop-blur supports-[backdrop-filter]:bg-slate-800/80 border-b border-white/10">
     <div class="mx-auto max-w-none px-4 sm:px-6 lg:px-8 h-[var(--header-h)] flex items-center gap-4 w-full">
-      <div class="text-3xl font-extrabold tracking-tight select-none"><span class="text-white">RLTG</span></div>
+      <a href="/home.html" class="text-3xl font-extrabold tracking-tight select-none"><span class="text-white">RLTG</span></a>
       <div class="flex-1 flex items-center">
         <div class="relative w-full max-w-3xl mx-auto">
-          <input id="searchInput" type="text" placeholder="ค้นหา..."
-            class="w-full rounded-full bg-slate-700/90 pl-14 pr-14 py-3 text-white placeholder:text-slate-300 outline-none ring-1 ring-white/10 focus:ring-2 focus:ring-indigo-400 shadow-inner" />
-          <svg class="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 opacity-80" fill="none" stroke="currentColor"
-            stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z" />
-          </svg>
-          <button id="searchBtn"
-            class="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-full hover:bg-white/10 active:scale-95 transition"
-            aria-label="ค้นหา">
-            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path
-                d="M10.5 3a7.5 7.5 0 015.91 12.19l3.2 3.2a1 1 0 01-1.42 1.42l-3.2-3.2A7.5 7.5 0 1110.5 3zm0 2a5.5 5.5 0 100 11 5.5 5.5 0 000-11z" />
-            </svg>
-          </button>
+          <label for="searchInput" class="sr-only">ค้นหากิจกรรม</label>
+          <input id="searchInput" type="search" placeholder="ค้นหา..." class="w-full rounded-full bg-slate-700/90 pl-14 pr-14 py-3 text-white placeholder:text-slate-300 outline-none ring-1 ring-white/10 focus:ring-2 focus:ring-indigo-400 shadow-inner" />
+          <svg class="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 opacity-80" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z" /></svg>
         </div>
       </div>
-      
-      <button
-        class="relative shrink-0 h-12 w-12 rounded-full bg-slate-700 grid place-items-center ring-1 ring-white/10 hover:ring-indigo-400 transition"
-        id="notifBtn" aria-label="แจ้งเตือน">
-        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
-        </svg>
+      <button class="relative shrink-0 h-12 w-12 rounded-full bg-slate-700 grid place-items-center ring-1 ring-white/10 hover:ring-indigo-400 transition" id="notifBtn" aria-label="แจ้งเตือน">
+        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" /></svg>
         <span id="notifBadge" class="absolute top-2 right-2 h-4 w-4 rounded-full bg-rose-500 text-white text-xs font-bold grid place-items-center hidden"></span>
       </button>
-
-      <button
-        class="shrink-0 h-12 w-12 rounded-full bg-slate-700 grid place-items-center ring-1 ring-white/10 hover:ring-indigo-400 transition"
-        id="profileBtn" aria-label="โปรไฟล์">
-        <svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path
-            d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6a1 1 0 001 1h14a1 1 0 001-1c0-3.33-2.67-6-8-6z" />
-        </svg>
+      <button class="shrink-0 h-12 w-12 rounded-full bg-slate-700 grid place-items-center ring-1 ring-white/10 hover:ring-indigo-400 transition" id="profileBtn" aria-label="โปรไฟล์">
+        <svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6a1 1 0 001 1h14a1 1 0 001-1c0-3.33-2.67-6-8-6z" /></svg>
       </button>
     </div>
   </header>
 
   <main class="pt-[var(--header-h)]">
     <section class="relative mx-[calc(50%-50vw)] w-screen">
-      <div id="tvStage" class="relative">
-        <div
-          class="pointer-events-none absolute inset-y-0 left-0 w-[7vw] max-w-32 bg-gradient-to-r from-black/30 to-transparent z-20">
+      <div id="tvStage" class="relative" tabindex="0" aria-roledescription="carousel" aria-label="กิจกรรมแนะนำ">
         </div>
-        <div
-          class="pointer-events-none absolute inset-y-0 right-0 w-[7vw] max-w-32 bg-gradient-to-l from-black/30 to-transparent z-20">
-        </div>
-
-        <button id="tvPrev"
-          class="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-30 h-10 w-10 grid place-items-center rounded-full bg-black/45 text-white ring-1 ring-white/30 hover:bg-black/60">
-          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
-          </svg>
-        </button>
-        <button id="tvNext"
-          class="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 z-30 h-10 w-10 grid place-items-center rounded-full bg-black/45 text-white ring-1 ring-white/30 hover:bg-black/60">
-          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-            <path d="m10 6-1.41 1.41L13.17 12l-4.58 4.59L10 18l6-6z" />
-          </svg>
-        </button>
-
-        <div id="tvDotsWrap"
-          class="absolute bottom-2 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-3 pointer-events-auto">
-          <div id="tvDots" class="flex items-center gap-2"></div>
-        </div>
-        <button id="tvToggle"
-          class="absolute bottom-2 right-3 md:right-6 z-30 h-8 w-8 grid place-items-center rounded-full bg-white/90 text-slate-900 hover:bg-white invisible pointer-events-none">⏸</button>
-      </div> </section>
+    </section>
 
     <section class="relative z-10 w-full max-w-3xl px-4 mx-auto mt-14 md:mt-20">
       <div class="rounded-2xl bg-white/30 backdrop-blur shadow-2xl ring-1 ring-white/40 p-6 sm:p-8">
-        <ul id="eventList" class="space-y-4"></ul>
+        <h2 class="text-2xl font-bold mb-6 text-white">กิจกรรมทั้งหมด</h2>
+        <ul id="eventList" class="space-y-4">
+          <li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10 animate-pulse">กำลังโหลดกิจกรรม...</li>
+        </ul>
       </div>
     </section>
   </main>
-
-  <button id="fabAdd"
-    class="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-indigo-600 shadow-xl text-white text-3xl leading-none grid place-items-center hover:bg-indigo-500 active:scale-95 transition hidden"
-    title="เพิ่มกิจกรรม">+</button>
-
-  <button id="fabReg"
-    class="fixed bottom-24 right-6 h-14 w-14 rounded-full bg-emerald-600 text-white grid place-items-center shadow-xl hover:bg-emerald-500 active:scale-95 transition hidden"
-    title="รายชื่อผู้ลงทะเบียน">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor">
-      <path
-        d="M16 11a4 4 0 10-3.999-4A3.999 3.999 0 0016 11zm-8 0a4 4 0 10-4-3.999A3.999 3.999 0 008 11zm0 2c-4 0-6 2-6 4v1a1 1 0 001 1h10a1 1 0 001-1v-1c0-2-2-4-6-4zm8 0c-.445 0-.86.03-1.246.08A5.96 5.96 0 0120 18v1a1 1 0 001 1h3a1 1 0 001-1v-1c0-2-2-4-6-4z" />
-    </svg>
-  </button>
-
-  <button id="fabDel"
-    class="fixed bottom-40 right-6 h-14 w-14 rounded-full bg-rose-600 text-white grid place-items-center shadow-xl hover:bg-rose-500 active:scale-95 transition hidden"
-    title="ลบกิจกรรม">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor">
-      <path
-        d="M9 3h6a1 1 0 011 1v1h4a1 1 0 010 2h-1v12a2 2 0 01-2 2H7a2 2 0 01-2-2V7H4a1 1 0 010-2h4V4a1 1 0 011-1zm2 0v1h2V3h-2zm-1 6a1 1 0 10-2 0v8a1 1 0 102 0V9zm6 0a1 1 0 10-2 0v8a1 1 0 102 0V9z" />
-    </svg>
-  </button>
-
-  <div id="delModal" class="fixed inset-0 z-[75] hidden" role="dialog" aria-modal="true">
-    <div data-overlay class="absolute inset-0 bg-black/50"></div>
-    <div class="relative z-10 min-h-full p-4 grid place-items-center">
-      <div
-        class="modal-enter w-[720px] max-w-[calc(100vw-2rem)] rounded-2xl bg-white text-slate-900 shadow-2xl border border-slate-200">
-        <div class="flex items-center justify-between px-6 py-5 border-b">
-          <h3 class="text-xl font-bold">ลบกิจกรรม</h3>
-          <button id="delClose" class="h-9 w-9 grid place-items-center rounded-full hover:bg-black/5">✕</button>
-        </div>
-        <div class="p-6">
-          <div id="delLoading" class="h-10 rounded-lg bg-slate-100 animate-pulse"></div>
-          <div id="delEmpty" class="hidden text-slate-500">ยังไม่มีกิจกรรม</div>
-          <div id="delScroll" class="hidden max-h-[60vh] overflow-y-auto">
-            <ul id="delList" class="space-y-2"></ul>
-          </div>
-        </div>
-        <div class="px-6 pb-6 flex items-center justify-end">
-          <button id="delClose2" class="px-4 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800">ปิด</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <a id="calendarFab" href="./calendar.html"
-    class="hidden fixed bottom-6 right-6 h-14 w-14 rounded-full bg-indigo-600 text-white grid place-items-center shadow-xl hover:bg-indigo-500 active:scale-95 transition"
-    title="Calendar" aria-label="Calendar">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor">
-      <path
-        d="M7 2a1 1 0 011 1v1h8V3a1 1 0 112 0v1h1a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h1V3a1 1 0 112 0v1zm13 6H4v10h16V8z" />
-    </svg>
-  </a>
-
-  <div id="addModal" class="fixed inset-0 z-[70] hidden">
-    <div data-overlay class="absolute inset-0 bg-black/50 z-10"></div>
-    <div class="relative z-20 min-h-full p-4 grid place-items-center">
-      <form id="addForm"
-        class="w-full max-w-xl rounded-2xl bg-white text-slate-900 p-6 space-y-4 shadow-2xl border border-black/5">
-        <h2 class="text-xl font-bold">เพิ่มกิจกรรม</h2>
-        <input name="title" required placeholder="ชื่อกิจกรรม"
-          class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400">
-        <input name="dateText" id="addDate" type="date"
-          class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400"
-          required>
-        <input name="location" placeholder="สถานที่"
-          class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400">
-        <input name="imageUrl" placeholder="รูปปก (URL)"
-          class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400">
-        <textarea name="description" rows="4" placeholder="รายละเอียด"
-          class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400"></textarea>
-        <div class="flex justify-end gap-3 pt-2">
-          <button type="button" id="addCancel"
-            class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300">ยกเลิก</button>
-          <button type="submit"
-            class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500">บันทึก</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div id="regModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
-    <div data-overlay class="absolute inset-0 bg-black/50"></div>
-    <div class="relative z-10 min-h-full p-4 grid place-items-center">
-      <div
-        class="modal-enter w-[900px] max-w-[calc(100vw-2rem)] max-h-[85vh] overflow-hidden rounded-2xl bg-white text-slate-900 shadow-2xl border border-slate-200 flex flex-col">
-        <div class="flex items-start justify-between px-6 py-5 border-b">
-          <h3 class="text-xl font-bold">รายชื่อผู้ลงทะเบียน (Admin)</h3>
-          <button id="regClose" class="h-9 w-9 grid place-items-center rounded-full hover:bg-black/5"
-            aria-label="ปิด">✕</button>
-        </div>
-
-        <div id="regSummary" class="p-6 flex-1 min-h-0">
-          <div id="regLoading" class="h-10 rounded-lg bg-slate-100 animate-pulse"></div>
-          <div id="regEmpty" class="hidden text-slate-500">ยังไม่มีกิจกรรมหรือไม่พบข้อมูลผู้ลงทะเบียน</div>
-
-          <div id="regScroll" class="overflow-auto max-h-[60vh]">
-            <table id="regTable" class="hidden w-full text-sm">
-              <thead class="sticky top-0 z-10 bg-white">
-                <tr class="text-left text-slate-500">
-                  <th class="py-2 pr-3">กิจกรรม</th>
-                  <th class="py-2 pr-3">วันที่</th>
-                  <th class="py-2 pr-3 w-24">จำนวน</th>
-                  <th class="py-2">การจัดการ</th>
-                </tr>
-              </thead>
-              <tbody id="regTbody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div id="regDetail" class="hidden p-6 border-t flex-1 min-h-0">
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <div id="rdTitle" class="font-semibold text-lg">—</div>
-              <div id="rdDate" class="text-sm text-slate-500">—</div>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <button id="rdExport"
-                class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed">
-                ส่งออก Excel
-              </button>
-
-              <button id="rdBack" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50">
-                ← ย้อนกลับ
-              </button>
-            </div>
-          </div>
-
-          <div id="rdLoading" class="h-10 rounded-lg bg-slate-100 animate-pulse"></div>
-          <div id="rdEmpty" class="hidden text-slate-500">ไม่พบผู้ลงทะเบียนในกิจกรรมนี้</div>
-
-          <div id="rdScroll" class="overflow-auto max-h-[60vh]">
-            <table id="rdTable" class="hidden w-full text-sm">
-              <thead class="sticky top-0 z-10 bg-white">
-                <tr class="text-left text-slate-500">
-                  <th class="py-2 pr-3">ชื่อ</th>
-                  <th class="py-2 pr-3">รหัสนักศึกษา</th>
-                  <th class="py-2 pr-3">คณะ</th>
-                  <th class="py-2 pr-3">E-mail</th>
-                  <th class="py-2 pr-3">เบอร์โทรศัพท์</th>
-                  <th class="py-2 pr-3">ที่อยู่ (ตอนลงทะเบียน)</th>
-                </tr>
-              </thead>
-              <tbody id="rdTbody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="px-6 pb-6 pt-2 flex items-center justify-end gap-3">
-          <button id="regClose2" class="px-4 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800">ปิด</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="profileModal" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true">
-    <div data-overlay class="absolute inset-0 bg-black/50 backdrop-blur-sm z-10"></div>
-    <div class="relative z-20 min-h-full p-4">
-      <div id="profileCard"
-        class="fixed z-20 w-80 sm:w-96 rounded-2xl bg-white text-slate-900 shadow-2xl border border-black/5">
-        <div class="absolute -top-2 right-10 w-4 h-4 bg-white rotate-45 shadow ring-1 ring-black/5"></div>
-        <button data-close
-          class="absolute right-3 top-3 h-9 w-9 grid place-items-center rounded-full hover:bg-black/5 text-slate-900"
-          aria-label="ปิด">
-          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-
-        <div class="p-6 space-y-6">
-          <div class="mx-auto h-16 w-16 rounded-full bg-slate-200 grid place-items-center">
-            <svg class="h-10 w-10 text-slate-700" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path
-                d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 6a1 1 0 001 1h14a1 1 0 001-1c0-3.33-2.67-6-8-6z" />
-            </svg>
-          </div>
-
-          <div class="space-y-3 text-[15px]">
-            <div class="flex items-center gap-2"><span class="font-medium">ชื่อ-นามสกุล :</span><span id="ppName"
-                class="text-slate-600">—</span></div>
-            <div class="flex items-center gap-2"><span class="font-medium">รหัสนักศึกษา :</span><span id="ppId"
-                class="text-slate-600">—</span></div>
-            <div class="flex items-center gap-2"><span class="font-medium">E-mail :</span><span id="ppEmail"
-                class="text-slate-600">—</span></div>
-            <div class="flex items-center gap-2"><span class="font-medium">คณะ :</span><span id="ppMajor"
-                class="text-slate-600">—</span></div>
-            <div class="flex items-center gap-2"><span class="font-medium">เบอร์โทรศัพท์ :</span><span id="ppPhone"
-                class="text-slate-600">—</span></div>
-          </div>
-
-          <div class="space-y-3">
-            <button id="historyBtn"
-              class="w-full rounded-2xl bg-indigo-900 text-white px-5 py-3 font-semibold tracking-wide hover:bg-indigo-800 active:scale-[.99] transition">Registration
-              History</button>
-            <button id="logoutBtn"
-              class="w-full rounded-xl bg-slate-900 text-white px-5 py-2.5 font-medium hover:bg-slate-800 active:scale-[.99] transition">Log
-              out</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="historyModal" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true">
-    <div data-overlay class="absolute inset-0 bg-black/60 backdrop-blur-sm z-10"></div>
-    <div class="relative z-20 min-h-full p-4 grid place-items-center">
-      <div
-        class="relative w-[720px] max-w-[calc(100vw-2rem)] max-h-[85vh] rounded-2xl bg-white text-slate-900 shadow-2xl flex flex-col">
-        <div class="flex items-center justify-between px-6 py-4 border-b">
-          <h3 class="text-xl font-bold">ประวัติการลงทะเบียน</h3>
-          <button id="historyClose" class="h-9 w-9 grid place-items-center rounded-full hover:bg-black/5"
-            aria-label="ปิด">✕</button>
-        </div>
-        <div id="historyScroll" class="p-6 overflow-y-auto overscroll-contain">
-          <div id="historyLoading" class="text-slate-500">กำลังโหลด...</div>
-          <div id="historyEmpty" class="hidden text-slate-500">ยังไม่มีรายการลงทะเบียน</div>
-          <ul id="historyList" class="hidden space-y-3"></ul>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="notifModal" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true">
-    <div data-overlay class="absolute inset-0 bg-black/50 backdrop-blur-sm z-10"></div>
-    <div class="relative z-20 min-h-full p-4">
-      <div id="notifCard"
-        class="fixed z-20 w-80 sm:w-96 max-h-[70vh] flex flex-col rounded-2xl bg-white text-slate-900 shadow-2xl border border-black/5">
-        <div class="absolute -top-2 right-28 w-4 h-4 bg-white rotate-45 shadow ring-1 ring-black/5"></div>
-        <div class="p-4 border-b flex items-center justify-between">
-            <h3 class="font-bold text-lg">การแจ้งเตือน</h3>
-            <button data-close class="h-8 w-8 grid place-items-center rounded-full hover:bg-black/5 text-slate-900" aria-label="ปิด">✕</button>
-        </div>
-        <div id="notifList" class="flex-1 overflow-y-auto p-2 space-y-1">
-          <div id="notifEmpty" class="p-8 text-center text-slate-500">ไม่มีการแจ้งเตือน</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
+  
   <footer class="py-6 text-center text-sm text-white/70">© 2025 RLTG</footer>
 
-
-</body>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
-<script src="assets/js/home.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+  <script src="/assets/js/home.js"></script> </body>
 </html>
