@@ -12,123 +12,121 @@
     .font-manjari {
       font-family: 'Manjari', sans-serif;
     }
-
-    /* เพิ่ม animation สำหรับการกด Enter */
-    .enter-hint {
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-
-      0%,
-      100% {
-        opacity: 0.7;
-      }
-
-      50% {
-        opacity: 1;
-      }
-    }
   </style>
 </head>
 
 <body class="min-h-screen bg-gray-200 flex items-center justify-center p-6">
-  <!-- กล่องหลัก -->
   <main class="w-full max-w-2xl rounded-3xl bg-white shadow-lg p-10">
     <div class="mx-auto w-full max-w-md">
 
-      <!-- หัวข้อ -->
       <h1 class="font-manjari text-8xl text-black text-center mb-8 font-semibold
-           [text-shadow:7px_7px_8px_rgba(0,0,0,0.5),11px_11px_8px_rgba(0,0,0,0.1)]">
+                 [text-shadow:7px_7px_8px_rgba(0,0,0,0.5),11px_11px_8px_rgba(0,0,0,0.1)]">
         Sign in
       </h1>
 
-      <!-- Username -->
       <input id="identifier" type="text" placeholder="Student ID หรือ Email :"
         class="font-bold w-full h-12 rounded-xl bg-gray-200 px-4 mb-4 outline-none focus:ring-2 focus:ring-indigo-400"
         required>
 
-      <!-- Password -->
-      <input id="loginPassword" type="password" placeholder="Password  :"
-        class="font-bold w-full h-12 rounded-xl bg-gray-200 px-4 mb-2 outline-none focus:ring-2 focus:ring-indigo-400"
-        required>
+      <div class="relative w-full mb-2">
+        <input id="loginPassword" type="password" placeholder="Password  :"
+          class="font-bold w-full h-12 rounded-xl bg-gray-200 px-4 pr-12 outline-none focus:ring-2 focus:ring-indigo-400"
+          required>
+        <button id="togglePasswordBtn" type="button" class="absolute inset-y-0 right-0 flex items-center justify-center h-12 w-12 text-gray-500 hover:text-indigo-600">
+          <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          <svg id="eyeOffIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+          </svg>
+        </button>
+      </div>
 
-      <!-- ลิงก์ Forgot -->
       <div class="text-base mb-4">
         <a href="./forgot.html" class="font-bold font-manjari text-indigo-700 hover:underline">Forgot password?</a>
       </div>
 
-      <!-- ปุ่ม Login -->
       <button id="loginBtn"
         class="w-full h-12 rounded-xl bg-gradient-to-r from-indigo-950 via-indigo-800 to-indigo-700 text-white font-semibold text-lg hover:from-indigo-500 hover:via-indigo-700 hover:to-indigo-950 active:translate-y-[1px] transition">
         LOGIN
       </button>
 
-      <!-- Sign up -->
       <p class="text-center text-lg text-black mt-6">
         Don't have an account?
-        <a href="/REGISTER.HTML" class="text-indigo-700 hover:underline">Sign up</a>
+        <a href="./register.html" class="text-indigo-700 hover:underline">Sign up</a>
       </p>
-
-    <!-- ✅ SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-  const hostname = (location.hostname || "").toLowerCase();
-  const PROD_HOSTS = [(h) => h.endsWith('.vercel.app'), (h) => h === 'rltg.online', (h) => h === 'www.rltg.online'];
-  const isProd = PROD_HOSTS.some(fn => fn(hostname));
-  const API_BASE = isProd ? '' : 'http://127.0.0.1:4000';
-  const LOGIN_API = `${API_BASE}/api/auth/login`;
-
-  async function performLogin() {
-    const identifier = document.getElementById("identifier").value.trim();  // <-- ใช้ identifier
-    const password = document.getElementById("loginPassword").value;
-
-    if (!identifier || !password) {
-      return Swal.fire({ title: 'กรุณากรอกข้อมูลให้ครบ', icon: 'warning', confirmButtonText: 'OK' });
-    }
-
-    try {
-      const res = await fetch(LOGIN_API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ identifier, password }) // <-- ส่ง identifier
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        return Swal.fire({
-          title: `Login failed (${res.status})`,
-          text: data.message || 'unknown error',
-          icon: 'error',
-          confirmButtonText: 'OK'
-        });
-      }
-
-      if (data.token) localStorage.setItem("token", data.token);
-      Swal.fire({ title: 'Login success!', icon: 'success', confirmButtonText: 'OK' })
-        .then(() => window.location.href = "./HOMEนศทตกลทบ.html");
-    } catch (err) {
-      console.error(err);
-      Swal.fire({ title: 'Network error', icon: 'error', confirmButtonText: 'OK' });
-    }
-  }
-
-  // ปุ่ม + Enter
-  document.getElementById("loginBtn").addEventListener("click", performLogin);
-  document.getElementById("identifier").addEventListener("keypress", (e) => {
-    if (e.key === "Enter") document.getElementById("loginPassword").focus();
-  });
-  document.getElementById("loginPassword").addEventListener("keypress", (e) => {
-    if (e.key === "Enter") performLogin();
-  });
-  window.addEventListener('load', () => document.getElementById("identifier").focus());
-</script>
 
     </div>
   </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    const hostname = (location.hostname || "").toLowerCase();
+    const PROD_HOSTS = [(h) => h.endsWith('.vercel.app'), (h) => h === 'rltg.online', (h) => h === 'www.rltg.online'];
+    const isProd = PROD_HOSTS.some(fn => fn(hostname));
+    const API_BASE = isProd ? '' : 'http://127.0.0.1:4000';
+    const LOGIN_API = `${API_BASE}/api/auth/login`;
+
+    async function performLogin() {
+      const identifier = document.getElementById("identifier").value.trim();
+      const password = document.getElementById("loginPassword").value;
+
+      if (!identifier || !password) {
+        return Swal.fire({ title: 'กรุณากรอกข้อมูลให้ครบ', icon: 'warning', confirmButtonText: 'OK' });
+      }
+
+      try {
+        const res = await fetch(LOGIN_API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ identifier, password })
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          return Swal.fire({
+            title: `Login failed (${res.status})`,
+            text: data.message || 'unknown error',
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
+        }
+
+        if (data.token) localStorage.setItem("token", data.token);
+        Swal.fire({ title: 'Login success!', icon: 'success', timer: 1500, showConfirmButton: false })
+          .then(() => window.location.href = "./home.html"); // แก้ชื่อไฟล์เป็น home.html
+      } catch (err) {
+        console.error(err);
+        Swal.fire({ title: 'Network error', icon: 'error', confirmButtonText: 'OK' });
+      }
+    }
+
+    // --- ส่วนที่เพิ่มเข้ามา ---
+    const passwordInput = document.getElementById("loginPassword");
+    const toggleBtn = document.getElementById("togglePasswordBtn");
+    const eyeIcon = document.getElementById("eyeIcon");
+    const eyeOffIcon = document.getElementById("eyeOffIcon");
+
+    toggleBtn.addEventListener("click", () => {
+      const isPassword = passwordInput.type === "password";
+      passwordInput.type = isPassword ? "text" : "password";
+      eyeIcon.classList.toggle("hidden", isPassword);
+      eyeOffIcon.classList.toggle("hidden", !isPassword);
+    });
+    // --- จบส่วนที่เพิ่ม ---
+
+    document.getElementById("loginBtn").addEventListener("click", performLogin);
+    document.getElementById("identifier").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") document.getElementById("loginPassword").focus();
+    });
+    passwordInput.addEventListener("keypress", (e) => { // เปลี่ยนเป็นตัวแปร passwordInput
+      if (e.key === "Enter") performLogin();
+    });
+    window.addEventListener('load', () => document.getElementById("identifier").focus());
+  </script>
 </body>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </html>
