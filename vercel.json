@@ -24,6 +24,6 @@
     { "source": "/(.*)", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
   ],
   "crons": [
-    { "path": "/api/cron", "schedule": "* * * * *" }
+    { "path": "/api/cron", "schedule": "0 0 * * *" }
   ]
 }
