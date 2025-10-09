@@ -17,7 +17,7 @@
   <style>
     :root { --header-h: 72px; }
     body { font-family: 'Inter', system-ui, sans-serif; }
-    /* ... (CSS ที่เหลือของคุณเหมือนเดิม) ... */
+    /* (CSS เดิมทั้งหมดของคุณอยู่ที่นี่) */
     #tvStage { --H: clamp(320px, 58vh, 660px); height: var(--H); position: relative; }
     .tv-slide { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(1100px, 76vw, calc(var(--H) * 16 / 9)); aspect-ratio: 16/9; border-radius: 22px; overflow: hidden; background: #000; box-shadow: 0 40px 90px rgba(0, 0, 0, .45); transition: transform 800ms cubic-bezier(.2, .6, .2, 1), opacity 800ms cubic-bezier(.2, .6, .2, 1), filter 800ms cubic-bezier(.2, .6, .2, 1); will-change: transform, opacity, filter; z-index: 10; pointer-events: none; }
     .tv-slide img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
@@ -59,7 +59,6 @@
       <div id="tvStage" class="relative" tabindex="0" aria-roledescription="carousel" aria-label="กิจกรรมแนะนำ">
         </div>
     </section>
-
     <section class="relative z-10 w-full max-w-3xl px-4 mx-auto mt-14 md:mt-20">
       <div class="rounded-2xl bg-white/30 backdrop-blur shadow-2xl ring-1 ring-white/40 p-6 sm:p-8">
         <h2 class="text-2xl font-bold mb-6 text-white">กิจกรรมทั้งหมด</h2>
@@ -73,5 +72,6 @@
   <footer class="py-6 text-center text-sm text-white/70">© 2025 RLTG</footer>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
-  <script src="/assets/js/home.js"></script> </body>
+  <script src="/assets/js/home.js" defer></script>
+</body>
 </html>
