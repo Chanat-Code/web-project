@@ -12,6 +12,16 @@
     .font-manjari {
       font-family: 'Manjari', sans-serif;
     }
+    /* ซ่อนปุ่ม "Show Password" ของเบราว์เซอร์ Chrome, Safari, Opera, Edge */
+    input[type="password"]::-webkit-reveal,
+    input[type="password"]::-webkit-password-reveal-button {
+      display: none !important;
+    }
+    
+    /* ซ่อนปุ่ม "Show Password" ของเบราว์เซอร์ Internet Explorer และ Edge รุ่นเก่า */
+    input[type="password"]::-ms-reveal {
+      display: none !important;
+    }
   </style>
 </head>
 
