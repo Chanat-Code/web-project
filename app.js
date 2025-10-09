@@ -10,6 +10,7 @@ import eventRoutes from './src/routes/events.js';
 import registrationRoutes from './src/routes/registrations.js';
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import notificationRoutes from './src/routes/notifications.js';
 import cronRoutes from './src/routes/cron.js';
 
@@ -55,12 +56,21 @@ import notificationRoutes from './src/routes/notifications.js'; // <-- Import �
 const app = express();
 
 >>>>>>> parent of f5a9cd5 (add vertify OTP)
+=======
+import notificationRoutes from './src/routes/notifications.js'; // <-- Import ที่นี่
+
+const app = express();
+
+>>>>>>> parent of f5a9cd5 (add vertify OTP)
 // Middleware
 app.use(cors({
   origin: ['http://localhost:3000', 'http://localhost:5173', process.env.CLIENT_URL],
   credentials: true,
 }));
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of f5a9cd5 (add vertify OTP)
+=======
 >>>>>>> parent of f5a9cd5 (add vertify OTP)
 =======
 >>>>>>> parent of f5a9cd5 (add vertify OTP)
@@ -74,9 +84,13 @@ app.use('/api/events', eventRoutes);
 app.use('/api/registrations', registrationRoutes);
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/cron', cronRoutes); // อย่าลืมเพิ่ม cron route ที่สร้างไว้
 app.use(express.static(path.join(__dirname, 'public')));
+=======
+app.use('/api/notifications', notificationRoutes); // <-- ลงทะเบียน Route ที่นี่
+>>>>>>> parent of f5a9cd5 (add vertify OTP)
 =======
 app.use('/api/notifications', notificationRoutes); // <-- ลงทะเบียน Route ที่นี่
 >>>>>>> parent of f5a9cd5 (add vertify OTP)
