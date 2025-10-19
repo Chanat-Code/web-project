@@ -136,12 +136,12 @@
     if (!stage) return;
 
     const IMAGES = [
-      'assets/hero/1.jpg',
-      'assets/hero/2.jpg',
-      'assets/hero/3.jpg',
-      'assets/hero/4.jpg',
-      'assets/hero/5.jpg',
-      'assets/hero/6.jpg'
+      'assets/hero/1.v2.jpg',
+      'assets/hero/2.v2.jpg',
+      'assets/hero/3.v2.jpg',
+      'assets/hero/4.v2.jpg',
+      'assets/hero/5.v2.jpg',
+      'assets/hero/6.v2.jpg'
     ];
     const FALLBACKS = [
       'https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=1600&auto=format&fit=crop',
