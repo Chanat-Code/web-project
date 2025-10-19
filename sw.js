@@ -7,7 +7,7 @@ const API_EVENTS = /\/api\/events(?:\?|$)/;
 const STATIC_ASSETS = [
   '/', '/home.html',
   '/assets/js/home.js',
-  '/assets/hero/IMG_20250807_143556.jpg'
+  '/assets/hero/1.jpg'
 ];
 
 self.addEventListener('install', (e) => {
