@@ -979,7 +979,7 @@
   }
   requestIdleCallback?.(() => {
   // warm image cache
-  ['IMG_20250106_182958.jpg','S__11288578.jpg'].forEach(name => {
+  ['2.jpg','3.jpg'].forEach(name => {
     const i = new Image();
     i.referrerPolicy = 'no-referrer';
     i.src = `/assets/hero/${name}`;
