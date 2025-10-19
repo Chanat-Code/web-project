@@ -1,40 +1,69 @@
-// app.js (ESM)
-import express from "express";
-import cors from "cors";
-import cookieParser from "cookie-parser";
-import authRouter from "./src/routes/auth.js";
-import eventsRouter from "./src/routes/events.js";
-import registrationsRouter from "./src/routes/registrations.js";
+import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import compression from 'compression';
+
+// routes
+import authRoutes from './src/routes/auth.js';
+import eventRoutes from './src/routes/events.js';
+import registrationRoutes from './src/routes/registrations.js';
+import notificationRoutes from './src/routes/notifications.js';
+import cronRoutes from './api/cron.js';
+import helmet from 'helmet';
 
 const app = express();
 
-// ===== CORS =====
-const DEFAULT_ORIGINS = ["http://localhost:5500", "http://127.0.0.1:5500"];
-const origins = (process.env.CORS_ORIGINS || DEFAULT_ORIGINS.join(","))
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
+/** ---------- CORS allowlist ---------- */
+function isOriginAllowed(origin) {
+  // อนุญาตคำขอที่ไม่มี origin (เช่น curl, mobile app, same-origin บางกรณี)
+  if (!origin) return true;
 
-// ✅ แบบปลอดภัย — ถ้า origin ไม่อยู่ใน whitelist ก็ไม่ใส่ header CORS
+  try {
+    const url = new URL(origin);
+    const host = url.hostname.toLowerCase();
+
+    // localhost/dev
+    if (host === 'localhost' || host === '127.0.0.1') return true;
+
+    // โปรดักชันของคุณ
+    if (host === 'rltg.online' || host === 'www.rltg.online') return true;
+
+    // อนุญาตทุกโปรเจกต์บน vercel ของคุณ (เช่น preview)
+    if (host.endsWith('.vercel.app')) return true;
+
+    // ถ้าตั้งค่า CLIENT_URL ไว้ ให้ผ่านตาม origin เต็ม ๆ
+    const client = (process.env.CLIENT_URL || '').trim();
+    if (client && client === origin) return true;
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 const corsOptions = {
   origin: (origin, cb) => {
-    if (!origin || origins.includes(origin)) return cb(null, true);
-    return cb(null, false); // แค่ไม่อนุญาต (ไม่โยน error)
+    if (isOriginAllowed(origin)) return cb(null, true);
+    cb(new Error('Not allowed by CORS'));
   },
-  credentials: true,
+  credentials: true, // ต้องมีถ้าจะส่ง cookie
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
-app.use(cors(corsOptions));
 
-// ===== parsers =====
+/** ---------- Middlewares ---------- */
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
-// ===== routes =====
-app.use("/api/auth", authRouter);
-app.use("/api/events", eventsRouter);
-app.use("/api/registrations", registrationsRouter);
-
-// health check
-app.get("/", (_req, res) => res.send("OK"));
+/** ---------- Routes ---------- */
+app.use(compression());
+app.get('/api', (req, res) => res.json({ message: 'API is running' }));
+app.use('/api/auth', authRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/registrations', registrationRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/cron', cronRoutes);
+app.use(helmet({ contentSecurityPolicy: false }));
 
 export default app;

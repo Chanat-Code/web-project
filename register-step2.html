@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Create Account - Step 2</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manjari:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="assets/hero/image.png" sizes="any">
+  <style>
+    .font-manjari { font-family: 'Manjari', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#e5e5e6] flex items-center justify-center p-6">
+  <main class="w-full max-w-[1120px] rounded-[36px] bg-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.25)] ring-1 ring-black/10 px-8 sm:px-12 md:px-16 py-12 md:py-14">
+    <div class="mx-auto w-full max-w-[900px]">
+      <h1 class="font-manjari text-[86px] md:text-[92px] leading-[0.9] text-black text-center mb-10 [text-shadow:7px_7px_7px_rgba(0,0,0,0.5)]">
+        <span class="font-bold block">Personal</span>
+        <span class="font-bold block">Details</span>
+      </h1>
+
+      <form id="registerForm" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+        <input id="firstName" name="firstName" type="text" placeholder="ชื่อ :" required
+          class="h-14 rounded-[14px] bg-neutral-200/80 text-neutral-800 px-6 shadow-inner focus:ring-2 focus:ring-indigo-400">
+
+        <input id="lastName" name="lastName" type="text" placeholder="นามสกุล :" required
+          class="h-14 rounded-[14px] bg-neutral-200/80 text-neutral-800 px-6 shadow-inner focus:ring-2 focus:ring-indigo-400">
+        
+        <input id="studentId" name="studentId" type="text" inputmode="numeric" maxlength="8" pattern="^[0-9]{8}$" title="กรอกตัวเลข 8 หลักเท่านั้น" placeholder="รหัสนักศึกษา (8 หลัก):" required
+          class="h-14 rounded-[14px] bg-neutral-200/80 text-neutral-800 px-6 shadow-inner focus:ring-2 focus:ring-indigo-400">
+
+        <input id="phone" name="phone" type="tel" inputmode="numeric" maxlength="10" pattern="^[0-9]{10}$" title="กรอกตัวเลข 10 หลักเท่านั้น" placeholder="เบอร์โทรศัพท์ (10 หลัก):"
+          class="h-14 rounded-[14px] bg-neutral-200/80 text-neutral-800 px-6 shadow-inner focus:ring-2 focus:ring-indigo-400">
+
+        <select id="faculty" name="major" required
+          class="h-14 rounded-[14px] bg-neutral-200/80 text-neutral-800 px-6 shadow-inner focus:ring-2 focus:ring-sky-400">
+          <option value="" disabled selected>เลือกคณะ :</option>
+          <option value="วิศวกรรมศาสตร์">วิศวกรรมศาสตร์</option>
+          <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
+          <option value="เทคโนโลยีสารสนเทศ">เทคโนโลยีสารสนเทศ</option>
+          <option value="บริหารธุรกิจ">บริหารธุรกิจ</option>
+          <option value="อุตสาหกรรมเกษตร">อุตสาหกรรมเกษตร</option>
+        </select>
+
+        <select id="department" name="department" required
+          class="h-14 rounded-[14px] bg-neutral-200/80 text-neutral-800 px-6 shadow-inner focus:ring-2 focus:ring-sky-400 disabled:bg-neutral-300 disabled:text-neutral-500"
+          disabled>
+          <option value="" disabled selected>กรุณาเลือกคณะก่อน</option>
+        </select>
+        
+        <div class="md:col-span-2 flex items-center justify-center pt-2">
+          <button type="submit"
+            class="w-[320px] h-12 rounded-2xl bg-gradient-to-r from-indigo-950 via-indigo-800 to-indigo-700 text-white text-[18px] font-semibold tracking-wide shadow-[0_4px_10px_rgba(0,0,0,0.25)] active:translate-y-[1px] transition">
+            REGISTER
+          </button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+
+        const host = (location.hostname || "").toLowerCase();
+        const isProd =
+            host.endsWith(".vercel.app") ||
+            host === "rltg.online" ||
+            host === "www.rltg.online";
+
+        // ตัวแปรนี้ต้องใช้แบบ global
+        window.API_BASE = isProd ? "" : "http://127.0.0.1:4000";
+
+    const tempToken = localStorage.getItem('tempRegToken');
+    if (!tempToken) {
+        alert('เกิดข้อผิดพลาด: กรุณายืนยัน OTP ก่อน');
+        window.location.href = './register-step1.html';
+    }
+
+    const facultySelect = document.getElementById("faculty");
+    const departmentSelect = document.getElementById("department");
+    const departmentsByFaculty = {
+      "วิศวกรรมศาสตร์": ["วิศวกรรมคอมพิวเตอร์", "วิศวกรรมเครื่องกล", "วิศวกรรมไฟฟ้า", "วิศวกรรมโยธา", "วิศวกรรมอุตสาหการ"],
+      "วิทยาศาสตร์": ["ฟิสิกส์", "เคมี", "ชีววิทยา", "คณิตศาสตร์"],
+      "เทคโนโลยีสารสนเทศ": ["เทคโนโลยีสารสนเทศ", "วิทยาการข้อมูลและการวิเคราะห์เชิงธุรกิจ", "นวัตกรรมบริการดิจิทัล"],
+      "บริหารธุรกิจ": ["การตลาด", "การเงินและการธนาคาร", "การจัดการ"],
+      "อุตสาหกรรมเกษตร": ["วิทยาศาสตร์และเทคโนโลยีการอาหาร", "เทคโนโลยีชีวภาพ"]
+    };
+
+    facultySelect.addEventListener("change", (e) => {
+      const selectedFaculty = e.target.value;
+      const departments = departmentsByFaculty[selectedFaculty] || [];
+      departmentSelect.innerHTML = '<option value="" disabled selected>กรุณาเลือกคณะก่อน</option>';
+      departmentSelect.disabled = true;
+
+      if (departments.length > 0) {
+        let options = '<option value="" disabled selected>เลือกสาขา :</option>';
+        departments.forEach(dept => { options += `<option value="${dept}">${dept}</option>`; });
+        departmentSelect.innerHTML = options;
+        departmentSelect.disabled = false;
+      }
+    });
+
+    document.getElementById("registerForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      if (!departmentSelect.value || !facultySelect.value) {
+        return Swal.fire('กรุณากรอกข้อมูลให้ครบถ้วน', 'ต้องเลือกคณะและสาขาก่อน', 'warning');
+      }
+
+      const payload = {
+            tempToken: tempToken,
+            firstName: document.getElementById("firstName").value.trim(),
+            lastName: document.getElementById("lastName").value.trim(),
+            studentId: document.getElementById("studentId").value.trim(),
+            major: facultySelect.value,
+            department: departmentSelect.value,
+            phone: document.getElementById("phone").value.trim()
+      };
+
+      try {
+            const res = await fetch(`${API_BASE}/api/auth/register-complete`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.message || 'เกิดข้อผิดพลาดในการลงทะเบียน');
+            }
+            
+            localStorage.removeItem('registrationEmail');
+            localStorage.removeItem('tempRegToken');
+
+            Swal.fire({ title: 'ลงทะเบียนสำเร็จ!', icon: 'success', timer: 2000, showConfirmButton: false })
+                .then(() => window.location.href = "./index.html");
+
+        } catch (err) {
+            Swal.fire({ title: 'เกิดข้อผิดพลาด', text: err.message, icon: 'error' });
+        }
+    });
+  </script>
+</body>
+</html>

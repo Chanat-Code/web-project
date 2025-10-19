@@ -11,7 +11,6 @@
   };
   window.escapeHtml = (t = '') => t.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 
-  // fallback ถ้าไม่ได้โหลด sweetalert2
   function toastError(title, text) {
     if (window.Swal) Swal.fire({ title, text, icon: 'error', confirmButtonText: 'OK' });
     else alert((title ? title + '\n' : '') + (text || ''));
@@ -21,10 +20,120 @@
     else alert((title ? title + '\n' : '') + (text || ''));
   }
 
+  // -------------------- Notifications Logic (เพิ่มเข้ามาใหม่) --------------------
+  (function () {
+    const btn = document.getElementById('notifBtn');
+    const modal = document.getElementById('notifModal');
+    const card = document.getElementById('notifCard');
+    const badge = document.getElementById('notifBadge');
+    const listEl = document.getElementById('notifList');
+    const emptyEl = document.getElementById('notifEmpty');
+
+    if (!btn || !modal || !card) return;
+
+    const overlay = modal.querySelector('[data-overlay]');
+    const closeBtn = modal.querySelector('[data-close]');
+    let NOTIFICATIONS = [];
+
+    function place() {
+      const r = btn.getBoundingClientRect(), gap = 10, width = card.offsetWidth;
+      const maxLeft = window.innerWidth - width - 8;
+      card.style.left = Math.max(8, Math.min(r.right - width + 48, maxLeft)) + 'px';
+      card.style.top = (r.bottom + gap) + 'px';
+    }
+    
+    function open() {
+      modal.classList.remove('hidden');
+      requestAnimationFrame(place);
+      window.addEventListener('resize', place, { passive: true });
+      markAsRead();
+    }
+    function close() {
+      modal.classList.add('hidden');
+      window.removeEventListener('resize', place);
+    }
+
+    btn.addEventListener('click', open);
+    overlay?.addEventListener('click', close);
+    closeBtn?.addEventListener('click', close);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
+
+    function render() {
+        const unreadCount = NOTIFICATIONS.filter(n => !n.read).length;
+        if (badge) {
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+        
+        if (NOTIFICATIONS.length === 0) {
+            listEl.innerHTML = '';
+            emptyEl.classList.remove('hidden');
+            return;
+        }
+
+        emptyEl.classList.add('hidden');
+        listEl.innerHTML = NOTIFICATIONS.map(n => {
+            const isUnread = !n.read ? 'bg-indigo-50' : 'bg-white';
+            const link = n.eventId ? `./event.html?id=${n.eventId}` : '#';
+            const date = new Date(n.createdAt).toLocaleString('th-TH', { day:'numeric', month:'short', hour:'2-digit', minute: '2-digit' });
+            
+            return `
+            <a href="${link}" class="block p-3 rounded-lg hover:bg-slate-100 ${isUnread}">
+                <div class="flex items-start gap-3">
+                    ${!n.read ? '<div class="mt-1.5 h-2 w-2 rounded-full bg-indigo-500 shrink-0"></div>' : '<div class="h-2 w-2 shrink-0"></div>'}
+                    <div class="flex-1">
+                        <p class="text-sm text-slate-800">${window.escapeHtml(n.message)}</p>
+                        <p class="text-xs text-slate-500 mt-1">${date}</p>
+                    </div>
+                </div>
+            </a>`;
+        }).join('');
+    }
+
+    async function loadNotifications() {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        try {
+            const res = await fetch(`${window.API_BASE}/notifications/me`, {
+                headers: { Authorization: "Bearer " + token }, credentials: "include"
+            });
+            if (!res.ok) return;
+            NOTIFICATIONS = await res.json();
+            render();
+        } catch (e) {
+            console.error("Failed to load notifications:", e);
+        }
+    }
+
+    async function markAsRead() {
+        const hasUnread = NOTIFICATIONS.some(n => !n.read);
+        if (!hasUnread) return;
+
+        NOTIFICATIONS.forEach(n => n.read = true);
+        render();
+
+        const token = localStorage.getItem("token");
+        try {
+            await fetch(`${window.API_BASE}/notifications/me/mark-as-read`, {
+                method: 'POST',
+                headers: { Authorization: "Bearer " + token }, credentials: "include"
+            });
+        } catch (e) {
+            console.error("Failed to mark notifications as read:", e);
+        }
+    }
+    
+    loadNotifications();
+  })();
+
   // -------------------- Apple TV-like Hero --------------------
   (function () {
     const stage = document.getElementById('tvStage');
-    if (!stage) return; // กัน element หาย
+    if (!stage) return;
 
     const IMAGES = [
       'assets/hero/517989489_1147073954117870_5797414761155095363_n.jpg',
@@ -49,21 +158,28 @@
 
     function makeSlide(src, i) {
       const eager = i === 0 ? 'eager' : 'lazy';
-      const prio = i === 0 ? 'high' : 'auto';
+      const prio  = i === 0 ? 'high' : 'auto';
       const el = document.createElement('div');
       el.className = 'tv-slide';
+      // ระบุ width/height + srcset/sizes เพื่อลด data และกัน CLS
       el.innerHTML = `
-        <img src="${src}" alt=""
+        <img
+          src="${src}"
+          srcset="${src} 1600w"
+          sizes="(max-width: 1024px) 100vw, 1100px"
+          width="1600" height="900"
+          alt=""
           loading="${eager}" fetchpriority="${prio}" decoding="async"
           referrerpolicy="no-referrer" crossorigin="anonymous">
         <div class="fade"></div>`;
       const img = el.querySelector('img');
       el.dataset.loading = '1';
       img.addEventListener('load', () => { delete el.dataset.loading; });
-      img.addEventListener('error', () => { img.src = FALLBACKS[i % FALLBACKS.length]; });
+      // ถ้ารูปเสียให้ fallback ไปภาพ placeholder เบา ๆ
+      img.addEventListener('error', () => { img.src = 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1600&auto=format&fit=crop'; });
       stage.appendChild(el);
       return el;
-    }
+}
 
     const slides = IMAGES.map((src, i) => makeSlide(src, i));
     const dots = IMAGES.map((_, i) => {
@@ -111,7 +227,6 @@
 
     apply(); start();
 
-    // ดันคอนโทรลให้ลอยบนรูป
     ['tvDotsWrap', 'tvToggle', 'tvPrev', 'tvNext'].forEach(id => {
       const el = document.getElementById(id);
       if (el) stage.appendChild(el);
@@ -230,10 +345,10 @@
 
       const calFab = document.getElementById('calendarFab');
       if (me.role === "admin") {
-        fab?.classList.remove("hidden"); // admin เห็นปุ่ม +
-        calFab?.remove?.();              // ไม่ให้ปุ่ม calendar
+        fab?.classList.remove("hidden");
+        calFab?.remove?.();
       } else {
-        calFab?.classList.remove('hidden'); // user เห็นปุ่ม calendar
+        calFab?.classList.remove('hidden');
       }
     }
 
@@ -242,7 +357,6 @@
       if (!btn) return;
       btn.addEventListener("click", async () => {
         try {
-          // ✅ แก้บั๊ก path (ตัด /api ที่ซ้ำ)
           await fetch(`${API_BASE}/auth/logout`, {
             method: "POST",
             credentials: "include",
@@ -716,7 +830,7 @@
     }
 
     function downloadCSVFile(filename, csvText) {
-      const BOM = '\uFEFF'; // ให้ Excel อ่านไทยถูก
+      const BOM = '\uFEFF';
       const blob = new Blob([BOM + csvText], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -728,134 +842,131 @@
       URL.revokeObjectURL(url);
     }
 
-// helper: คืนค่าตัวแรกที่ไม่ว่าง/ไม่เป็นสตริงว่าง
-const coalesce = (...vals) => {
-  for (const v of vals) {
-    if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim();
-  }
-  return undefined;
-};
+    const coalesce = (...vals) => {
+      for (const v of vals) {
+        if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim();
+      }
+      return undefined;
+    };
 
-async function openRegDetail(ev) {
-  regUI.detailWrap.classList.remove('hidden');
-  regUI.sumWrap.classList.add('hidden');
-  regUI.dScroll?.scrollTo?.(0, 0);
-  regUI.dTitle.textContent = ev.title || '(ไม่ระบุชื่อกิจกรรม)';
-  regUI.dDate.textContent = toDisplayDate(ev.dateText);
-  regUI.dLoading.classList.remove('hidden');
-  regUI.dEmpty.classList.add('hidden');
-  regUI.dTable.classList.add('hidden');
-  regUI.dTbody.innerHTML = '';
-  RD_CURRENT_ROWS = [];
-  document.getElementById('rdExport')?.setAttribute('disabled', 'true');
+    async function openRegDetail(ev) {
+      regUI.detailWrap.classList.remove('hidden');
+      regUI.sumWrap.classList.add('hidden');
+      regUI.dScroll?.scrollTo?.(0, 0);
+      regUI.dTitle.textContent = ev.title || '(ไม่ระบุชื่อกิจกรรม)';
+      regUI.dDate.textContent = toDisplayDate(ev.dateText);
+      regUI.dLoading.classList.remove('hidden');
+      regUI.dEmpty.classList.add('hidden');
+      regUI.dTable.classList.add('hidden');
+      regUI.dTbody.innerHTML = '';
+      RD_CURRENT_ROWS = [];
+      document.getElementById('rdExport')?.setAttribute('disabled', 'true');
 
-  let regs = await fetchRegistrationsByEvent(ev._id);
-  if (!regs.length) {
-    const all = await fetchAllRegistrations();
-    if (Array.isArray(all)) regs = all.filter(r => getRegEventId(r) === ev._id);
-  }
+      let regs = await fetchRegistrationsByEvent(ev._id);
+      if (!regs.length) {
+        const all = await fetchAllRegistrations();
+        if (Array.isArray(all)) regs = all.filter(r => getRegEventId(r) === ev._id);
+      }
 
-  regUI.dLoading.classList.add('hidden');
-  if (!regs.length) { regUI.dEmpty.classList.remove('hidden'); return; }
+      regUI.dLoading.classList.add('hidden');
+      if (!regs.length) { regUI.dEmpty.classList.remove('hidden'); return; }
 
-  // === วาดตาราง (ใช้ coalesce ครอบจักรวาล) ===
-  regUI.dTbody.innerHTML = regs.map(r => {
-    const u = r.user || r.profile || r.account || {};
+      regUI.dTbody.innerHTML = regs.map(r => {
+        const u = r.user || r.profile || r.account || {};
 
-    const first = coalesce(
-      u.firstName, u.firstname, u.first_name, u.givenName, u.given_name,
-      r.firstName, r.firstname, r.first_name, r.givenName, r.given_name
-    );
-    const last = coalesce(
-      u.lastName, u.lastname, u.last_name, u.familyName, u.family_name,
-      r.lastName, r.lastname, r.last_name, r.familyName, r.family_name
-    );
-    const fullFromParts = [first, last].filter(Boolean).join(' ').trim();
-    const name = coalesce(
-      fullFromParts,
-      u.fullName, u.fullname, u.name,
-      r.fullName, r.fullname, r.name,
-      u.username, r.username,
-      '—'
-    );
+        const first = coalesce(
+          u.firstName, u.firstname, u.first_name, u.givenName, u.given_name,
+          r.firstName, r.firstname, r.first_name, r.givenName, r.given_name
+        );
+        const last = coalesce(
+          u.lastName, u.lastname, u.last_name, u.familyName, u.family_name,
+          r.lastName, r.lastname, r.last_name, r.familyName, r.family_name
+        );
+        const fullFromParts = [first, last].filter(Boolean).join(' ').trim();
+        const name = coalesce(
+          fullFromParts,
+          u.fullName, u.fullname, u.name,
+          r.fullName, r.fullname, r.name,
+          u.username, r.username,
+          '—'
+        );
 
-    const idnum   = coalesce(u.studentId, u.idNumber, r.studentId, r.idNumber, r.sid, '—');
-    const faculty = coalesce(
-      u.faculty, u.fac, u.facultyName, u.department, u.major, u.school, u.college,
-      r.faculty, r.fac, r.facultyName, r.department, r.major, r.school, r.college,
-      '—'
-    );
-    const email   = coalesce(u.email, r.email, '—');
-    const phone   = coalesce(u.phone, u.tel, r.phone, r.tel, '—');
-    const addr    = coalesce(r.address, r.addr, r.registrationAddress, r.contactAddress, '—');
+        const idnum   = coalesce(u.studentId, u.idNumber, r.studentId, r.idNumber, r.sid, '—');
+        const faculty = coalesce(
+          u.faculty, u.fac, u.facultyName, u.department, u.major, u.school, u.college,
+          r.faculty, r.fac, r.facultyName, r.department, r.major, r.school, r.college,
+          '—'
+        );
+        const email   = coalesce(u.email, r.email, '—');
+        const phone   = coalesce(u.phone, u.tel, r.phone, r.tel, '—');
+        const addr    = coalesce(r.address, r.addr, r.registrationAddress, r.contactAddress, '—');
 
-    return `<tr class="border-t">
-      <td class="py-2 pr-3">${esc(name)}</td>
-      <td class="py-2 pr-3">${esc(idnum)}</td>
-      <td class="py-2 pr-3">${esc(faculty)}</td>
-      <td class="py-2 pr-3">${esc(email)}</td>
-      <td class="py-2 pr-3">${esc(phone)}</td>
-      <td class="py-2 pr-3">${esc(addr)}</td>
-    </tr>`;
-  }).join('');
+        return `<tr class="border-t">
+          <td class="py-2 pr-3">${esc(name)}</td>
+          <td class="py-2 pr-3">${esc(idnum)}</td>
+          <td class="py-2 pr-3">${esc(faculty)}</td>
+          <td class="py-2 pr-3">${esc(email)}</td>
+          <td class="py-2 pr-3">${esc(phone)}</td>
+          <td class="py-2 pr-3">${esc(addr)}</td>
+        </tr>`;
+      }).join('');
 
-  // === เตรียมข้อมูลสำหรับส่งออก (ต้องใช้ key: name,idnum,faculty,email,phone,addr) ===
-  RD_CURRENT_ROWS = regs.map(r => {
-    const u = r.user || r.profile || r.account || {};
+      RD_CURRENT_ROWS = regs.map(r => {
+        const u = r.user || r.profile || r.account || {};
 
-    const first = coalesce(
-      u.firstName, u.firstname, u.first_name, u.givenName, u.given_name,
-      r.firstName, r.firstname, r.first_name, r.givenName, r.given_name
-    );
-    const last = coalesce(
-      u.lastName, u.lastname, u.last_name, u.familyName, u.family_name,
-      r.lastName, r.lastname, r.last_name, r.familyName, r.family_name
-    );
-    const fullFromParts = [first, last].filter(Boolean).join(' ').trim();
-    const name = coalesce(
-      fullFromParts,
-      u.fullName, u.fullname, u.name,
-      r.fullName, r.fullname, r.name,
-      u.username, r.username,
-      '—'
-    );
+        const first = coalesce(
+          u.firstName, u.firstname, u.first_name, u.givenName, u.given_name,
+          r.firstName, r.firstname, r.first_name, r.givenName, r.given_name
+        );
+        const last = coalesce(
+          u.lastName, u.lastname, u.last_name, u.familyName, u.family_name,
+          r.lastName, r.lastname, r.last_name, r.familyName, r.family_name
+        );
+        const fullFromParts = [first, last].filter(Boolean).join(' ').trim();
+        const name = coalesce(
+          fullFromParts,
+          u.fullName, u.fullname, u.name,
+          r.fullName, r.fullname, r.name,
+          u.username, r.username,
+          '—'
+        );
 
-    const idnum   = coalesce(u.studentId, u.idNumber, r.studentId, r.idNumber, r.sid, '—');
-    const faculty = coalesce(
-      u.faculty, u.fac, u.facultyName, u.department, u.major, u.school, u.college,
-      r.faculty, r.fac, r.facultyName, r.department, r.major, r.school, r.college,
-      '—'
-    );
-    const email   = coalesce(u.email, r.email, '—');
-    const phone   = coalesce(u.phone, u.tel, r.phone, r.tel, '—');
-    const addr    = coalesce(r.address, r.addr, r.registrationAddress, r.contactAddress, '—');
+        const idnum   = coalesce(u.studentId, u.idNumber, r.studentId, r.idNumber, r.sid, '—');
+        const faculty = coalesce(
+          u.faculty, u.fac, u.facultyName, u.department, u.major, u.school, u.college,
+          r.faculty, r.fac, r.facultyName, r.department, r.major, r.school, r.college,
+          '—'
+        );
+        const email   = coalesce(u.email, r.email, '—');
+        const phone   = coalesce(u.phone, u.tel, r.phone, r.tel, '—');
+        const addr    = coalesce(r.address, r.addr, r.registrationAddress, r.contactAddress, '—');
 
-    return { name, idnum, faculty, email, phone, addr };
-  });
+        return { name, idnum, faculty, email, phone, addr };
+      });
 
-  regUI.dTable.classList.remove('hidden');
-  document.getElementById('rdExport')?.removeAttribute('disabled');
-}
+      regUI.dTable.classList.remove('hidden');
+      document.getElementById('rdExport')?.removeAttribute('disabled');
+    }
 
 
-  fabReg?.addEventListener('click', openRegModal);
-  regUI.overlay?.addEventListener('click', () => hideModal(regUI.wrap));
-  regUI.close?.addEventListener('click', () => hideModal(regUI.wrap));
-  regUI.close2?.addEventListener('click', () => hideModal(regUI.wrap));
-  regUI.dBack?.addEventListener('click', () => {
-    regUI.detailWrap.classList.add('hidden');
-    regUI.sumWrap.classList.remove('hidden');
-    regUI.sumScroll?.scrollTo?.(0, 0);
-  });
+    fabReg?.addEventListener('click', openRegModal);
+    regUI.overlay?.addEventListener('click', () => hideModal(regUI.wrap));
+    regUI.close?.addEventListener('click', () => hideModal(regUI.wrap));
+    regUI.close2?.addEventListener('click', () => hideModal(regUI.wrap));
+    regUI.dBack?.addEventListener('click', () => {
+      regUI.detailWrap.classList.add('hidden');
+      regUI.sumWrap.classList.remove('hidden');
+      regUI.sumScroll?.scrollTo?.(0, 0);
+    });
 
-  document.getElementById('rdExport')?.addEventListener('click', () => {
-    if (!RD_CURRENT_ROWS.length) return;
-    const title = document.getElementById('rdTitle')?.textContent || 'export';
-    const date  = document.getElementById('rdDate')?.textContent || '';
-    const filename = sanitizeFilename(`${title} ${date}`.trim());
-    const csv = toCSV(RD_CURRENT_ROWS);
-    downloadCSVFile(filename, csv);
-  });
+    document.getElementById('rdExport')?.addEventListener('click', () => {
+      if (!RD_CURRENT_ROWS.length) return;
+      const title = document.getElementById('rdTitle')?.textContent || 'export';
+      const date  = document.getElementById('rdDate')?.textContent || '';
+      const filename = sanitizeFilename(`${title} ${date}`.trim());
+      const csv = toCSV(RD_CURRENT_ROWS);
+      downloadCSVFile(filename, csv);
+    });
 
     Promise.allSettled([loadMe(), loadEvents()]).catch(() => { });
   })();
@@ -866,5 +977,12 @@ async function openRegDetail(ev) {
       navigator.serviceWorker.register('/sw.js').catch(() => { /* ignore */ });
     });
   }
+  requestIdleCallback?.(() => {
+  // warm image cache
+  ['IMG_20250106_182958.jpg','S__11288578.jpg'].forEach(name => {
+    const i = new Image();
+    i.referrerPolicy = 'no-referrer';
+    i.src = `/assets/hero/${name}`;
+  });
+});
 })();
-

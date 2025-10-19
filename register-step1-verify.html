@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verify OTP</title>
+
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manjari:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="/assets/hero/image.png" type="image/png">
+
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .font-manjari { font-family: 'Manjari', sans-serif; }
+    
+    /* 2. Styles for OTP inputs & loading state */
+    .otp-input {
+      width: 3.5rem; /* 56px */
+      height: 4rem; /* 64px */
+      text-align: center;
+      font-size: 1.875rem; /* 30px */
+      border-radius: 0.75rem; /* 12px */
+      border: 1px solid #d1d5db; /* gray-300 */
+      background-color: #f3f4f6; /* gray-100 */
+      transition: all 0.2s;
+    }
+    .otp-input:focus {
+      border-color: #4f46e5; /* indigo-600 */
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4);
+      outline: none;
+    }
+
+    #submitBtn:disabled { cursor: not-allowed; opacity: 0.7; }
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      width: 1.25rem;
+      height: 1.25rem;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="min-h-screen bg-[#e5e5e6] flex items-center justify-center p-6">
+  <main class="w-full max-w-lg rounded-[36px] bg-white shadow-lg px-8 sm:px-12 py-12">
+    <div class="mx-auto w-full text-center">
+      <h1 class="font-manjari text-5xl font-bold text-black mb-4">ยืนยันอีเมลของคุณ</h1>
+      <p id="otpMessage" class="text-neutral-600 mb-8">เราได้ส่งรหัส OTP 6 หลักไปที่อีเมลของคุณแล้ว</p>
+      
+      <form id="otpForm">
+        <div id="otp-inputs" class="flex justify-center gap-2 mb-6">
+          <input type="text" class="otp-input" maxlength="1" inputmode="numeric">
+          <input type="text" class="otp-input" maxlength="1" inputmode="numeric">
+          <input type="text" class="otp-input" maxlength="1" inputmode="numeric">
+          <input type="text" class="otp-input" maxlength="1" inputmode="numeric">
+          <input type="text" class="otp-input" maxlength="1" inputmode="numeric">
+          <input type="text" class="otp-input" maxlength="1" inputmode="numeric">
+        </div>
+        
+        <button id="submitBtn" type="submit"
+          class="w-full h-12 rounded-xl bg-gradient-to-r from-indigo-950 via-indigo-800 to-indigo-700 text-white font-semibold tracking-wide flex items-center justify-center">
+          <span id="submitBtnText">ยืนยัน</span>
+          <div id="submitSpinner" class="spinner hidden"></div>
+        </button>
+      </form>
+      
+      <div class="mt-6 text-center">
+        <p id="resend-container" class="text-sm text-neutral-600">
+          ไม่ได้รับรหัส? 
+          <button id="resendBtn" class="font-semibold text-indigo-600 hover:underline disabled:text-gray-400 disabled:no-underline disabled:cursor-wait">
+            ส่งรหัสอีกครั้ง
+          </button>
+          <span id="countdown" class="hidden"></span>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // --- CONFIG & ELEMENTS ---
+      const RESEND_COOLDOWN = 60; // Cooldown in seconds
+      const email = localStorage.getItem('registrationEmail');
+      
+      const otpMessage = document.getElementById('otpMessage');
+      const otpInputs = document.querySelectorAll('#otp-inputs .otp-input');
+      const otpForm = document.getElementById('otpForm');
+      
+      const submitBtn = document.getElementById("submitBtn");
+      const submitBtnText = document.getElementById("submitBtnText");
+      const submitSpinner = document.getElementById("submitSpinner");
+
+      const resendContainer = document.getElementById('resend-container');
+      const resendBtn = document.getElementById('resendBtn');
+      
+      const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
+      const API_BASE = isLocal ? 'http://127.0.0.1:4000' : '';
+      const VERIFY_OTP_API = `${API_BASE}/api/auth/register-verify-otp`;
+      const RESEND_OTP_API = `${API_BASE}/api/auth/register-send-otp`;
+
+      // --- INITIALIZATION ---
+      if (!email) {
+        alert('ไม่พบอีเมล กรุณากลับไปขั้นตอนแรก');
+        window.location.href = '/register-step1.html';
+        return;
+      }
+      otpMessage.textContent = `เราได้ส่งรหัส OTP 6 หลักไปที่ ${email} แล้ว`;
+      otpInputs[0].focus();
+
+      // --- OTP INPUT LOGIC (AUTO-TAB, BACKSPACE, PASTE) ---
+      otpInputs.forEach((input, index) => {
+        input.addEventListener('input', () => {
+          if (input.value && index < otpInputs.length - 1) {
+            otpInputs[index + 1].focus();
+          }
+        });
+
+        input.addEventListener('keydown', (e) => {
+          if (e.key === "Backspace" && !input.value && index > 0) {
+            otpInputs[index - 1].focus();
+          }
+        });
+      });
+      
+      otpInputs[0].addEventListener('paste', (e) => {
+        const pasteData = (e.clipboardData || window.clipboardData).getData('text').trim();
+        if (pasteData.length === otpInputs.length && /^\d+$/.test(pasteData)) {
+          e.preventDefault();
+          otpInputs.forEach((input, index) => {
+            input.value = pasteData[index];
+          });
+          otpInputs[otpInputs.length - 1].focus();
+          submitBtn.focus();
+        }
+      });
+      
+      // --- LOADING STATE ---
+      const setLoading = (isLoading) => {
+        submitBtn.disabled = isLoading;
+        submitBtnText.classList.toggle('hidden', isLoading);
+        submitSpinner.classList.toggle('hidden', !isLoading);
+      };
+
+      // --- FORM SUBMISSION ---
+      otpForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const otp = Array.from(otpInputs).map(input => input.value).join('');
+
+        if (otp.length !== otpInputs.length) {
+          return Swal.fire('ข้อผิดพลาด', `กรุณากรอก OTP ${otpInputs.length} หลักให้ถูกต้อง`, 'warning');
+        }
+
+        setLoading(true);
+
+        try {
+          const res = await fetch(VERIFY_OTP_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, otp })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.message || 'OTP ไม่ถูกต้องหรือหมดอายุ');
+
+          localStorage.setItem('tempRegToken', data.tempToken);
+          window.location.href = '/register-step2.html';
+
+        } catch (error) {
+          Swal.fire('เกิดข้อผิดพลาด', error.message, 'error');
+        } finally {
+          setLoading(false);
+        }
+      });
+      
+      // --- RESEND OTP LOGIC ---
+      let countdownInterval;
+      const startCountdown = () => {
+        resendBtn.disabled = true;
+        let timeLeft = RESEND_COOLDOWN;
+        resendBtn.innerHTML = `ส่งอีกครั้งใน <strong>${timeLeft}</strong> วินาที`;
+        
+        countdownInterval = setInterval(() => {
+          timeLeft--;
+          resendBtn.innerHTML = `ส่งอีกครั้งใน <strong>${timeLeft}</strong> วินาที`;
+          if (timeLeft <= 0) {
+            clearInterval(countdownInterval);
+            resendBtn.disabled = false;
+            resendBtn.textContent = 'ส่งรหัสอีกครั้ง';
+          }
+        }, 1000);
+      };
+      
+      const handleResend = async () => {
+        clearInterval(countdownInterval);
+        startCountdown();
+        
+        try {
+          // ใช้ localStorage ดึงรหัสผ่านที่กรอกล่าสุดเพื่อส่งไปอีกครั้ง
+          const password = localStorage.getItem('registrationPassword');
+          if (!password) throw new Error('Session expired, please start over.');
+
+          const res = await fetch(RESEND_OTP_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.message || 'Failed to resend OTP.');
+          
+          Swal.fire({
+            toast: true,
+            icon: 'success',
+            title: 'ส่ง OTP ใหม่แล้ว',
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+          });
+
+        } catch (error) {
+          Swal.fire('เกิดข้อผิดพลาด', error.message, 'error');
+          clearInterval(countdownInterval);
+          resendBtn.disabled = false;
+          resendBtn.textContent = 'ส่งรหัสอีกครั้ง';
+        }
+      };
+      
+      resendBtn.addEventListener('click', handleResend);
+      startCountdown(); // เริ่มนับถอยหลังครั้งแรกเมื่อหน้าโหลด
+    });
+  </script>
+</body>
+</html>
