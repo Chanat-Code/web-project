@@ -136,12 +136,12 @@
     if (!stage) return;
 
     const IMAGES = [
-      '/assets/hero/517989489_1147073954117870_5797414761155095363_n.jpg',
-      '/assets/hero/528040170_1169345845224014_7728658216178474178_n.jpg',
-      '/assets/hero/533131520_1177330571092208_7966233837105788021_n.jpg',
-      '/assets/hero/534706166_1177351304423468_507727307226450412_n.jpg',
-      '/assets/hero/536283237_1180262817465650_5799907231531121634_n.jpg',
-      '/assets/hero/548209941_1200115282147070_7689057721461864570_n.jpg'
+      '/assets/hero/1.jpg',
+      '/assets/hero/2.jpg',
+      '/assets/hero/3.jpg',
+      '/assets/hero/4.jpg',
+      '/assets/hero/5.jpg',
+      '/assets/hero/6.jpg'
     ];
     const FALLBACKS = [
       'https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=1600&auto=format&fit=crop',
