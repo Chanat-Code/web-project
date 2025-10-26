@@ -432,22 +432,30 @@ function renderEvents(items, q = "") {
     });
 
     async function loadEvents() {
-      const key = 'rltg:events:v1';
+      const key = 'rltg:events:v2'; // <-- เปลี่ยนเวอร์ชัน
 
       const cached = localStorage.getItem(key);
       if (cached) {
         try {
           const items = JSON.parse(cached);
-          if (Array.isArray(items)) { ALL_EVENTS = items; renderEvents(ALL_EVENTS); }
-        } catch { }
+          // render จาก cache ก็ต่อเมื่อมี imageUrl อย่างน้อย 1 ชิ้น
+          if (Array.isArray(items) && items.some(it => it.imageUrl)) {
+            ALL_EVENTS = items;
+            renderEvents(ALL_EVENTS);
+          }
+        } catch {}
       }
 
       try {
-        const res = await fetch(`${API_BASE}/events`, { credentials: 'include', headers: { 'Cache-Control': 'no-cache' }, keepalive: true });
+        const res = await fetch(`${API_BASE}/events`, {
+          credentials: 'include',
+          headers: { 'Cache-Control': 'no-cache' },
+          keepalive: true
+        });
         const items = await res.json().catch(() => []);
         ALL_EVENTS = Array.isArray(items) ? items : [];
         localStorage.setItem(key, JSON.stringify(ALL_EVENTS));
-        renderEvents(ALL_EVENTS);
+        renderEvents(ALL_EVENTS); // render ด้วยข้อมูลสด (มี imageUrl)
       } catch (e) {
         if (!eventList.innerHTML.trim()) {
           eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">โหลดข้อมูลไม่สำเร็จ</li>`;
