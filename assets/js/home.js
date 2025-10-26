@@ -30,7 +30,11 @@
     const listEl = document.getElementById('notifList');
     const emptyEl = document.getElementById('notifEmpty');
 
-    if (!btn || !modal || !card) return;
+    if (!btn || !modal || !card || !listEl || !emptyEl) {
+        // console.warn("Notification elements not found."); // Optional: Add warning
+        return;
+    }
+
 
     const overlay = modal.querySelector('[data-overlay]');
     const closeBtn = modal.querySelector('[data-close]');
@@ -72,11 +76,11 @@
 
       if (NOTIFICATIONS.length === 0) {
         listEl.innerHTML = '';
-        emptyEl?.classList.remove('hidden'); // Add null check
+        emptyEl.classList.remove('hidden');
         return;
       }
 
-      emptyEl?.classList.add('hidden'); // Add null check
+      emptyEl.classList.add('hidden');
       listEl.innerHTML = NOTIFICATIONS.map(n => {
         const isUnread = !n.read ? 'bg-indigo-50' : 'bg-white';
         const link = n.eventId ? `./event.html?id=${n.eventId}` : '#';
@@ -168,7 +172,7 @@
       return el;
     }
 
-    const slides = IMAGES.map((src, i) => makeSlide(src, i));
+    const slides = IMAGES.map(makeSlide);
     const dots = IMAGES.map((_, i) => {
       const b = document.createElement('button');
       b.className = 'dot'; b.addEventListener('click', () => goTo(i));
@@ -193,7 +197,8 @@
       dots.forEach((d, i) => d?.classList.toggle('active', i === index));
     }
     function goTo(i) { index = (i + slides.length) % slides.length; apply(); restart(); }
-    const next = () => goTo(index + 1), prev = () => goTo(index - 1);
+    const next = () => goTo(index + 1);
+    const prev = () => goTo(index - 1);
     function start() { if (playing && !timer) timer = setInterval(next, INTERVAL); }
     function stop() { clearInterval(timer); timer = null; }
     function restart() { stop(); start(); }
@@ -240,7 +245,7 @@
       else { el.style.overflow = el.dataset.prevOverflow || ''; document.body.classList.remove('overflow-hidden'); delete el.dataset.prevOverflow; }
     }
     function open() { lastActive = document.activeElement; modal.classList.remove('hidden'); lockScroll(true); requestAnimationFrame(place); window.addEventListener('resize', place, { passive: true }); }
-    function close() { modal.classList.add('hidden'); lockScroll(false); if (lastActive) lastActive.focus?.(); window.removeEventListener('resize', place); }
+    function close() { modal.classList.add('hidden'); lockScroll(false); lastActive?.focus?.(); window.removeEventListener('resize', place); }
     btn.addEventListener('click', open);
     overlay?.addEventListener('click', close);
     closeBtn?.addEventListener('click', close);
@@ -269,291 +274,266 @@
     const eventsPerPage = 8;
     let totalPages = 1;
     let isLoadingEvents = false;
-    let currentUser = null;
+    let currentUser = null; // Defined here, accessible by functions below
 
     // --- renderEvents function ---
     function renderEvents(items, q = "") {
-        if (!eventList) return;
-        if (!Array.isArray(items) || items.length === 0) {
+      if (!eventList) return;
+      if (!Array.isArray(items) || items.length === 0) {
         eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-5 text-center text-slate-200 ring-1 ring-white/10 col-span-full">
-            ${q ? `ไม่พบกิจกรรมที่ตรงกับ “${window.escapeHtml(q)}”` : 'ยังไม่มีกิจกรรม'}
+          ${q ? `ไม่พบกิจกรรมที่ตรงกับ “${window.escapeHtml(q)}”` : 'ยังไม่มีกิจกรรม'}
         </li>`;
         return;
-        }
+      }
+      eventList.innerHTML = items.map(ev => {
+        const dateTxt = ev.dateText ? window.formatDateLabel(ev.dateText) : "—";
+        const title = window.escapeHtml(ev.title || 'Untitled Event');
+        const eventUrl = `./event.html?id=${ev._id}`;
+        const raw = String(ev.imageUrl || '').trim();
+        const src =
+          /^https?:\/\//i.test(raw) ? raw :
+          raw.startsWith('/assets') ? raw :
+          raw.startsWith('assets') ? '/' + raw :
+          raw.startsWith('./assets') ? '/' + raw.replace(/^\.\//, '') :
+          raw.startsWith('/') ? raw :
+          (raw ? '/' + raw : '');
+        const hasImage = !!src;
+        const fallbackIcon = `<div class="absolute inset-0 bg-slate-700 grid place-items-center">
+          <svg class="w-12 h-12 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+          </svg>
+        </div>`;
+        const imageEl = hasImage
+          ? `<img src="${window.escapeHtml(src)}" alt="" loading="lazy"
+             class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-in-out">`
+          : fallbackIcon;
 
-        eventList.innerHTML = items.map(ev => {
-            const dateTxt = ev.dateText ? window.formatDateLabel(ev.dateText) : "—";
-            const title = window.escapeHtml(ev.title || 'Untitled Event');
-            const eventUrl = `./event.html?id=${ev._id}`;
-            const raw = String(ev.imageUrl || '').trim();
-            const src =
-                /^https?:\/\//i.test(raw) ? raw :
-                raw.startsWith('/assets') ? raw :
-                raw.startsWith('assets') ? '/' + raw :
-                raw.startsWith('./assets') ? '/' + raw.replace(/^\.\//, '') :
-                raw.startsWith('/') ? raw :
-                (raw ? '/' + raw : '');
-            const hasImage = !!src;
-
-            const fallbackIcon = `<div class="absolute inset-0 bg-slate-700 grid place-items-center">
-              <svg class="w-12 h-12 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                 d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-              </svg>
-            </div>`;
-
-            const imageEl = hasImage
-                ? `<img src="${window.escapeHtml(src)}" alt="" loading="lazy"
-                   class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-in-out">`
-                : fallbackIcon;
-
-            return `<li class="relative aspect-[16/11] rounded-xl overflow-hidden group shadow-lg bg-slate-800 ring-1 ring-white/10">
-                    ${imageEl}
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none"></div>
-                    <div class="absolute bottom-0 left-0 right-0 p-4 text-white z-10">
-                        <h3 class="text-lg font-semibold leading-tight mb-1 line-clamp-2">${title}</h3>
-                        <div class="flex items-center justify-between text-sm mt-2">
-                            <span class="text-slate-300">${dateTxt}</span>
-                            <a href="${eventUrl}"
-                             class="px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors whitespace-nowrap">
-                             ดูรายละเอียด
-                            </a>
-                        </div>
-                    </div>
-                    <a href="${eventUrl}" class="absolute inset-0 z-0" aria-label="${title}"></a>
-                </li>`;
-        }).join("");
-    }
-
-    // --- renderPaginationControls ---
-    function renderPaginationControls(currentPage, totalPages) {
-        if (!paginationControlsContainer) return;
-        paginationControlsContainer.innerHTML = '';
-        if (totalPages <= 1) return;
-
-        let paginationHTML = '';
-
-        paginationHTML += `
-          <button data-page="${currentPage - 1}"
-                  class="px-3 py-1 rounded border border-slate-600 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  ${currentPage === 1 ? 'disabled' : ''}>
-            ก่อนหน้า
-          </button>
-        `;
-
-        const maxPagesToShow = 7;
-        const sidePages = Math.floor((maxPagesToShow - 3) / 2);
-        const startPage = Math.max(2, currentPage - sidePages);
-        const endPage = Math.min(totalPages - 1, currentPage + sidePages);
-
-        paginationHTML += createPageButton(1, currentPage);
-        if (startPage > 2) paginationHTML += `<span class="px-2">...</span>`;
-        for (let i = startPage; i <= endPage; i++) {
-            paginationHTML += createPageButton(i, currentPage);
-        }
-        if (endPage < totalPages - 1) paginationHTML += `<span class="px-2">...</span>`;
-        if (totalPages > 1) paginationHTML += createPageButton(totalPages, currentPage);
-
-        paginationHTML += `
-          <button data-page="${currentPage + 1}"
-                  class="px-3 py-1 rounded border border-slate-600 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  ${currentPage === totalPages ? 'disabled' : ''}>
-            ถัดไป
-          </button>
-        `;
-
-        paginationControlsContainer.innerHTML = paginationHTML;
-
-        paginationControlsContainer.querySelectorAll('button[data-page]').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const targetPage = parseInt(e.currentTarget.getAttribute('data-page'));
-                if (!isNaN(targetPage) && targetPage >= 1 && targetPage <= totalPages && targetPage !== currentPage && !isLoadingEvents) {
-                    loadEvents(targetPage);
-                }
-            });
-        });
+        return `<li class="relative aspect-[16/11] rounded-xl overflow-hidden group shadow-lg bg-slate-800 ring-1 ring-white/10">
+          ${imageEl}
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none"></div>
+          <div class="absolute bottom-0 left-0 right-0 p-4 text-white z-10">
+            <h3 class="text-lg font-semibold leading-tight mb-1 line-clamp-2">${title}</h3>
+            <div class="flex items-center justify-between text-sm mt-2">
+              <span class="text-slate-300">${dateTxt}</span>
+              <a href="${eventUrl}"
+               class="px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors whitespace-nowrap">
+                ดูรายละเอียด
+              </a>
+            </div>
+          </div>
+          <a href="${eventUrl}" class="absolute inset-0 z-0" aria-label="${title}"></a>
+        </li>`;
+      }).join("");
     }
 
     // --- createPageButton ---
-    function createPageButton(pageNumber, currentPage) {
-        const isCurrent = pageNumber === currentPage;
-        const baseClasses = "px-3 py-1 rounded border border-slate-600";
-        const activeClasses = "bg-indigo-600 text-white border-indigo-600";
-        const inactiveClasses = "hover:bg-slate-700";
-        return `<button data-page="${pageNumber}" class="${baseClasses} ${isCurrent ? activeClasses : inactiveClasses}" ${isCurrent ? 'aria-current="page"' : ''}>${pageNumber}</button>`;
+    function createPageButton(pageNumber, current) {
+      const isCurrent = pageNumber === current;
+      const base = "px-3 py-1 rounded border border-slate-600";
+      const on = "bg-indigo-600 text-white border-indigo-600";
+      const off = "hover:bg-slate-700";
+      return `<button data-page="${pageNumber}" class="${base} ${isCurrent ? on : off}" ${isCurrent ? 'aria-current="page"' : ""}>${pageNumber}</button>`;
+    }
+
+    // --- renderPaginationControls ---
+    function renderPaginationControls(current, total) {
+      if (!paginationControlsContainer) return;
+      paginationControlsContainer.innerHTML = "";
+      if (total <= 1) return;
+
+      let html = "";
+      html += `<button data-page="${current - 1}" class="px-3 py-1 rounded border border-slate-600 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed" ${current === 1 ? "disabled" : ""}>ก่อนหน้า</button>`;
+
+      const maxPagesToShow = 7;
+      const side = Math.floor((maxPagesToShow - 3) / 2);
+      const start = Math.max(2, current - side);
+      const end = Math.min(total - 1, current + side);
+
+      html += createPageButton(1, current);
+      if (start > 2) html += `<span class="px-2">...</span>`;
+      for (let i = start; i <= end; i++) html += createPageButton(i, current);
+      if (end < total - 1) html += `<span class="px-2">...</span>`;
+      if (total > 1) html += createPageButton(total, current);
+
+      html += `<button data-page="${current + 1}" class="px-3 py-1 rounded border border-slate-600 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed" ${current === total ? "disabled" : ""}>ถัดไป</button>`;
+
+      paginationControlsContainer.innerHTML = html;
+      paginationControlsContainer.querySelectorAll("button[data-page]").forEach(b => {
+        b.addEventListener("click", e => {
+          const target = parseInt(e.currentTarget.getAttribute("data-page"), 10);
+          if (!Number.isNaN(target) && target >= 1 && target <= total && target !== current && !isLoadingEvents) {
+            loadEvents(target);
+          }
+        });
+      });
     }
 
     // --- loadEvents ---
     async function loadEvents(page = 1) {
-        if (isLoadingEvents) return;
-        isLoadingEvents = true;
-        if (eventList) eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-5 text-center text-slate-200 ring-1 ring-white/10 col-span-full">กำลังโหลดกิจกรรม...</li>`;
-        if (paginationControlsContainer) paginationControlsContainer.innerHTML = '';
+      if (isLoadingEvents) return;
+      isLoadingEvents = true;
 
-        try {
-            const res = await fetch(`${API_BASE}/events?page=${page}&limit=${eventsPerPage}&ts=${Date.now()}`, {
-                credentials: 'include',
-                cache: 'no-store',
-            });
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-            const data = await res.json();
+      if (eventList) eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-5 text-center text-slate-200 ring-1 ring-white/10 col-span-full">กำลังโหลดกิจกรรม...</li>`;
+      if (paginationControlsContainer) paginationControlsContainer.innerHTML = "";
 
-            ALL_EVENTS_CURRENT_PAGE = data.items || [];
-            currentPage = data.currentPage || page;
-            totalPages = data.totalPages || 1;
-
-            renderEvents(ALL_EVENTS_CURRENT_PAGE);
-            renderPaginationControls(currentPage, totalPages);
-
-        } catch (e) {
-            console.error("Failed to load events:", e);
-            if (eventList) eventList.innerHTML = `<li class="rounded-xl bg-rose-800/80 px-6 py-4 text-rose-100 ring-1 ring-white/10 col-span-full">⚠️ โหลดข้อมูลไม่สำเร็จ: ${e.message}</li>`;
-            renderPaginationControls(1, 1);
-        } finally {
-            isLoadingEvents = false;
-        }
+      try {
+        const res = await fetch(`${API_BASE}/events?page=${page}&limit=${eventsPerPage}&ts=${Date.now()}`, {
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        ALL_EVENTS_CURRENT_PAGE = data.items || [];
+        currentPage = data.currentPage || page; // Use currentPage from response
+        totalPages = data.totalPages || 1;
+        renderEvents(ALL_EVENTS_CURRENT_PAGE);
+        renderPaginationControls(currentPage, totalPages);
+      } catch (e) {
+        console.error("Failed to load events:", e);
+        if (eventList) eventList.innerHTML = `<li class="rounded-xl bg-rose-800/80 px-6 py-4 text-rose-100 ring-1 ring-white/10 col-span-full">⚠️ โหลดข้อมูลไม่สำเร็จ: ${e.message}</li>`;
+        renderPaginationControls(1, 1); // Reset pagination on error
+      } finally {
+        isLoadingEvents = false;
+      }
     }
+    // Make loadEvents globally accessible for admin IIFE
+    window.loadEvents = loadEvents;
+    // Expose currentPage for admin IIFE delete logic
+    Object.defineProperty(window, 'currentPage', {
+        get: () => currentPage,
+        enumerable: true,
+        configurable: true
+    });
 
-    // --- Search Logic ---
+
+    // --- Search ---
     function applySearch() {
       const q = (searchInput?.value || "").trim().toLowerCase();
       if (!q) {
-        loadEvents(1);
+        loadEvents(1); // Reload page 1 if search is cleared
         return;
       }
+      // Simple search only searches the current page's data
       const filtered = ALL_EVENTS_CURRENT_PAGE.filter(ev => {
         const f = (v) => String(v || "").toLowerCase();
         return [ev.title, ev.location, ev.dateText].some(v => f(v).includes(q));
       });
       renderEvents(filtered, q);
-      if (paginationControlsContainer) paginationControlsContainer.innerHTML = '';
+      if (paginationControlsContainer) paginationControlsContainer.innerHTML = ""; // Hide pagination during search
     }
-
     const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
     const applySearchDebounced = debounce(applySearch, 250);
-
-    searchBtn?.addEventListener('click', applySearch);
-    searchInput?.addEventListener('input', applySearchDebounced);
-    searchInput?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); applySearch(); }
-      if (e.key === 'Escape') { searchInput.value = ''; loadEvents(1); }
+    searchBtn?.addEventListener("click", applySearch);
+    searchInput?.addEventListener("input", applySearchDebounced);
+    searchInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); applySearch(); }
+      if (e.key === "Escape") { searchInput.value = ""; loadEvents(1); }
     });
 
-    // --- loadMe ---
-    async function loadMe() {
-        try {
-            const res = await fetch(`${API_BASE}/auth/me?ts=${Date.now()}`, {
-                headers: { Authorization: "Bearer " + token },
-                credentials: "include",
-                cache: "no-store",
-            });
-            if (!res.ok) {
-                console.error("Failed to fetch user data, redirecting to login.");
-                localStorage.removeItem("token");
-                location.href = "./index.html";
-                return;
-            }
-            const json = await res.json().catch(() => ({}));
-            const me = json.user || json;
-            currentUser = me;
-
-            const id = (x) => document.getElementById(x);
-            const fullName = [me.firstName, me.lastName].filter(Boolean).join(" ").trim();
-            id("ppName") && (id("ppName").textContent = fullName || "—");
-            id("ppId")   && (id("ppId").textContent   = me.studentId ?? "—");
-            id("ppEmail") && (id("ppEmail").textContent = me.email ?? "—");
-            id("ppMajor") && (id("ppMajor").textContent = me.major ?? "—");
-            id("ppPhone") && (id("ppPhone").textContent = me.phone ?? "—");
-
-            const calFab = document.getElementById('calendarFab');
-            const historyBtn = document.getElementById('historyBtn');
-            const adminFabs = [fab, document.getElementById('fabReg'), document.getElementById('fabDel')];
-
-            if (me.role === "admin") {
-                adminFabs.forEach(el => el?.classList.remove("hidden"));
-                calFab?.remove?.();
-                historyBtn?.remove?.();
-                document.getElementById('historyModal')?.remove?.();
-            } else {
-                adminFabs.forEach(el => el?.remove?.());
-                calFab?.classList.remove('hidden');
-            }
-        } catch (error) {
-            console.error("Error in loadMe:", error);
-            localStorage.removeItem("token");
-            location.href = "./index.html";
-        }
-    }
-
-    // --- wireLogout ---
-    function wireLogout() {
-        const btn = document.getElementById("logoutBtn");
-        if (!btn) return;
-        btn.addEventListener("click", async () => {
-            try {
-                await fetch(`${API_BASE}/auth/logout?ts=${Date.now()}`, {
-                    method: "POST", credentials: "include", cache: "no-store",
-                });
-            } catch (e) { /* ignore */ }
-            try {
-                localStorage.removeItem("token");
-                localStorage.removeItem("rltg:events:v1");
-                sessionStorage.clear();
-                if (window.caches) {
-                    const keys = await caches.keys();
-                    await Promise.all(keys.map(k => caches.delete(k)));
-                }
-                if ('serviceWorker' in navigator) {
-                    const regs = await navigator.serviceWorker.getRegistrations();
-                    await Promise.all(regs.map(r => r.update()));
-                }
-            } catch (e) { /* ignore */ }
-            location.replace("./index.html");
-        });
-    }
-
-    // --- Add Event Form Logic ---
+    // --- Add Event ---
     function openAdd() { addModal?.classList.remove("hidden"); }
     function closeAdd() { addModal?.classList.add("hidden"); addForm?.reset(); }
-
-    addForm?.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const submitBtn = document.getElementById('addSubmitBtn');
-        const fd = new FormData(addForm);
-
-        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'กำลังบันทึก...'; }
-
-        try {
-            const res = await fetch(`${API_BASE}/events`, {
-                method: "POST",
-                headers: { Authorization: "Bearer " + token },
-                credentials: "include",
-                body: fd,
-                cache: "no-store",
-            });
-            if (!res.ok) {
-                const data = await res.json().catch(() => ({ message: `HTTP Error ${res.status}` }));
-                throw new Error(data.message || `เกิดข้อผิดพลาด: ${res.status}`);
-            }
-            closeAdd();
-            toastOK('เพิ่มกิจกรรมสำเร็จ!');
-            await loadEvents(1);
-
-        } catch (err) {
-            console.error("Add event error:", err);
-            toastError('เพิ่มกิจกรรมไม่สำเร็จ', err.message || 'โปรดตรวจสอบข้อมูลแล้วลองอีกครั้ง');
-        } finally {
-            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'บันทึก'; }
-        }
-    });
     addCancel?.addEventListener("click", closeAdd);
     fab?.addEventListener("click", openAdd);
     addModal?.querySelector("[data-overlay]")?.addEventListener("click", closeAdd);
+    addForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById("addSubmitBtn");
+      const fd = new FormData(addForm);
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "กำลังบันทึก..."; }
+      try {
+        const res = await fetch(`${API_BASE}/events`, {
+          method: "POST",
+          headers: { Authorization: "Bearer " + token },
+          credentials: "include",
+          body: fd,
+          cache: "no-store",
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({ message: `HTTP ${res.status}` }));
+          throw new Error(data.message || `เกิดข้อผิดพลาด: ${res.status}`);
+        }
+        closeAdd();
+        toastOK("เพิ่มกิจกรรมสำเร็จ!");
+        await loadEvents(1); // Go to page 1 after adding
+      } catch (err) {
+        console.error("Add event error:", err);
+        toastError("เพิ่มกิจกรรมไม่สำเร็จ", err.message || "โปรดตรวจสอบข้อมูลแล้วลองอีกครั้ง");
+      } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "บันทึก"; }
+      }
+    });
 
-    // --- Initial Load ---
+    // --- Me + Logout ---
+    async function loadMe() {
+      try {
+        const res = await fetch(`${API_BASE}/auth/me?ts=${Date.now()}`, {
+          headers: { Authorization: "Bearer " + token },
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!res.ok) throw new Error("unauthorized"); // Throw error to be caught below
+        const json = await res.json().catch(() => ({}));
+        const me = json.user || json;
+        currentUser = me;
+
+        const id = (x) => document.getElementById(x);
+        const fullName = [me.firstName, me.lastName].filter(Boolean).join(" ").trim();
+        id("ppName") && (id("ppName").textContent = fullName || "—");
+        id("ppId") && (id("ppId").textContent = me.studentId ?? "—");
+        id("ppEmail") && (id("ppEmail").textContent = me.email ?? "—");
+        id("ppMajor") && (id("ppMajor").textContent = me.major ?? "—");
+        id("ppPhone") && (id("ppPhone").textContent = me.phone ?? "—");
+
+        const calFab = document.getElementById("calendarFab");
+        const historyBtn = document.getElementById("historyBtn");
+        const adminFabs = [fab, document.getElementById("fabReg"), document.getElementById("fabDel")];
+
+        if (me.role === "admin") {
+          adminFabs.forEach(el => el?.classList.remove("hidden"));
+          calFab?.remove?.();
+          historyBtn?.remove?.();
+          document.getElementById("historyModal")?.remove?.();
+        } else {
+          adminFabs.forEach(el => el?.remove?.());
+          calFab?.classList.remove("hidden");
+        }
+      } catch (error) {
+        console.error("Error in loadMe, redirecting:", error);
+        localStorage.removeItem("token");
+        location.href = "./index.html"; // Redirect on error
+        throw error; // Re-throw to prevent loadEvents from running in DOMContentLoaded .then()
+      }
+    }
+
+    function wireLogout() {
+      const btn = document.getElementById("logoutBtn");
+      if (!btn) return;
+      btn.addEventListener("click", async () => {
+        try { await fetch(`${API_BASE}/auth/logout?ts=${Date.now()}`, { method: "POST", credentials: "include", cache: "no-store" }); } catch {}
+        try {
+          localStorage.removeItem("token");
+          localStorage.removeItem("rltg:events:v1"); // Clear event cache key if used
+          sessionStorage.clear();
+          if (window.caches) { const keys = await caches.keys(); await Promise.all(keys.map(k => caches.delete(k))); }
+          if ("serviceWorker" in navigator) { const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r => r.update())); }
+        } catch {}
+        location.replace("./index.html");
+      });
+    }
+
+    // --- Init ---
     document.addEventListener("DOMContentLoaded", () => {
-      loadMe().then(() => { loadEvents(1); })
-        .catch((err) => { console.error("Initial loadMe failed:", err); });
+      loadMe()
+        .then(() => {
+            // Only load events if loadMe was successful (user is authenticated)
+            loadEvents(1);
+          })
+        .catch((err) => {
+            // loadMe already handles redirection on error, just log if needed
+            console.error("Initial loadMe failed:", err);
+          });
       wireLogout();
     });
 
@@ -561,214 +541,304 @@
 
  // -------------------- History modal (user) --------------------
  (function historyModal() {
-  // ... (History modal code remains the same) ...
     const API_BASE = window.API_BASE;
-  const btnOpen = document.getElementById('historyBtn');
-  const modal = document.getElementById('historyModal');
-  if (!btnOpen || !modal) return; // Exit if button/modal not found (e.g., for admin)
+    const btnOpen = document.getElementById("historyBtn");
+    const modal = document.getElementById("historyModal");
+    if (!btnOpen || !modal) return;
 
-  const btnClose = document.getElementById('historyClose');
-  const overlay = modal.querySelector('[data-overlay]');
-  const ul = document.getElementById('historyList');
-  const empty = document.getElementById('historyEmpty');
-  const loading = document.getElementById('historyLoading');
+    const btnClose = document.getElementById("historyClose");
+    const overlay = modal.querySelector("[data-overlay]");
+    const ul = document.getElementById("historyList");
+    const empty = document.getElementById("historyEmpty");
+    const loading = document.getElementById("historyLoading");
+    if (!ul || !empty || !loading) return; // Add checks
 
-  const open = () => modal.classList.remove('hidden');
-  const close = () => modal.classList.add('hidden');
+    const open = () => modal.classList.remove("hidden");
+    const close = () => modal.classList.add("hidden");
 
-  async function fetchMyRegistrations() {
-   const token = localStorage.getItem('token');
-   const opt = { headers: { Authorization: 'Bearer ' + token }, credentials: 'include', cache: 'no-store' };
-   let res = await fetch(`${API_BASE}/registrations/me?ts=${Date.now()}`, opt);
-   if (res.ok) { const j = await res.json().catch(() => ({})); return j.items || []; }
-   if (res.status === 404) {
-    res = await fetch(`${API_BASE}/auth/my-registrations?ts=${Date.now()}`, opt);
-    if (res.ok) { const j = await res.json().catch(() => ({})); return j.items || []; }
-   }
-   const t = await res.text().catch(() => ''); throw new Error(`GET failed ${res.status}: ${t || 'unknown error'}`);
-  }
+    async function fetchMyRegistrations() {
+      const token = localStorage.getItem("token");
+      const opt = { headers: { Authorization: "Bearer " + token }, credentials: "include", cache: "no-store" };
+      let res = await fetch(`${API_BASE}/registrations/me?ts=${Date.now()}`, opt);
+      if (res.ok) { const j = await res.json().catch(() => ({})); return j.items || []; }
+      if (res.status === 404) {
+        res = await fetch(`${API_BASE}/auth/my-registrations?ts=${Date.now()}`, opt);
+        if (res.ok) { const j = await res.json().catch(() => ({})); return j.items || []; }
+      }
+      const t = await res.text().catch(() => "");
+      throw new Error(`GET failed ${res.status}: ${t || "unknown error"}`);
+    }
 
-  async function loadHistory() {
-   if (!ul || !empty || !loading) return; // Add checks for elements
-      ul.classList.add('hidden'); ul.innerHTML = ''; empty.classList.add('hidden'); loading.classList.remove('hidden');
-   try {
-    const items = await fetchMyRegistrations();
-    loading.classList.add('hidden');
-    if (!items.length) { empty.classList.remove('hidden'); return; }
-    ul.innerHTML = items.map(it => { /* ... generate history item HTML ... */ }).join('');
-    ul.classList.remove('hidden');
-    ul.querySelectorAll('[data-remove]').forEach(btn => { /* ... add delete listener ... */ });
-   } catch (err) { loading.textContent = 'โหลดไม่สำเร็จ: ' + err.message; }
-  }
+    async function loadHistory() {
+      ul.classList.add("hidden"); ul.innerHTML = ""; empty.classList.add("hidden"); loading.classList.remove("hidden");
+      try {
+        const items = await fetchMyRegistrations();
+        loading.classList.add("hidden");
+        if (!items.length) { empty.classList.remove("hidden"); return; }
+        ul.innerHTML = items.map(it => {
+          const ev = it.event || {}; const title = ev.title || "(ไม่ระบุชื่อกิจกรรม)";
+          const dateTxt = window.formatDateLabel(ev.dateText); const loc = ev.location || "—";
+          const orphan = !ev._id;
+          return `<li class="rounded-xl border border-slate-200 bg-white/60 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="font-semibold text-slate-900">
+                  ${window.escapeHtml(title)}
+                  ${orphan ? '<span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-rose-100 text-rose-600">ถูกลบแล้ว</span>' : ""}
+                </div>
+                <div class="text-sm text-slate-500">${dateTxt} • ${window.escapeHtml(loc)}</div>
+                ${it.address ? `<div class="mt-1 text-xs text-slate-500">address: ${window.escapeHtml(it.address)}</div>` : ""}
+              </div>
+              <div class="shrink-0 flex gap-2">
+                ${orphan
+                  ? `<button data-remove="${it._id}" class="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300">ลบออก</button>`
+                  : `<a href="./event.html?id=${ev._id}" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-700">ดูรายละเอียด</a>`}
+              </div>
+            </div>
+          </li>`;
+        }).join("");
+        ul.classList.remove("hidden");
+        ul.querySelectorAll("[data-remove]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const id = btn.getAttribute("data-remove");
+            try {
+              await fetch(`${API_BASE}/registrations/${id}`, { method: "DELETE", headers: { Authorization: "Bearer " + localStorage.getItem("token") }, cache: "no-store" });
+              loadHistory(); // Reload history list after deletion
+            } catch { toastError('ไม่สามารถลบรายการได้'); }
+          });
+        });
+      } catch (err) { loading.textContent = "โหลดประวัติไม่สำเร็จ: " + err.message; }
+    }
 
-  btnOpen.addEventListener('click', () => { open(); loadHistory(); });
-  btnClose?.addEventListener('click', close);
-  overlay?.addEventListener('click', close);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
+    btnOpen.addEventListener("click", () => { open(); loadHistory(); });
+    btnClose?.addEventListener("click", close);
+    overlay?.addEventListener("click", close);
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && !modal.classList.contains("hidden")) close(); });
  })();
 
- // -------------------- Admin: Registrations Modal --------------------
+ // -------------------- Admin: Registrations / Delete --------------------
  (function () {
-  // ... (Admin code - ensure it uses loadEventsForAdminCacheOnly) ...
     const API_BASE = window.API_BASE;
-  const token = localStorage.getItem("token");
-  if (!token) return;
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-  const $ = (s) => document.querySelector(s);
-  // NOTE: Admin code should NOT interact with the main #eventList rendering
-  const fabAdd = $("#fabAdd");
-  const fabReg = $("#fabReg");
-  const fabDel = $("#fabDel");
+    const $ = (s) => document.querySelector(s);
+    const fabAdd = $("#fabAdd"); // Needed? Main IIFE handles this
+    const fabReg = $("#fabReg");
+    const fabDel = $("#fabDel");
 
-    // UI elements for Modals
-    const delUI = { wrap: document.getElementById('delModal'), overlay: document.querySelector('#delModal [data-overlay]'), close: document.getElementById('delClose'), close2: document.getElementById('delClose2'), loading: document.getElementById('delLoading'), empty: document.getElementById('delEmpty'), scroll: document.getElementById('delScroll'), list: document.getElementById('delList') };
-    const regUI = { wrap: document.getElementById('regModal'), overlay: document.querySelector('#regModal [data-overlay]'), close: document.getElementById('regClose'), close2: document.getElementById('regClose2'), sumWrap: document.getElementById('regSummary'), sumScroll: document.getElementById('regScroll'), sumLoading: document.getElementById('regLoading'), sumEmpty: document.getElementById('regEmpty'), table: document.getElementById('regTable'), tbody: document.getElementById('regTbody'), detailWrap: document.getElementById('regDetail'), dScroll: document.getElementById('rdScroll'), dTitle: document.getElementById('rdTitle'), dDate: document.getElementById('rdDate'), dLoading: document.getElementById('rdLoading'), dEmpty: document.getElementById('rdEmpty'), dTable: document.getElementById('rdTable'), dTbody: document.getElementById('rdTbody'), dBack: document.getElementById('rdBack') };
+    const delUI = { wrap: $("#delModal"), overlay: $("#delModal [data-overlay]"), close: $("#delClose"), close2: $("#delClose2"), loading: $("#delLoading"), empty: $("#delEmpty"), scroll: $("#delScroll"), list: $("#delList") };
+    const regUI = { wrap: $("#regModal"), overlay: $("#regModal [data-overlay]"), close: $("#regClose"), close2: $("#regClose2"), sumWrap: $("#regSummary"), sumScroll: $("#regScroll"), sumLoading: $("#regLoading"), sumEmpty: $("#regEmpty"), table: $("#regTable"), tbody: $("#regTbody"), detailWrap: $("#regDetail"), dScroll: $("#rdScroll"), dTitle: $("#rdTitle"), dDate: $("#rdDate"), dLoading: $("#rdLoading"), dEmpty: $("#rdEmpty"), dTable: $("#rdTable"), dTbody: $("#rdTbody"), dBack: $("#rdBack") };
 
     const esc = window.escapeHtml ?? (s => s);
     const fmt = window.formatDateLabel ?? (s => s);
-    let RD_CURRENT_ROWS = []; // For CSV export
+    let RD_CURRENT_ROWS = [];
+    let CURRENT_USER_ADMIN = null; // Renamed to avoid conflict
+    let EVENTS_CACHE_ADMIN = []; // Renamed to avoid conflict
 
-    function toDisplayDate(s) { if (!s) return '—'; const d = /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(s + 'T00:00:00') : new Date(s); if (isNaN(d)) return '—'; const day = d.getDate(), month = d.getMonth() + 1, year = d.getFullYear() + 543; return `${day}/${month}/${String(year).slice(-2)}`; }
-    function showModal(el) { el?.classList.remove('hidden'); document.documentElement.classList.add('overflow-hidden'); const p = el?.querySelector('.modal-enter'); if (p) requestAnimationFrame(() => p.classList.add('modal-enter-active')); }
-    function hideModal(el) { const p = el?.querySelector('.modal-enter'); if (p) p.classList.remove('modal-enter-active'); setTimeout(() => { el?.classList.add('hidden'); document.documentElement.classList.remove('overflow-hidden'); }, 180); }
+    function showModal(el) { el?.classList.remove("hidden"); document.documentElement.classList.add("overflow-hidden"); const p = el?.querySelector(".modal-enter"); if (p) requestAnimationFrame(() => p.classList.add("modal-enter-active")); }
+    function hideModal(el) { const p = el?.querySelector(".modal-enter"); if (p) p.classList.remove("modal-enter-active"); setTimeout(() => { el?.classList.add("hidden"); document.documentElement.classList.remove("overflow-hidden"); }, 180); }
+    function toDisplayDate(s) { if (!s) return "—"; const d = /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(s + "T00:00:00") : new Date(s); if (isNaN(d)) return "—"; const day = d.getDate(), month = d.getMonth() + 1, year = d.getFullYear() + 543; return `${day}/${month}/${String(year).slice(-2)}`; }
     function listify(j) { if (!j) return []; if (Array.isArray(j)) return j; if (Array.isArray(j.items)) return j.items; if (Array.isArray(j.data)) return j.data; if (Array.isArray(j.results)) return j.results; return []; }
-    async function tryJson(url) { try { const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token }, credentials: 'include', cache: 'no-store' }); if (!res.ok) return null; return await res.json().catch(() => null); } catch { return null; } }
-    async function fetchEventCounts() { try { const r = await fetch(`${API_BASE}/events/admin/summary?ts=${Date.now()}`, { headers: { Authorization: 'Bearer ' + token }, credentials: 'include', cache: 'no-store' }); if (!r.ok) return {}; const list = await r.json().catch(() => []); const map = {}; list.forEach(it => { map[it.eventId] = it.count || 0; }); return map; } catch { return {}; } }
-    function getRegEventId(reg) { if (!reg) return null; if (typeof reg.event === 'string') return reg.event; if (reg.event && typeof reg.event === 'object') return reg.event._id || null; return reg.eventId || reg.eventID || reg.event_id || null; }
-    const coalesce = (...vals) => { for (const v of vals) { if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim(); } return undefined; };
-
-
-    let CURRENT_USER_ADMIN = null;
-    let EVENTS_CACHE_ADMIN = [];
+    async function tryJson(url) { try { const res = await fetch(url, { headers: { Authorization: "Bearer " + token }, credentials: "include", cache: "no-store" }); if (!res.ok) return null; return await res.json().catch(() => null); } catch { return null; } }
+    async function fetchEventCounts() { try { const r = await fetch(`${API_BASE}/events/admin/summary?ts=${Date.now()}`, { headers: { Authorization: "Bearer " + token }, credentials: "include", cache: "no-store" }); if (!r.ok) return {}; const list = await r.json().catch(() => []); const map = {}; list.forEach(it => { map[it.eventId] = it.count || 0; }); return map; } catch { return {}; } }
+    function getRegEventId(reg) { if (!reg) return null; if (typeof reg.event === "string") return reg.event; if (reg.event && typeof reg.event === "object") return reg.event._id || null; return reg.eventId || reg.eventID || reg.event_id || null; }
+    const coalesce = (...vals) => { for (const v of vals) { if (v !== undefined && v !== null && String(v).trim() !== "") return String(v).trim(); } return undefined; };
 
     async function loadMeAdmin() {
-      const res = await fetch(`${API_BASE}/auth/me?ts=${Date.now()}`, { headers: { Authorization: 'Bearer ' + token }, credentials: 'include', cache: 'no-store' });
-      const j = await res.json().catch(() => ({}));
-      CURRENT_USER_ADMIN = j.user || j;
+      try {
+        const res = await fetch(`${API_BASE}/auth/me?ts=${Date.now()}`, { headers: { Authorization: "Bearer " + token }, credentials: "include", cache: "no-store" });
+        if (!res.ok) throw new Error("Admin auth fetch failed");
+        const j = await res.json().catch(() => ({}));
+        CURRENT_USER_ADMIN = j.user || j;
+      } catch (err) {
+        console.error("Failed to load admin user data:", err);
+        CURRENT_USER_ADMIN = null; // Ensure user is null on error
+      }
     }
-
     async function loadEventsForAdminCacheOnly() {
-      const res = await fetch(`${API_BASE}/events?page=1&limit=999&ts=${Date.now()}`, { credentials: 'include', cache: 'no-store' }); // Fetch all for admin cache
-      const data = await res.json().catch(() => ({ items: [] }));
-      EVENTS_CACHE_ADMIN = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
+      // Fetch ALL events for admin modals, not just one page
+      try {
+        const res = await fetch(`${API_BASE}/events?page=1&limit=999&ts=${Date.now()}`, { credentials: "include", cache: "no-store" });
+        if (!res.ok) throw new Error("Failed to fetch all events for admin");
+        const data = await res.json(); // Expect { items: [...] } structure
+        EVENTS_CACHE_ADMIN = data.items || []; // Use items array
+      } catch (err) {
+         console.error("Failed to load events for admin cache:", err);
+         EVENTS_CACHE_ADMIN = []; // Ensure empty array on error
+      }
     }
 
+    // Init Admin specific data
     (async function initAdmin() {
       await loadMeAdmin();
-      if (CURRENT_USER_ADMIN?.role !== 'admin') return;
+      if (CURRENT_USER_ADMIN?.role !== "admin") return;
       await loadEventsForAdminCacheOnly();
-    })().catch((err) => { console.error("Admin Init Error:", err)});
+    })().catch((err) => { console.error("Admin Init Error:", err) });
 
-    // --- Delete Modal Logic ---
+    // --- Delete Modal ---
     function openDelModal() {
-        if (CURRENT_USER_ADMIN?.role !== 'admin' || !delUI.wrap) return;
-        delUI.loading?.classList.remove('hidden'); delUI.empty?.classList.add('hidden'); delUI.scroll?.classList.add('hidden'); delUI.list.innerHTML = '';
-        showModal(delUI.wrap);
-        const items = EVENTS_CACHE_ADMIN || [];
-        delUI.loading?.classList.add('hidden');
-        if (!items.length) { delUI.empty?.classList.remove('hidden'); return; }
-        delUI.list.innerHTML = items.map(ev => `
-          <li class="rounded-xl border border-slate-200 bg-white/60 p-4 flex items-center justify-between gap-3">
-            <div><div class="font-semibold">${esc(ev.title || '(...)')}</div><div class="text-sm text-slate-500">${fmt(ev.dateText)} • ${esc(ev.location || '—')}</div></div>
-            <button data-del="${ev._id}" class="px-3 py-1.5 rounded-lg bg-rose-600 text-white hover:bg-rose-500">ลบ</button>
-          </li>`).join('');
-        delUI.scroll?.classList.remove('hidden');
+      if (CURRENT_USER_ADMIN?.role !== "admin" || !delUI.wrap || !delUI.list) return;
+      delUI.loading?.classList.remove("hidden"); delUI.empty?.classList.add("hidden"); delUI.scroll?.classList.add("hidden"); delUI.list.innerHTML = "";
+      showModal(delUI.wrap);
+      const items = EVENTS_CACHE_ADMIN || [];
+      delUI.loading?.classList.add("hidden");
+      if (!items.length) { delUI.empty?.classList.remove("hidden"); return; }
+      delUI.list.innerHTML = items.map(ev => `
+        <li class="rounded-xl border border-slate-200 bg-white/60 p-4 flex items-center justify-between gap-3">
+          <div><div class="font-semibold">${esc(ev.title || "(...)")}</div><div class="text-sm text-slate-500">${fmt(ev.dateText)} • ${esc(ev.location || "—")}</div></div>
+          <button data-del="${ev._id}" class="px-3 py-1.5 rounded-lg bg-rose-600 text-white hover:bg-rose-500">ลบ</button>
+        </li>`).join("");
+      delUI.scroll?.classList.remove("hidden");
 
-        delUI.list.querySelectorAll('button[data-del]').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const id = btn.getAttribute('data-del');
-                const ev = EVENTS_CACHE_ADMIN.find(e => e._id === id);
-                const name = ev?.title || '';
-                // ... (confirm deletion logic) ...
-                if (window.Swal) { /* ... Swal confirm ... */ } else if (!confirm(`ยืนยันลบ: ${name}`)) return;
+      delUI.list.querySelectorAll("button[data-del]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-del");
+          const ev = EVENTS_CACHE_ADMIN.find(e => e._id === id);
+          const name = ev?.title || "";
+          const confirmed = await Swal.fire({ title: "ยืนยันลบกิจกรรมนี้?", text: name, icon: "question", showCancelButton: true, confirmButtonText: "ลบ", cancelButtonText: "ยกเลิก", confirmButtonColor: "#e11d48" })
+                                    .then(result => result.isConfirmed)
+                                    .catch(() => false); // Use Swal promise
+          if (!confirmed) return;
 
-                btn.disabled = true;
-                try {
-                    const r = await fetch(`${API_BASE}/events/${id}`, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token }, credentials: 'include', cache: 'no-store' });
-                    if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.message || r.status); }
 
-                    EVENTS_CACHE_ADMIN = EVENTS_CACHE_ADMIN.filter(e => e._id !== id);
-                    btn.closest('li')?.remove();
-                    if (!delUI.list.children.length) { delUI.scroll?.classList.add('hidden'); delUI.empty?.classList.remove('hidden'); }
+          btn.disabled = true;
+          try {
+            const r = await fetch(`${API_BASE}/events/${id}`, { method: "DELETE", headers: { Authorization: "Bearer " + token }, credentials: "include", cache: "no-store" });
+            if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.message || r.status); }
 
-                    // Trigger reload of the main event list using the globally available loadEvents
-                    // Need access to 'currentPage' and 'loadEvents' from the parent scope
-                    const mainScope = window; // Assuming loadEvents is global or accessible via window
-                    if (mainScope.loadEvents && typeof mainScope.currentPage !== 'undefined') {
-                      const listItemsLeftOnPage = document.querySelectorAll('#eventList > li').length - 1;
-                      if (listItemsLeftOnPage <= 0 && mainScope.currentPage > 1) {
-                        await mainScope.loadEvents(mainScope.currentPage - 1);
-                      } else {
-                        await mainScope.loadEvents(mainScope.currentPage);
-                      }
-                    }
+            EVENTS_CACHE_ADMIN = EVENTS_CACHE_ADMIN.filter(e => e._id !== id); // Update admin cache
+            btn.closest("li")?.remove(); // Remove from modal list
+            if (!delUI.list.children.length) { delUI.scroll?.classList.add("hidden"); delUI.empty?.classList.remove("hidden"); }
 
-                    toastOK('ลบสำเร็จ');
-                } catch (e) { toastError('ลบไม่สำเร็จ', e.message || '');
-                } finally { btn.disabled = false; }
-            });
+            // Dispatch custom event instead of calling global function directly
+            window.dispatchEvent(new CustomEvent('eventDeleted'));
+
+            toastOK("ลบสำเร็จ");
+          } catch (e) { toastError("ลบไม่สำเร็จ", e.message || ""); }
+          finally { btn.disabled = false; }
         });
+      });
     }
-    fabDel?.addEventListener('click', openDelModal);
-    delUI.overlay?.addEventListener('click', () => hideModal(delUI.wrap));
-    delUI.close?.addEventListener('click', () => hideModal(delUI.wrap));
-    delUI.close2?.addEventListener('click', () => hideModal(delUI.wrap));
+    fabDel?.addEventListener("click", openDelModal);
+    delUI.close?.addEventListener("click", () => hideModal(delUI.wrap));
+    delUI.close2?.addEventListener("click", () => hideModal(delUI.wrap));
+    delUI.overlay?.addEventListener("click", () => hideModal(delUI.wrap));
 
-    // --- Registrations Modal Logic ---
-    // ... (Rest of Admin code: fetchAllRegistrations, fetchRegistrationsByEvent, openRegModal, CSV export, etc.) ...
-     async function fetchAllRegistrations() { /* ... */ }
-     async function fetchRegistrationsByEvent(eventId) { /* ... */ }
-     function countFromEvent(ev) { /* ... */ }
+    // --- Registrations Modal ---
+    async function fetchAllRegistrations() {
+        const urls = [`${API_BASE}/registrations`, `${API_BASE}/admin/registrations`, `${API_BASE}/registration`];
+        for (const u of urls) { const j = await tryJson(u); if (j !== null) return listify(j); }
+        return undefined; // Return undefined if all fail
+    }
+    async function fetchRegistrationsByEvent(eventId) {
+        const urls = [
+            `${API_BASE}/events/${eventId}/registrations`, `${API_BASE}/events/${eventId}/registration`,
+            `${API_BASE}/events/${eventId}/participants`, `${API_BASE}/events/${eventId}/attendees`,
+            `${API_BASE}/registrations?eventId=${encodeURIComponent(eventId)}`, `${API_BASE}/registrations?event=${encodeURIComponent(eventId)}`,
+            `${API_BASE}/registrations/by-event/${eventId}`, `${API_BASE}/registrations/event/${eventId}`
+        ];
+        for (const u of urls) { const j = await tryJson(u); if (j !== null) return listify(j); }
+        return []; // Return empty array if all fail
+    }
 
-     async function openRegModal() {
-        if (CURRENT_USER_ADMIN?.role !== 'admin' || !regUI.wrap) return;
-        regUI.sumLoading?.classList.remove('hidden'); regUI.sumWrap?.classList.remove('hidden'); regUI.detailWrap?.classList.add('hidden'); regUI.sumEmpty?.classList.add('hidden'); regUI.table?.classList.add('hidden'); if(regUI.tbody) regUI.tbody.innerHTML = ''; regUI.sumScroll?.scrollTo?.(0, 0);
-        showModal(regUI.wrap);
-        let events = EVENTS_CACHE_ADMIN;
-        if (!events.length) { const r = await fetch(`${API_BASE}/events?page=1&limit=999&ts=${Date.now()}`, { credentials: 'include', cache: 'no-store' }); const data = await r.json().catch(() => ({ items: [] })); events = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []); EVENTS_CACHE_ADMIN = events; } // Refetch if cache is empty
-        const COUNTS = await fetchEventCounts();
-        if(regUI.tbody) regUI.tbody.innerHTML = events.map(ev => { const c = COUNTS[ev._id] ?? 0; return `<tr class="border-t"><td class="py-2 pr-3">${esc(ev.title || '(...)')}</td><td class="py-2 pr-3">${toDisplayDate(ev.dateText)}</td><td class="py-2 pr-3">${c}</td><td class="py-2"><button data-view="${ev._id}" class="...">ดูรายชื่อ</button></td></tr>`; }).join("");
-        regUI.sumLoading?.classList.add('hidden');
-        if (!events.length) regUI.sumEmpty?.classList.remove('hidden'); else regUI.table?.classList.remove('hidden');
-        regUI.tbody?.querySelectorAll('button[data-view]').forEach(btn => { btn.addEventListener('click', async () => { const id = btn.getAttribute('data-view'); const ev = events.find(e => e._id === id) || {}; await openRegDetail(ev); }); });
-     }
-     function sanitizeFilename(s = '') { return String(s).replace(/[\/\\?%*:|"<>]/g, '_').trim() || 'export'; }
-     function toCSV(rows) { const header = ['ชื่อ', 'รหัสนักศึกษา', 'คณะ', 'E-mail', 'เบอร์โทรศัพท์', 'ที่อยู่ (ตอนลงทะเบียน)']; const escCSV = (v) => { const t = String(v ?? ''); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; }; const lines = [header.map(escCSV).join(',')]; for (const r of rows) { lines.push([r.name, r.idnum, r.faculty, r.email, r.phone, r.addr].map(escCSV).join(',')); } return lines.join('\n'); }
-     function downloadCSVFile(filename, csvText) { const BOM = '\uFEFF'; const blob = new Blob([BOM + csvText], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename.endsWith('.csv') ? filename : filename + '.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
-     async function openRegDetail(ev) {
-        if (!regUI.detailWrap || !regUI.sumWrap || !regUI.dTitle || !regUI.dDate || !regUI.dLoading || !regUI.dEmpty || !regUI.dTable || !regUI.dTbody) return;
-        regUI.detailWrap.classList.remove('hidden'); regUI.sumWrap.classList.add('hidden'); regUI.dScroll?.scrollTo?.(0, 0); regUI.dTitle.textContent = ev.title || '(...)'; regUI.dDate.textContent = toDisplayDate(ev.dateText); regUI.dLoading.classList.remove('hidden'); regUI.dEmpty.classList.add('hidden'); regUI.dTable.classList.add('hidden'); regUI.dTbody.innerHTML = ''; RD_CURRENT_ROWS = []; document.getElementById('rdExport')?.setAttribute('disabled', 'true');
-        let regs = await fetchRegistrationsByEvent(ev._id);
-        // if (!regs.length) { const all = await fetchAllRegistrations(); if (Array.isArray(all)) regs = all.filter(r => getRegEventId(r) === ev._id); } // Optionally re-fetch all if specific fetch fails
-        regUI.dLoading.classList.add('hidden');
-        if (!regs.length) { regUI.dEmpty.classList.remove('hidden'); return; }
-        regUI.dTbody.innerHTML = regs.map(r => { const u = r.user || {}; const first = coalesce(u.firstName, r.firstName); const last = coalesce(u.lastName, r.lastName); const name = coalesce([first, last].filter(Boolean).join(' ').trim(), u.fullName, r.fullName, u.username, '—'); const idnum = coalesce(u.studentId, r.studentId, '—'); const faculty = coalesce(u.faculty, u.major, r.faculty, r.major, '—'); const email = coalesce(u.email, r.email, '—'); const phone = coalesce(u.phone, r.phone, '—'); const addr = coalesce(r.address, '—'); return `<tr class="border-t"><td class="py-2 pr-3">${esc(name)}</td><td class="py-2 pr-3">${esc(idnum)}</td><td class="py-2 pr-3">${esc(faculty)}</td><td class="py-2 pr-3">${esc(email)}</td><td class="py-2 pr-3">${esc(phone)}</td><td class="py-2 pr-3">${esc(addr)}</td></tr>`; }).join('');
-        RD_CURRENT_ROWS = regs.map(r => { const u = r.user || {}; const first = coalesce(u.firstName, r.firstName); const last = coalesce(u.lastName, r.lastName); const name = coalesce([first, last].filter(Boolean).join(' ').trim(), u.fullName, r.fullName, u.username, '—'); const idnum = coalesce(u.studentId, r.studentId, '—'); const faculty = coalesce(u.faculty, u.major, r.faculty, r.major, '—'); const email = coalesce(u.email, r.email, '—'); const phone = coalesce(u.phone, r.phone, '—'); const addr = coalesce(r.address, '—'); return { name, idnum, faculty, email, phone, addr }; });
-        regUI.dTable.classList.remove('hidden'); document.getElementById('rdExport')?.removeAttribute('disabled');
-     }
-     fabReg?.addEventListener('click', openRegModal);
-     regUI.overlay?.addEventListener('click', () => hideModal(regUI.wrap));
-     regUI.close?.addEventListener('click', () => hideModal(regUI.wrap));
-     regUI.close2?.addEventListener('click', () => hideModal(regUI.wrap));
-     regUI.dBack?.addEventListener('click', () => { regUI.detailWrap?.classList.add('hidden'); regUI.sumWrap?.classList.remove('hidden'); regUI.sumScroll?.scrollTo?.(0, 0); });
-     document.getElementById('rdExport')?.addEventListener('click', () => { if (!RD_CURRENT_ROWS.length) return; const title = regUI.dTitle?.textContent || 'export'; const date = regUI.dDate?.textContent || ''; const filename = sanitizeFilename(`${title} ${date}`.trim()); const csv = toCSV(RD_CURRENT_ROWS); downloadCSVFile(filename, csv); });
+    async function openRegModal() {
+      if (CURRENT_USER_ADMIN?.role !== "admin" || !regUI.wrap || !regUI.sumLoading || !regUI.sumWrap || !regUI.detailWrap || !regUI.sumEmpty || !regUI.table || !regUI.tbody) return;
 
+      regUI.sumLoading.classList.remove("hidden"); regUI.sumWrap.classList.remove("hidden"); regUI.detailWrap.classList.add("hidden"); regUI.sumEmpty.classList.add("hidden"); regUI.table.classList.add("hidden"); regUI.tbody.innerHTML = ""; regUI.sumScroll?.scrollTo?.(0, 0);
+      showModal(regUI.wrap);
+
+      let events = EVENTS_CACHE_ADMIN;
+      if (!events.length) { await loadEventsForAdminCacheOnly(); events = EVENTS_CACHE_ADMIN; } // Reload cache if empty
+
+      // Removed redundant fetchAllRegistrations logic here, relying on fetchEventCounts
+      const COUNTS = await fetchEventCounts();
+
+      regUI.tbody.innerHTML = events.map(ev => {
+        const c = COUNTS[ev._id] ?? 0;
+        return `<tr class="border-t">
+          <td class="py-2 pr-3">${esc(ev.title || "(...)")}</td>
+          <td class="py-2 pr-3">${fmt(ev.dateText)}</td>
+          <td class="py-2 pr-3">${c}</td>
+          <td class="py-2"><button data-view="${ev._id}" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800">ดูรายชื่อ</button></td>
+        </tr>`;
+      }).join("");
+
+      regUI.sumLoading.classList.add("hidden");
+      if (!events.length) regUI.sumEmpty.classList.remove("hidden"); else regUI.table.classList.remove("hidden");
+
+      regUI.tbody.querySelectorAll("button[data-view]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-view");
+          const ev = events.find(e => e._id === id) || {};
+          await openRegDetail(ev);
+        });
+      });
+    }
+
+    async function openRegDetail(ev) {
+      if (!regUI.detailWrap || !regUI.sumWrap || !regUI.dTitle || !regUI.dDate || !regUI.dLoading || !regUI.dEmpty || !regUI.dTable || !regUI.dTbody) return;
+      regUI.detailWrap.classList.remove("hidden"); regUI.sumWrap.classList.add("hidden"); regUI.dScroll?.scrollTo?.(0, 0); regUI.dTitle.textContent = ev.title || "(...)"; regUI.dDate.textContent = fmt(ev.dateText); regUI.dLoading.classList.remove("hidden"); regUI.dEmpty.classList.add("hidden"); regUI.dTable.classList.add("hidden"); regUI.dTbody.innerHTML = ""; RD_CURRENT_ROWS = []; document.getElementById("rdExport")?.setAttribute("disabled", "true");
+
+      const regs = await fetchRegistrationsByEvent(ev._id);
+
+      regUI.dLoading.classList.add("hidden");
+      if (!regs.length) { regUI.dEmpty.classList.remove("hidden"); return; }
+
+      regUI.dTbody.innerHTML = regs.map(r => {
+        const u = r.user || {};
+        const first = coalesce(u.firstName, r.firstName);
+        const last = coalesce(u.lastName, r.lastName);
+        const name = coalesce([first, last].filter(Boolean).join(" ").trim(), u.fullName, r.fullName, u.username, "—");
+        const idnum = coalesce(u.studentId, r.studentId, "—");
+        const faculty = coalesce(u.faculty, u.major, r.faculty, r.major, "—");
+        const email = coalesce(u.email, r.email, "—");
+        const phone = coalesce(u.phone, r.phone, "—");
+        const addr = coalesce(r.address, "—");
+        return `<tr class="border-t"><td class="py-2 pr-3">${esc(name)}</td><td class="py-2 pr-3">${esc(idnum)}</td><td class="py-2 pr-3">${esc(faculty)}</td><td class="py-2 pr-3">${esc(email)}</td><td class="py-2 pr-3">${esc(phone)}</td><td class="py-2 pr-3">${esc(addr)}</td></tr>`;
+      }).join("");
+
+      RD_CURRENT_ROWS = regs.map(r => {
+        const u = r.user || {};
+        const first = coalesce(u.firstName, r.firstName);
+        const last = coalesce(u.lastName, r.lastName);
+        const name = coalesce([first, last].filter(Boolean).join(" ").trim(), u.fullName, r.fullName, u.username, "—");
+        const idnum = coalesce(u.studentId, r.studentId, "—");
+        const faculty = coalesce(u.faculty, u.major, r.faculty, r.major, "—");
+        const email = coalesce(u.email, r.email, "—");
+        const phone = coalesce(u.phone, r.phone, "—");
+        const addr = coalesce(r.address, "—");
+        return { name, idnum, faculty, email, phone, addr };
+      });
+
+      regUI.dTable.classList.remove("hidden");
+      document.getElementById("rdExport")?.removeAttribute("disabled");
+    }
+
+    function sanitizeFilename(s = "") { return String(s).replace(/[\/\\?%*:|"<>]/g, "_").trim() || "export"; }
+    function toCSV(rows) { const h = ["ชื่อ", "รหัสนักศึกษา", "คณะ", "E-mail", "เบอร์โทรศัพท์", "ที่อยู่ (ตอนลงทะเบียน)"]; const esc = (v) => { const t = String(v ?? ""); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; }; const l = [h.map(esc).join(",")]; for (const r of rows) l.push([r.name, r.idnum, r.faculty, r.email, r.phone, r.addr].map(esc).join(",")); return l.join("\n"); }
+    function downloadCSVFile(filename, csvText) { const B = "\uFEFF"; const b = new Blob([B + csvText], { type: "text/csv;charset=utf-8;" }); const u = URL.createObjectURL(b); const a = document.createElement("a"); a.href = u; a.download = filename.endsWith(".csv") ? filename : filename + ".csv"; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(u); }
+
+    fabReg?.addEventListener("click", openRegModal);
+    regUI.overlay?.addEventListener("click", () => hideModal(regUI.wrap));
+    regUI.close?.addEventListener("click", () => hideModal(regUI.wrap));
+    regUI.close2?.addEventListener("click", () => hideModal(regUI.wrap));
+    regUI.dBack?.addEventListener("click", () => { regUI.detailWrap?.classList.add("hidden"); regUI.sumWrap?.classList.remove("hidden"); regUI.sumScroll?.scrollTo?.(0, 0); });
+    document.getElementById("rdExport")?.addEventListener("click", () => { if (!RD_CURRENT_ROWS.length) return; const t = regUI.dTitle?.textContent || "export"; const d = regUI.dDate?.textContent || ""; const f = sanitizeFilename(`${t} ${d}`.trim()); const c = toCSV(RD_CURRENT_ROWS); downloadCSVFile(f, c); });
  })();
 
  // -------------------- Service worker --------------------
- if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-   navigator.serviceWorker.register('/sw.js').catch(() => { /* ignore */ });
+ if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+   navigator.serviceWorker.register("/sw.js").catch(() => {});
   });
  }
-
  requestIdleCallback?.(() => {
-  // warm image cache
-  ['2.v2.jpg','3.v2.jpg'].forEach(name => {
+  ["2.v2.jpg", "3.v2.jpg"].forEach(name => {
    const i = new Image();
-   i.referrerPolicy = 'no-referrer';
+   i.referrerPolicy = "no-referrer";
    i.src = `/assets/hero/${name}`;
   });
  });
 
-})(); 
+})(); // End of main IIFE
