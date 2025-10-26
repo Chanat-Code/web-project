@@ -1,5 +1,6 @@
 (() => {
 <<<<<<< HEAD
+<<<<<<< HEAD
   // -------------------- Globals / Utils --------------------
   window.API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
     ? 'http://localhost:4000/api' : '/api';
@@ -843,6 +844,8 @@
 
 })(); // End of main IIFE
 =======
+=======
+>>>>>>> parent of a7f1bb3 (Refactor home.js: add null checks and formatting)
   // -------------------- Globals / Utils --------------------
   window.API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
     ? 'http://localhost:4000/api' : '/api';
@@ -1934,4 +1937,7 @@
     });
   });
 })();
+<<<<<<< HEAD
+>>>>>>> parent of a7f1bb3 (Refactor home.js: add null checks and formatting)
+=======
 >>>>>>> parent of a7f1bb3 (Refactor home.js: add null checks and formatting)
