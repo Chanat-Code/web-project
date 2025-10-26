@@ -318,7 +318,7 @@
    : fallbackIcon; // ใช้ fallback ถ้าไม่มีรูป
 
    // ── สร้างการ์ด HTML ─────────────────────────────────────────────
-    return `<li class="relative aspect-[16/9] rounded-xl overflow-hidden group shadow-lg bg-slate-800 ring-1 ring-white/10">
+    return `<li class="relative aspect-[16/11] rounded-xl overflow-hidden group shadow-lg bg-slate-800 ring-1 ring-white/10">
       ${imageEl}
           <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none"></div>
       <div class="absolute bottom-0 left-0 right-0 p-4 text-white z-10">
