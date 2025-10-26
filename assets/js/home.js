@@ -284,22 +284,68 @@
     let ALL_EVENTS = [];
 
     function renderEvents(items, q = "") {
+      const el = document.getElementById("eventList");
       if (!Array.isArray(items) || items.length === 0) {
-        eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">
+        el.innerHTML = `<li class="col-span-full rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">
           ${q ? `ไม่พบกิจกรรมที่ตรงกับ “${window.escapeHtml(q)}”` : 'ยังไม่มีกิจกรรม'}
         </li>`;
         return;
       }
-      eventList.innerHTML = items.map(ev => {
-        const dateTxt = ev.dateText ? `${window.formatDateLabel(ev.dateText)} ` : "";
-        return `<li>
-          <a href="./event.html?id=${ev._id}" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 ring-1 ring-white/10 hover:bg-slate-700 transition">
-            <span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span>
-            <span class="font-semibold tracking-wide">${dateTxt}${window.escapeHtml(ev.title || '')}</span>
-          </a>
+
+      const ph = (t) =>
+        `https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop`;
+
+      el.innerHTML = items.map(ev => {
+        const id    = ev._id;
+        const img   = ev.imageUrl && ev.imageUrl.trim() ? ev.imageUrl : ph();
+        const date  = ev.dateText ? window.formatDateLabel(ev.dateText) : "—";
+        const title = window.escapeHtml(ev.title || "(ไม่ระบุชื่อกิจกรรม)");
+        const loc   = window.escapeHtml(ev.location || "—");
+        const href  = `./event.html?id=${id}`;
+
+        return `
+        <li>
+          <article class="h-full overflow-hidden rounded-2xl bg-slate-800/70 ring-1 ring-white/10 shadow hover:shadow-lg transition">
+            <a href="${href}" class="block relative">
+              <img
+                src="${img}"
+                alt=""
+                class="h-44 w-full object-cover"
+                loading="lazy" decoding="async" referrerpolicy="no-referrer" crossorigin="anonymous">
+              <div class="absolute bottom-0 inset-x-0 h-20 bg-gradient-to-t from-black/50 to-transparent"></div>
+            </a>
+
+            <div class="p-4 space-y-2">
+              <h3 class="text-base font-semibold leading-snug line-clamp-2">${title}</h3>
+
+              <div class="text-sm text-slate-300 flex flex-wrap gap-x-3 gap-y-1">
+                <span class="inline-flex items-center gap-1">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2a1 1 0 011 1v1h8V3a1 1 0 112 0v1h1a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h1V3a1 1 0 112 0v1zm13 6H4v10h16V8z"/></svg>
+                  ${date}
+                </span>
+                <span class="inline-flex items-center gap-1">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 017 7c0 5.25-7 13-7 13S5 14.25 5 9a7 7 0 017-7zm0 9.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/></svg>
+                  ${loc}
+                </span>
+              </div>
+
+              <div class="pt-2 flex items-center gap-2">
+                <a href="${href}"
+                  class="flex-1 inline-flex justify-center items-center gap-2 rounded-xl bg-indigo-600 text-white px-4 py-2 font-medium hover:bg-indigo-500 active:scale-[.99] transition"
+                  aria-label="ลงทะเบียนกิจกรรม">
+                  ลงทะเบียน
+                </a>
+                <a href="${href}"
+                  class="rounded-xl border border-white/15 px-4 py-2 hover:bg-white/10 active:scale-[.99] transition">
+                  รายละเอียด
+                </a>
+              </div>
+            </div>
+          </article>
         </li>`;
       }).join("");
     }
+
 
     function applySearch() {
       const q = (searchInput?.value || "").trim().toLowerCase();
