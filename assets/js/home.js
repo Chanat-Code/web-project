@@ -432,7 +432,7 @@ function renderEvents(items, q = "") {
     });
 
     async function loadEvents() {
-      const key = 'rltg:events:v2'; // <-- เปลี่ยนเวอร์ชัน
+      const key = 'rltg:events:v3'; // <-- เปลี่ยนเวอร์ชัน
 
       const cached = localStorage.getItem(key);
       if (cached) {
