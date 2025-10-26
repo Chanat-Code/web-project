@@ -1,11 +1,13 @@
 // sw.js
-const VER = 'v20251026-2';
+const VER = 'v3';
 const STATIC_CACHE  = `static-${VER}`;
 const RUNTIME_CACHE = `runtime-${VER}`;
+const API_EVENTS = /\/api\/events(?:\?|$)/;
 
 const STATIC_ASSETS = [
   '/', '/home.html',
-  // อย่าใส่ไฟล์ที่มี ?v=xxx ตรงๆ ในพรีแคช ให้ปล่อย runtime จัดการ
+  '/assets/js/home.js',
+  // 🚫 อย่าพรีแคชรูปที่เปลี่ยนบ่อย
 ];
 
 self.addEventListener('install', (e) => {
@@ -19,84 +21,51 @@ self.addEventListener('activate', (e) => {
     await Promise.all(keys
       .filter(k => ![STATIC_CACHE, RUNTIME_CACHE].includes(k))
       .map(k => caches.delete(k)));
-    await self.clients.claim();
+    self.clients.claim();
   })());
 });
-
-// รับข้อความเพื่อสั่ง skip waiting จากหน้าเว็บ
-self.addEventListener('message', (e) => {
-  if (e.data === 'SKIP_WAITING') self.skipWaiting();
-});
-
-function isHTML(req) {
-  return req.mode === 'navigate' ||
-         (req.headers.get('accept') || '').includes('text/html');
-}
-function isStaticAsset(url) {
-  return /\.(?:js|css|woff2?)$/i.test(url.pathname);
-}
-function isHeroImage(url) {
-  return url.pathname.startsWith('/assets/hero/');
-}
 
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
-
   const url = new URL(req.url);
 
-  // 1) HTML → network-first
-  if (isHTML(req)) {
-    e.respondWith((async () => {
-      try {
-        const fresh = await fetch(req, { cache: 'no-store' });
-        const cache = await caches.open(RUNTIME_CACHE);
-        cache.put(req, fresh.clone());
-        return fresh;
-      } catch {
-        const cached = await caches.match(req, { ignoreSearch: false });
-        return cached || new Response('Offline', { status: 503 });
-      }
-    })());
-    return;
-  }
-
-  // 2) Hero images → network-first (เห็นรูปใหม่ทันที)
-  if (isHeroImage(url)) {
-    e.respondWith((async () => {
-      try {
-        const fresh = await fetch(req, { cache: 'no-store' });
-        const cache = await caches.open(RUNTIME_CACHE);
-        cache.put(req, fresh.clone());
-        return fresh;
-      } catch {
-        return (await caches.match(req, { ignoreSearch: false })) || fetch(req);
-      }
-    })());
-    return;
-  }
-
-  // 3) JS/CSS/ฟ้อนต์ → stale-while-revalidate (สนใจ query string)
-  if (isStaticAsset(url)) {
+  // 1) API → network-first (มีสำรอง)
+  if (API_EVENTS.test(url.pathname + url.search)) {
     e.respondWith((async () => {
       const cache = await caches.open(RUNTIME_CACHE);
-      const cached = await cache.match(req, { ignoreSearch: false });
-      const fetchAndUpdate = fetch(req).then(res => {
-        cache.put(req, res.clone());
-        return res;
-      }).catch(() => null);
-      return cached || (await fetchAndUpdate) || fetch(req);
+      try {
+        const fresh = await fetch(req, { cache: 'no-store' });
+        if (fresh.ok) await cache.put(req, fresh.clone());
+        return fresh;
+      } catch {
+        return (await cache.match(req)) ||
+               new Response('[]', { headers: { 'Content-Type': 'application/json' } });
+      }
     })());
     return;
   }
 
-  // 4) อื่น ๆ → ลอง cache-first แล้วค่อยเน็ต
-  e.respondWith((async () => {
-    const cached = await caches.match(req, { ignoreSearch: false });
-    return cached || fetch(req).then(async res => {
-      const c = await caches.open(RUNTIME_CACHE);
-      c.put(req, res.clone());
-      return res;
-    });
-  })());
+  // 2) รูปภาพ → SWR + reload + purge 404 (จากบล็อกด้านบน)
+  if (/\.(?:png|jpe?g|webp|gif|svg|ico)$/i.test(url.pathname)) {
+    e.respondWith((async () => {
+      const cache = await caches.open(RUNTIME_CACHE);
+      const cached = await cache.match(req);
+      const fresh = await fetch(req, { cache: 'reload' })
+        .then(async res => {
+          if (res.ok) await cache.put(req, res.clone());
+          else if (res.status === 404 && cached) await cache.delete(req);
+          return res;
+        })
+        .catch(() => null);
+      return cached || fresh || new Response('', { status: 504 });
+    })());
+    return;
+  }
+
+  // 3) static อื่น ๆ → cache-first (ถ้าฟังส์ชันเปลี่ยนบ่อย ให้ใช้ SWR เช่นเดียวกับรูป)
+  if (/\.(?:js|css|woff2?)$/i.test(url.pathname)) {
+    e.respondWith((async () => (await caches.match(req)) || fetch(req))());
+    return;
+  }
 });
