@@ -283,68 +283,103 @@
 
     let ALL_EVENTS = [];
 
-    function renderEvents(items, q = "") {
-      const el = document.getElementById("eventList");
-      if (!Array.isArray(items) || items.length === 0) {
-        el.innerHTML = `<li class="col-span-full rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">
-          ${q ? `ไม่พบกิจกรรมที่ตรงกับ “${window.escapeHtml(q)}”` : 'ยังไม่มีกิจกรรม'}
-        </li>`;
-        return;
-      }
+// ===== helper: ทำให้ลิงก์รูปเป็นแบบ hotlink ได้ + กัน mixed content =====
+function normalizeImageUrl(u = "") {
+  if (!u) return u;
+  try {
+    const url = new URL(u);
 
-      const ph = (t) =>
-        `https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop`;
-
-      el.innerHTML = items.map(ev => {
-        const id    = ev._id;
-        const img   = ev.imageUrl && ev.imageUrl.trim() ? ev.imageUrl : ph();
-        const date  = ev.dateText ? window.formatDateLabel(ev.dateText) : "—";
-        const title = window.escapeHtml(ev.title || "(ไม่ระบุชื่อกิจกรรม)");
-        const loc   = window.escapeHtml(ev.location || "—");
-        const href  = `./event.html?id=${id}`;
-
-        return `
-        <li>
-          <article class="h-full overflow-hidden rounded-2xl bg-slate-800/70 ring-1 ring-white/10 shadow hover:shadow-lg transition">
-            <a href="${href}" class="block relative">
-              <img
-                src="${img}"
-                alt=""
-                class="h-44 w-full object-cover"
-                loading="lazy" decoding="async" referrerpolicy="no-referrer" crossorigin="anonymous">
-              <div class="absolute bottom-0 inset-x-0 h-20 bg-gradient-to-t from-black/50 to-transparent"></div>
-            </a>
-
-            <div class="p-4 space-y-2">
-              <h3 class="text-base font-semibold leading-snug line-clamp-2">${title}</h3>
-
-              <div class="text-sm text-slate-300 flex flex-wrap gap-x-3 gap-y-1">
-                <span class="inline-flex items-center gap-1">
-                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2a1 1 0 011 1v1h8V3a1 1 0 112 0v1h1a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h1V3a1 1 0 112 0v1zm13 6H4v10h16V8z"/></svg>
-                  ${date}
-                </span>
-                <span class="inline-flex items-center gap-1">
-                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 017 7c0 5.25-7 13-7 13S5 14.25 5 9a7 7 0 017-7zm0 9.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/></svg>
-                  ${loc}
-                </span>
-              </div>
-
-              <div class="pt-2 flex items-center gap-2">
-                <a href="${href}"
-                  class="flex-1 inline-flex justify-center items-center gap-2 rounded-xl bg-indigo-600 text-white px-4 py-2 font-medium hover:bg-indigo-500 active:scale-[.99] transition"
-                  aria-label="ลงทะเบียนกิจกรรม">
-                  ลงทะเบียน
-                </a>
-                <a href="${href}"
-                  class="rounded-xl border border-white/15 px-4 py-2 hover:bg-white/10 active:scale-[.99] transition">
-                  รายละเอียด
-                </a>
-              </div>
-            </div>
-          </article>
-        </li>`;
-      }).join("");
+    // Google Drive (แปลง share link -> direct)
+    if (url.hostname.includes("drive.google.com")) {
+      // ดึง file id จากรูปแบบต่างๆ
+      const idMatch = u.match(/[-\w]{25,}/);
+      if (idMatch) return `https://drive.google.com/uc?export=view&id=${idMatch[0]}`;
     }
+
+    // Dropbox (เปลี่ยนเป็นไฟล์ตรง)
+    if (url.hostname.includes("dropbox.com")) {
+      url.hostname = "dl.dropboxusercontent.com";
+      url.searchParams.delete("dl");
+      url.searchParams.set("raw", "1");
+      return url.toString();
+    }
+  } catch { /* ignore parse errors */ }
+
+  // ถ้าเว็บเราเป็น https แล้วรูปเป็น http ให้ตัดปัญหาด้วย placeholder แทน
+  if (location.protocol === "https:" && /^http:\/\//i.test(u)) return "";
+
+  return u;
+}
+
+function safeImage(u) {
+  const PLACEHOLDER =
+    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop";
+  const v = normalizeImageUrl(u || "");
+  return v || PLACEHOLDER;
+}
+
+// ===== ฟังก์ชันเรนเดอร์รายการกิจกรรมเป็น “การ์ด + รูป + วัน/ที่ + ปุ่มลงทะเบียน” =====
+function renderEvents(items, q = "") {
+  const el = document.getElementById("eventList");
+  if (!Array.isArray(items) || items.length === 0) {
+    el.innerHTML = `<li class="col-span-full rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">
+      ${q ? `ไม่พบกิจกรรมที่ตรงกับ “${window.escapeHtml(q)}”` : "ยังไม่มีกิจกรรม"}
+    </li>`;
+    return;
+  }
+
+  el.innerHTML = items
+    .map((ev) => {
+      const id = ev._id;
+      const date = ev.dateText ? window.formatDateLabel(ev.dateText) : "—";
+      const title = window.escapeHtml(ev.title || "(ไม่ระบุชื่อกิจกรรม)");
+      const loc = window.escapeHtml(ev.location || "—");
+      const img = safeImage(ev.imageUrl);
+      const href = `./event.html?id=${id}`;
+
+      return `
+      <li>
+        <article class="h-full flex flex-col overflow-hidden rounded-2xl bg-slate-800/70 ring-1 ring-white/10 shadow hover:shadow-lg transition">
+          <a href="${href}" class="relative aspect-[16/9] overflow-hidden">
+            <img
+              src="${img}"
+              alt=""
+              class="absolute inset-0 h-full w-full object-cover"
+              loading="lazy" decoding="async" referrerpolicy="no-referrer" crossorigin="anonymous"
+              onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200&auto=format&fit=crop'">
+            <div class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 to-transparent"></div>
+          </a>
+
+          <div class="flex-1 p-4 flex flex-col gap-2">
+            <h3 class="text-base font-semibold leading-snug line-clamp-2">${title}</h3>
+
+            <div class="text-sm text-slate-300 flex flex-wrap gap-x-3 gap-y-1">
+              <span class="inline-flex items-center gap-1">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2a1 1 0 011 1v1h8V3a1 1 0 112 0v1h1a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h1V3a1 1 0 112 0v1zm13 6H4v10h16V8z"/></svg>
+                ${date}
+              </span>
+              <span class="inline-flex items-center gap-1">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 017 7c0 5.25-7 13-7 13S5 14.25 5 9a7 7 0 017-7zm0 9.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/></svg>
+                ${loc}
+              </span>
+            </div>
+
+            <div class="pt-2 mt-auto flex items-center gap-2">
+              <a href="${href}#register"
+                 class="flex-1 inline-flex justify-center items-center rounded-xl bg-indigo-600 text-white px-4 py-2 font-medium hover:bg-indigo-500 active:scale-[.99] transition">
+                 ลงทะเบียน
+              </a>
+              <a href="${href}"
+                 class="rounded-xl border border-white/15 px-4 py-2 hover:bg-white/10 active:scale-[.99] transition">
+                 รายละเอียด
+              </a>
+            </div>
+          </div>
+        </article>
+      </li>`;
+    })
+    .join("");
+}
 
 
     function applySearch() {
