@@ -249,11 +249,11 @@ let currentUser = null;
   let ALL_EVENTS = [];
 
   // ===== Pagination state & helpers =====
-  const PAGER = { page: 1, size: 1, view: [] }; // size จะเซ็ตตามหน้าจอข้างล่าง
+  const PAGER = { page: 1, size: 8, view: [] }; // size จะเซ็ตตามหน้าจอข้างล่าง
 
   function computePageSize() {
     const cols = matchMedia('(min-width:1024px)').matches ? 4
-               : matchMedia('(min-width:768px)').matches ? 2
+               : matchMedia('(min-width:768px)').matches ? 3
                : 1;
     const rows = 2; // ล็อก 2 แถว
     PAGER.size = cols * rows; // lg:8, md:4, mobile:2
