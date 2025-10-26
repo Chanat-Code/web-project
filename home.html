@@ -498,4 +498,31 @@
 </body>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
 <script src="assets/js/home.js?v=20251026-1" defer></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
+      try {
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        // ถ้ามี SW ตัวใหม่ waiting ให้สั่ง activate ทันที
+        if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          nw && nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && reg.waiting) {
+              reg.waiting.postMessage('SKIP_WAITING');
+            }
+          });
+        });
+        // รีโหลดแท็บที่คุมโดย SW ตัวใหม่ให้รับไฟล์ล่าสุด
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          // ป้องกันลูป
+          if (!window.__swReloaded) {
+            window.__swReloaded = true;
+            location.reload();
+          }
+        });
+      } catch {}
+    });
+  }
+</script>
 </html>
