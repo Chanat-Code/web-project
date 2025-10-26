@@ -243,7 +243,31 @@ let currentUser = null;
   const searchBtn = $("#searchBtn");
   const fab = $("#fabAdd"), addModal = $("#addModal"), addForm = $("#addForm");
   const dateInput = document.getElementById('addDate');
-  if (dateInput) { const offset = new Date().getTimezoneOffset() * 60000; dateInput.value = new Date(Date.now() - offset).toISOString().slice(0, 10); }
+if (dateInput && window.flatpickr) {
+  // ฟังก์ชันแปลงปี พ.ศ. สำหรับ altInput (โชว์)
+  const toBE = (d) => {
+    const dd = String(d.getDate()).padStart(2,'0');
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const yyyyBE = d.getFullYear() + 543;
+    return `${dd}/${mm}/${String(yyyyBE).slice(-2)}`;
+  };
+
+  flatpickr('#addDate', {
+    dateFormat: 'Y-m-d',         // ค่าที่ submit ไป backend (ค.ศ.)
+    altInput: true,              // มีช่องโชว์สวย ๆ
+    altFormat: 'd/m/Y',          // สำรอง (เราจะ override เป็น พ.ศ. ข้างล่าง)
+    locale: flatpickr.l10ns.th,  // ไทย
+    disableMobile: true,         // ให้ใช้ Flatpickr แทน native
+    defaultDate: new Date(),     // วันนี้
+    onReady: (_, __, inst) => {
+      if (inst.selectedDates[0]) inst.altInput.value = toBE(inst.selectedDates[0]);
+      inst.calendarContainer.style.zIndex = 9999; // เผื่อซ้อน modal
+    },
+    onValueUpdate: (_, __, inst) => {
+      if (inst.selectedDates[0]) inst.altInput.value = toBE(inst.selectedDates[0]);
+    }
+  });
+}
   const addCancel = $("#addCancel");
 
   let ALL_EVENTS = [];

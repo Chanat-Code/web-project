@@ -18,6 +18,9 @@
   <link rel="preload" as="image" href="/assets/hero/1.v2.jpg"
       imagesrcset="/assets/hero/1.v2.jpg 1600w"
       imagesizes="(max-width: 1024px) 100vw, 1100px">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/th.js"></script>
+
 
   <style>
     :root {
@@ -164,6 +167,17 @@
     .tv-slide {
       pointer-events: none;
     }
+
+    .flatpickr-calendar { background:#0f172a; color:#e2e8f0; border:1px solid rgba(255,255,255,.08); border-radius:12px; }
+    .flatpickr-months .flatpickr-month, .flatpickr-weekdays { background:#111827; color:#e5e7eb; }
+    .flatpickr-day { color:#e2e8f0; border-radius:8px; }
+    .flatpickr-day:hover { background:#1f2937; }
+    .flatpickr-day.today { border-color:#6366f1; }
+    .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange,
+    .flatpickr-day.selected:hover { background:#6366f1; border-color:#6366f1; color:#fff; }
+    .flatpickr-weekday { color:#9ca3af; }
+    .flatpickr-monthDropdown-months, .numInput.cur-year { color:#e5e7eb; }
+    
   </style>
 </head>
 
@@ -314,9 +328,9 @@
         <h2 class="text-xl font-bold">เพิ่มกิจกรรม</h2>
         <input name="title" required placeholder="ชื่อกิจกรรม"
           class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400">
-        <input name="dateText" id="addDate" type="date"
-          class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400"
-          required>
+        <input name="dateText" id="addDate" type="text" placeholder="เลือกวันที่"
+        class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400"
+        required>
         <input name="location" placeholder="สถานที่"
           class="w-full rounded-lg bg-slate-100 px-4 py-2 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-400">
 
@@ -507,4 +521,6 @@
 </body>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
 <script src="/assets/js/home.js?v=v192" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/th.js"></script>
 </html>
