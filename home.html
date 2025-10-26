@@ -169,59 +169,6 @@
       pointer-events: none;
     }
 
-.flatpickr-calendar {
-  background: #0b1220;
-  color: #e5e7eb;
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 14px;
-  box-shadow: 0 20px 50px rgba(0,0,0,.45);
-}
-.flatpickr-months .flatpickr-month, .flatpickr-weekdays { background: #0f172a; color: #f1f5f9; }
-.flatpickr-weekday { color: #94a3b8; font-weight: 600; }
-
-/* ✅ ปรับปรุงส่วนแสดงปี พ.ศ. */
-.flatpickr-current-month input.cur-year { /* Target input ปี โดยตรง */
-  color: #f8fafc !important; /* สีข้อความ */
-  font-weight: 700 !important; /* ความหนา */
-  background: transparent !important; /* พื้นหลังโปร่งใส */
-  border: none !important; /* ไม่มีเส้นขอบ */
-  padding: 0 0.2em !important; /* ลด padding */
-  display: inline-block !important; /* แสดงผลแบบ inline */
-  width: auto !important; /* ความกว้างอัตโนมัติ */
-  box-sizing: content-box !important; /* ป้องกันการคำนวณขนาดผิด */
-  margin: 0 !important; /* ไม่มี margin */
-  text-align: center; /* จัดกลาง (ถ้าต้องการ) */
-}
-/* ทำให้ลูกศรเปลี่ยนปีเด่นขึ้น */
-.flatpickr-months .flatpickr-prev-month,
-.flatpickr-months .flatpickr-next-month {
-    color: #cbd5e1; /* สีสว่างขึ้น */
-    fill: #cbd5e1; /* สีไอคอน */
-}
-.flatpickr-months .flatpickr-prev-month:hover,
-.flatpickr-months .flatpickr-next-month:hover {
-    color: #f1f5f9;
-    fill: #f1f5f9;
-    background: #1e293b; /* เพิ่มพื้นหลังตอน hover */
-}
-
-.flatpickr-monthDropdown-months {
-  color: #f8fafc; font-weight: 700; background: transparent; border: none;
-}
-
-.flatpickr-days { padding: .5rem .75rem 1rem; }
-.flatpickr-day {
-  color: #e2e8f0; border-radius: 10px; line-height: 2.45rem; height: 2.45rem; width: 2.45rem;
-  margin: .15rem; font-size: 1rem;
-}
-.flatpickr-day:hover { background: #1f2937; }
-.flatpickr-day.today { border-color: #a78bfa; box-shadow: inset 0 0 0 1px #a78bfa; }
-.flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange,
-.flatpickr-day.selected:hover {
-  background: #6366f1; border-color: #6366f1; color: #fff;
-}
-.flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay { color: #475569; }
-.flatpickr-current-month { padding-top: .35rem; padding-bottom: .35rem; }
 
   </style>
 </head>
