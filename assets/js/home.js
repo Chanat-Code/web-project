@@ -463,9 +463,9 @@
     function closeAdd() { addModal?.classList.add("hidden"); addForm?.reset(); }
 
     addForm?.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  e.preventDefault();
     const submitBtn = document.getElementById('addSubmitBtn'); // Get submit button
-   const fd = new FormData(addForm); // ✅ Create FormData directly from the form
+  const fd = new FormData(addForm); // ✅ Create FormData directly from the form
 
     // Optional: Add loading state to button
     if (submitBtn) {
