@@ -1046,7 +1046,7 @@ function renderEvents(items, q = "") {
   }
   requestIdleCallback?.(() => {
   // warm image cache
-  ['2.jpg','3.jpg'].forEach(name => {
+  ['2.v2.jpg','3.v2.jpg'].forEach(name => {
     const i = new Image();
     i.referrerPolicy = 'no-referrer';
     i.src = `/assets/hero/${name}`;
