@@ -278,53 +278,63 @@
 
     let ALL_EVENTS = [];
 
-    function renderEvents(items, q = "") {
-      if (!Array.isArray(items) || items.length === 0) {
-        eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-5 text-center text-slate-200 ring-1 ring-white/10">
-          ${q ? `ไม่พบกิจกรรมที่ตรงกับ “${window.escapeHtml(q)}”` : 'ยังไม่มีกิจกรรม'}
-        </li>`;
-        return;
-      }
+ function renderEvents(items, q = "") {
+ if (!Array.isArray(items) || items.length === 0) {
+  // ใช้ col-span-full เพื่อให้ข้อความ "ไม่มีกิจกรรม" แสดงเต็มความกว้างของ grid
+  eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-5 text-center text-slate-200 ring-1 ring-white/10 col-span-full">
+   ${q ? `ไม่พบกิจกรรมที่ตรงกับ “${window.escapeHtml(q)}”` : 'ยังไม่มีกิจกรรม'}
+  </li>`;
+  return;
+ }
 
-      eventList.innerHTML = items.map(ev => {
-        const dateTxt = ev.dateText ? window.formatDateLabel(ev.dateText) : "—";
-        const title = window.escapeHtml(ev.title || 'Untitled Event');
+ eventList.innerHTML = items.map(ev => {
+  const dateTxt = ev.dateText ? window.formatDateLabel(ev.dateText) : "—";
+  const title = window.escapeHtml(ev.title || 'Untitled Event');
+  const eventUrl = `./event.html?id=${ev._id}`;
 
-        // normalize image url
-        const raw = String(ev.imageUrl || '').trim();
-        const src =
-          /^https?:\/\//i.test(raw) ? raw :
-          raw.startsWith('/assets') ? raw :
-          raw.startsWith('assets') ? '/' + raw :
-          raw.startsWith('./assets') ? '/' + raw.replace(/^\.\//, '') :
-          raw.startsWith('/') ? raw :
-          (raw ? '/' + raw : '');
-        const hasImage = !!src;
+  // ── normalize รูป ─────────────────────────────────────────────
+  const raw = String(ev.imageUrl || '').trim();
+  const src =
+   /^https?:\/\//i.test(raw) ? raw :
+   raw.startsWith('/assets') ? raw :
+   raw.startsWith('assets') ? '/' + raw :
+   raw.startsWith('./assets') ? '/' + raw.replace(/^\.\//, '') :
+   raw.startsWith('/') ? raw :
+   (raw ? '/' + raw : ''); // ถ้ามี path แต่ไม่เข้าเงื่อนไข ให้เติม / ข้างหน้า
+  const hasImage = !!src;
 
-        const imageEl = hasImage
-          ? `<img src="${window.escapeHtml(src)}" alt="" loading="lazy"
-               class="w-20 h-20 rounded-lg object-cover bg-slate-700 shrink-0">`
-          : `<div class="w-20 h-20 rounded-lg bg-slate-700 grid place-items-center shrink-0">
-               <svg class="w-8 h-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                 <path stroke-linecap="round" stroke-linejoin="round"
-                   d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-               </svg>
-             </div>`;
+  // Fallback Icon SVG (เหมือนเดิม)
+  const fallbackIcon = `<div class="absolute inset-0 bg-slate-700 grid place-items-center">
+      <svg class="w-12 h-12 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+       <path stroke-linecap="round" stroke-linejoin="round"
+        d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+      </svg>
+     </div>`;
 
-        return `<li>
-          <a href="./event.html?id=${ev._id}" class="group flex items-center gap-4 rounded-xl bg-slate-800 p-4 text-slate-100 ring-1 ring-white/10 hover:bg-slate-700 transition">
-            ${imageEl}
-            <div class="flex-1 min-w-0">
-              <div class="font-semibold tracking-wide truncate">${title}</div>
-              <div class="text-sm text-slate-300 mt-1">${dateTxt}</div>
-            </div>
-            <svg class="w-5 h-5 text-slate-400 group-hover:text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-            </svg>
-          </a>
-        </li>`;
-      }).join("");
-    }
+  // Image Element (ถ้ามี src)
+  const imageEl = hasImage
+   ? `<img src="${window.escapeHtml(src)}" alt="" loading="lazy"
+     class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-in-out">`
+   : fallbackIcon; // ใช้ fallback ถ้าไม่มีรูป
+
+   // ── สร้างการ์ด HTML ─────────────────────────────────────────────
+    return `<li class="relative aspect-[16/9] rounded-xl overflow-hidden group shadow-lg bg-slate-800 ring-1 ring-white/10">
+      ${imageEl}
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none"></div>
+      <div class="absolute bottom-0 left-0 right-0 p-4 text-white z-10">
+    <h3 class="text-lg font-semibold leading-tight mb-1 line-clamp-2">${title}</h3>
+    <div class="flex items-center justify-between text-sm mt-2">
+     <span class="text-slate-300">${dateTxt}</span>
+     <a href="${eventUrl}"
+      class="px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors whitespace-nowrap">
+      ดูรายละเอียด
+     </a>
+    </div>
+   </div>
+      <a href="${eventUrl}" class="absolute inset-0 z-0" aria-label="${title}"></a>
+  </li>`;
+ }).join("");
+}
 
     function applySearch() {
       const q = (searchInput?.value || "").trim().toLowerCase();
