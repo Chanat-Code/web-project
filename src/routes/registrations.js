@@ -34,17 +34,6 @@ router.get("/me", requireAuth, async (req, res) => {
   }));
 
   res.json({ items });
-  try {
-     const regs = await Registration.find({ user: req.user.sub })
-       .sort({ createdAt: -1 })
-       .populate({ path: "event", select: "title dateText location" })
-       .lean();
-     ...
-     res.json({ items });
-   } catch (err) {
-     console.error(err);
-     res.status(500).json({ message: "server error" });
-   }
 });
 
 // ลบรายการ (ใช้ตอน “ลบออก” กรณี event ถูกลบแล้ว)
