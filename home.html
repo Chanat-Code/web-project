@@ -169,15 +169,32 @@
       pointer-events: none;
     }
 
-    .flatpickr-calendar { background:#0f172a; color:#e2e8f0; border:1px solid rgba(255,255,255,.08); border-radius:12px; }
-    .flatpickr-months .flatpickr-month, .flatpickr-weekdays { background:#111827; color:#e5e7eb; }
-    .flatpickr-day { color:#e2e8f0; border-radius:8px; }
-    .flatpickr-day:hover { background:#1f2937; }
-    .flatpickr-day.today { border-color:#6366f1; }
+        /* ปฏิทินโทนเข้ม อ่านง่าย */
+    .flatpickr-calendar{
+      background:#0b1220; color:#e5e7eb; border:1px solid rgba(255,255,255,.12);
+      border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,.45);
+    }
+    .flatpickr-months .flatpickr-month, .flatpickr-weekdays{ background:#0f172a; color:#f1f5f9; }
+    .flatpickr-weekday{ color:#94a3b8; font-weight:600; }
+
+    .numInput.cur-year, .flatpickr-monthDropdown-months{
+      color:#f8fafc; font-weight:700; background:transparent; border:none;
+    }
+
+    .flatpickr-days{ padding:.5rem .75rem 1rem; }
+    .flatpickr-day{
+      color:#e2e8f0; border-radius:10px; line-height:2.45rem; height:2.45rem; width:2.45rem;
+      margin:.15rem; font-size:1rem;
+    }
+    .flatpickr-day:hover{ background:#1f2937; }
+    .flatpickr-day.today{ border-color:#a78bfa; box-shadow:inset 0 0 0 1px #a78bfa; }
     .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange,
-    .flatpickr-day.selected:hover { background:#6366f1; border-color:#6366f1; color:#fff; }
-    .flatpickr-weekday { color:#9ca3af; }
-    .flatpickr-monthDropdown-months, .numInput.cur-year { color:#e5e7eb; }
+    .flatpickr-day.selected:hover{
+      background:#6366f1; border-color:#6366f1; color:#fff;
+    }
+    .flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay{ color:#475569; }
+    .flatpickr-current-month{ padding-top:.35rem; padding-bottom:.35rem; }
+
 
   </style>
 </head>

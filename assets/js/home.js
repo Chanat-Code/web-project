@@ -242,9 +242,10 @@ let currentUser = null;
   const searchInput = $("#searchInput");
   const searchBtn = $("#searchBtn");
   const fab = $("#fabAdd"), addModal = $("#addModal"), addForm = $("#addForm");
-  const dateInput = document.getElementById('addDate');
+const dateInput = document.getElementById('addDate');
 if (dateInput && window.flatpickr) {
-  // ฟังก์ชันแปลงปี พ.ศ. สำหรับ altInput (โชว์)
+
+  // แปลงวันที่สำหรับ altInput ให้เป็น พ.ศ.
   const toBE = (d) => {
     const dd = String(d.getDate()).padStart(2,'0');
     const mm = String(d.getMonth()+1).padStart(2,'0');
@@ -252,16 +253,44 @@ if (dateInput && window.flatpickr) {
     return `${dd}/${mm}/${String(yyyyBE).slice(-2)}`;
   };
 
+  // แพตช์ปีใน UI ของ Flatpickr ให้เป็น พ.ศ. แต่ logic ภายในยังใช้ ค.ศ.
+  function patchBE(inst) {
+    const yEl = inst.currentYearElement;               // ช่องปีบนหัวปฏิทิน
+    if (!yEl) return;
+
+    const syncDisplay = () => {                         // อัปเดตให้แสดง พ.ศ.
+      yEl.value = inst.currentYear + 543;
+    };
+
+    // เมื่อผู้ใช้พิมพ์/เปลี่ยนปี => แปลงกลับเป็น ค.ศ. ให้ไลบรารี
+    const onInput = () => {
+      const be = parseInt(yEl.value, 10);
+      if (Number.isFinite(be)) {
+        const gy = be - 543;
+        if (gy !== inst.currentYear) inst.changeYear(gy);
+      }
+    };
+
+    // hook หลาย ๆ จุดเพื่อคงค่าปี พ.ศ. ไว้เสมอ
+    syncDisplay();
+    yEl.addEventListener('input', onInput);
+    (inst.config.onOpen ??= []).push(syncDisplay);
+    (inst.config.onYearChange ??= []).push(syncDisplay);
+    (inst.config.onMonthChange ??= []).push(syncDisplay);
+    (inst.config.onValueUpdate ??= []).push(syncDisplay);
+  }
+
   flatpickr('#addDate', {
-    dateFormat: 'Y-m-d',         // ค่าที่ submit ไป backend (ค.ศ.)
-    altInput: true,              // มีช่องโชว์สวย ๆ
-    altFormat: 'd/m/Y',          // สำรอง (เราจะ override เป็น พ.ศ. ข้างล่าง)
-    locale: flatpickr.l10ns.th,  // ไทย
-    disableMobile: true,         // ให้ใช้ Flatpickr แทน native
-    defaultDate: new Date(),     // วันนี้
+    dateFormat: 'Y-m-d',          // ค่าที่ส่งไปแบ็กเอนด์ = ค.ศ.
+    altInput: true,               // ช่องโชว์สวย ๆ
+    altFormat: 'd/m/Y',           // (เราจะทับเป็น พ.ศ. ข้างล่าง)
+    locale: flatpickr.l10ns.th,   // ภาษาไทย
+    disableMobile: true,
+    defaultDate: new Date(),
     onReady: (_, __, inst) => {
       if (inst.selectedDates[0]) inst.altInput.value = toBE(inst.selectedDates[0]);
-      inst.calendarContainer.style.zIndex = 9999; // เผื่อซ้อน modal
+      inst.calendarContainer.style.zIndex = 9999;
+      patchBE(inst);              // <<< สำคัญ
     },
     onValueUpdate: (_, __, inst) => {
       if (inst.selectedDates[0]) inst.altInput.value = toBE(inst.selectedDates[0]);
