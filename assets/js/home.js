@@ -249,7 +249,7 @@ let currentUser = null;
   let ALL_EVENTS = [];
 
   // ===== Pagination state & helpers =====
-  const PAGER = { page: 1, size: 8, view: [] }; // size จะเซ็ตตามหน้าจอข้างล่าง
+  const PAGER = { page: 1, size: 1, view: [] }; // size จะเซ็ตตามหน้าจอข้างล่าง
 
   function computePageSize() {
     const cols = matchMedia('(min-width:1024px)').matches ? 4
