@@ -253,9 +253,9 @@ let currentUser = null;
 
   function computePageSize() {
     const cols = matchMedia('(min-width:1024px)').matches ? 4
-               : matchMedia('(min-width:768px)').matches ? 3
+               : matchMedia('(min-width:768px)').matches ? 2
                : 1;
-    const rows = 2; // ล็อก 2 แถว
+    const rows = 4; // ล็อก 2 แถว
     PAGER.size = cols * rows; // lg:8, md:4, mobile:2
   }
   computePageSize();
