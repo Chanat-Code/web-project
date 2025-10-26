@@ -283,82 +283,23 @@
 
     let ALL_EVENTS = [];
 
-function normalizeImageUrl(u = "") {
-  if (!u) return u;
-  try {
-    const url = new URL(u);
-    // Google Drive → direct
-    if (url.hostname.includes("drive.google.com")) {
-      const id = u.match(/[-\w]{25,}/)?.[0];
-      if (id) return `https://drive.google.com/uc?export=view&id=${id}`;
+    function renderEvents(items, q = "") {
+      if (!Array.isArray(items) || items.length === 0) {
+        eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">
+          ${q ? `ไม่พบกิจกรรมที่ตรงกับ “${window.escapeHtml(q)}”` : 'ยังไม่มีกิจกรรม'}
+        </li>`;
+        return;
+      }
+      eventList.innerHTML = items.map(ev => {
+        const dateTxt = ev.dateText ? `${window.formatDateLabel(ev.dateText)} ` : "";
+        return `<li>
+          <a href="./event.html?id=${ev._id}" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 ring-1 ring-white/10 hover:bg-slate-700 transition">
+            <span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span>
+            <span class="font-semibold tracking-wide">${dateTxt}${window.escapeHtml(ev.title || '')}</span>
+          </a>
+        </li>`;
+      }).join("");
     }
-    // Dropbox → direct
-    if (url.hostname.includes("dropbox.com")) {
-      url.hostname = "dl.dropboxusercontent.com";
-      url.searchParams.delete("dl");
-      url.searchParams.set("raw", "1");
-      return url.toString();
-    }
-  } catch {}
-  // กัน mixed content
-  if (location.protocol === "https:" && /^http:\/\//i.test(u)) return "";
-  return u;
-}
-function safeImage(u) {
-  const PH = "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop";
-  const v = normalizeImageUrl(u || "");
-  return v || PH;
-}
-
-// ===== การ์ดกิจกรรม =====
-function renderEvents(items, q = "") {
-  const el = document.getElementById("eventList");
-  if (!Array.isArray(items) || items.length === 0) {
-    el.innerHTML = `<li class="col-span-full rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">
-      ${q ? `ไม่พบกิจกรรมที่ตรงกับ “${window.escapeHtml(q)}”` : "ยังไม่มีกิจกรรม"}
-    </li>`;
-    return;
-  }
-
-  el.innerHTML = items.map(ev => {
-    const id = ev._id;
-    const href = `./event.html?id=${id}`;
-    const img = safeImage(ev.imageUrl);
-    const date = ev.dateText ? window.formatDateLabel(ev.dateText) : "—";
-    const title = window.escapeHtml(ev.title || "(ไม่ระบุชื่อกิจกรรม)");
-    const loc = window.escapeHtml(ev.location || "—");
-
-    return `
-    <li>
-      <article class="h-full flex flex-col overflow-hidden rounded-2xl bg-slate-800/70 ring-1 ring-white/10 shadow hover:shadow-lg transition">
-        <a href="${href}" class="relative aspect-[16/9] overflow-hidden">
-          <img src="${img}" alt="" class="absolute inset-0 h-full w-full object-cover"
-               loading="lazy" decoding="async" referrerpolicy="no-referrer" crossorigin="anonymous"
-               onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200&auto=format&fit=crop'">
-          <div class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 to-transparent"></div>
-        </a>
-        <div class="flex-1 p-4 flex flex-col gap-2">
-          <h3 class="text-base font-semibold leading-snug line-clamp-2">${title}</h3>
-          <div class="text-sm text-slate-300 flex flex-wrap gap-x-3 gap-y-1">
-            <span class="inline-flex items-center gap-1">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2a1 1 0 011 1v1h8V3a1 1 0 112 0v1h1a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h1V3a1 1 0 112 0v1zm13 6H4v10h16V8z"/></svg>
-              ${date}
-            </span>
-            <span class="inline-flex items-center gap-1">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 017 7c0 5.25-7 13-7 13S5 14.25 5 9a7 7 0 017-7zm0 9.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/></svg>
-              ${loc}
-            </span>
-          </div>
-          <div class="pt-2 mt-auto flex items-center gap-2">
-            <a href="${href}#register" class="flex-1 inline-flex justify-center items-center rounded-xl bg-indigo-600 text-white px-4 py-2 font-medium hover:bg-indigo-500 active:scale-[.99] transition">ลงทะเบียน</a>
-            <a href="${href}" class="rounded-xl border border-white/15 px-4 py-2 hover:bg-white/10 active:scale-[.99] transition">รายละเอียด</a>
-          </div>
-        </div>
-      </article>
-    </li>`;
-  }).join("");
-}
-
 
     function applySearch() {
       const q = (searchInput?.value || "").trim().toLowerCase();
@@ -432,30 +373,22 @@ function renderEvents(items, q = "") {
     });
 
     async function loadEvents() {
-      const key = 'rltg:events:v3'; // <-- เปลี่ยนเวอร์ชัน
+      const key = 'rltg:events:v1';
 
       const cached = localStorage.getItem(key);
       if (cached) {
         try {
           const items = JSON.parse(cached);
-          // render จาก cache ก็ต่อเมื่อมี imageUrl อย่างน้อย 1 ชิ้น
-          if (Array.isArray(items) && items.some(it => it.imageUrl)) {
-            ALL_EVENTS = items;
-            renderEvents(ALL_EVENTS);
-          }
-        } catch {}
+          if (Array.isArray(items)) { ALL_EVENTS = items; renderEvents(ALL_EVENTS); }
+        } catch { }
       }
 
       try {
-        const res = await fetch(`${API_BASE}/events`, {
-          credentials: 'include',
-          headers: { 'Cache-Control': 'no-cache' },
-          keepalive: true
-        });
+        const res = await fetch(`${API_BASE}/events`, { credentials: 'include', headers: { 'Cache-Control': 'no-cache' }, keepalive: true });
         const items = await res.json().catch(() => []);
         ALL_EVENTS = Array.isArray(items) ? items : [];
         localStorage.setItem(key, JSON.stringify(ALL_EVENTS));
-        renderEvents(ALL_EVENTS); // render ด้วยข้อมูลสด (มี imageUrl)
+        renderEvents(ALL_EVENTS);
       } catch (e) {
         if (!eventList.innerHTML.trim()) {
           eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">โหลดข้อมูลไม่สำเร็จ</li>`;
@@ -1046,7 +979,7 @@ function renderEvents(items, q = "") {
   }
   requestIdleCallback?.(() => {
   // warm image cache
-  ['2.v2.jpg','3.v2.jpg'].forEach(name => {
+  ['2.jpg','3.jpg'].forEach(name => {
     const i = new Image();
     i.referrerPolicy = 'no-referrer';
     i.src = `/assets/hero/${name}`;

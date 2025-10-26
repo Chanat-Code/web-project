@@ -15,7 +15,7 @@
     rel="stylesheet" />
 
   
-  <link rel="preload" as="script" href="/assets/js/home.js?v=20251026-1" />
+  <link rel="preload" as="script" href="/assets/js/home.js" />
   <link rel="preload" as="image" href="/assets/hero/1.v2.jpg"
       imagesrcset="/assets/hero/1.v2.jpg 1600w"
       imagesizes="(max-width: 1024px) 100vw, 1100px">
@@ -246,7 +246,7 @@
 
     <section class="relative z-10 w-full max-w-3xl px-4 mx-auto mt-14 md:mt-20">
       <div class="rounded-2xl bg-white/30 backdrop-blur shadow-2xl ring-1 ring-white/40 p-6 sm:p-8">
-        <ul id="eventList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></ul>
+        <ul id="eventList" class="space-y-4"></ul>
       </div>
     </section>
   </main>
@@ -497,32 +497,5 @@
 
 </body>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
-<script src="assets/js/home.js?v=20251026-1" defer></script>
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', async () => {
-      try {
-        const reg = await navigator.serviceWorker.register('/sw.js');
-        // ถ้ามี SW ตัวใหม่ waiting ให้สั่ง activate ทันที
-        if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
-        reg.addEventListener('updatefound', () => {
-          const nw = reg.installing;
-          nw && nw.addEventListener('statechange', () => {
-            if (nw.state === 'installed' && reg.waiting) {
-              reg.waiting.postMessage('SKIP_WAITING');
-            }
-          });
-        });
-        // รีโหลดแท็บที่คุมโดย SW ตัวใหม่ให้รับไฟล์ล่าสุด
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          // ป้องกันลูป
-          if (!window.__swReloaded) {
-            window.__swReloaded = true;
-            location.reload();
-          }
-        });
-      } catch {}
-    });
-  }
-</script>
+<script src="assets/js/home.js" defer></script>
 </html>
