@@ -228,370 +228,299 @@
     });
   })();
 
-  // -------------------- Profile / History / Events --------------------
-  let currentUser = null;
+ // -------------------- Profile / History / Events (with Pagination) --------------------
+let currentUser = null;
 
-  (function () {
-    const btn = document.getElementById('profileBtn');
-    const modal = document.getElementById('profileModal');
-    const card = document.getElementById('profileCard');
-    if (!btn || !modal || !card) return;
+(function () {
+  const API_BASE = window.API_BASE;
+  const token = localStorage.getItem("token");
+  if (!token) { location.href = "./index.html"; return; }
 
-    const overlay = modal.querySelector('[data-overlay]');
-    const closeBtn = modal.querySelector('[data-close]');
-    let lastActive = null;
+  const $ = (s) => document.querySelector(s);
+  const eventList = $("#eventList");
+  const pagerWrap = $("#eventPager"); // ต้องมี <div id="eventPager"></div> ใต้ <ul id="eventList">
+  const searchInput = $("#searchInput");
+  const searchBtn = $("#searchBtn");
+  const fab = $("#fabAdd"), addModal = $("#addModal"), addForm = $("#addForm");
+  const dateInput = document.getElementById('addDate');
+  if (dateInput) { const offset = new Date().getTimezoneOffset() * 60000; dateInput.value = new Date(Date.now() - offset).toISOString().slice(0, 10); }
+  const addCancel = $("#addCancel");
 
-    function place() {
-      const r = btn.getBoundingClientRect(), gap = 10, width = card.offsetWidth || 360;
-      const maxLeft = window.innerWidth - width - 8;
-      const left = Math.max(8, Math.min(r.right - width, maxLeft));
-      const top = Math.min(r.bottom + gap, window.innerHeight - card.offsetHeight - 8);
-      card.style.left = left + 'px'; card.style.top = top + 'px';
-    }
-    function lockScroll(lock) {
-      const el = document.scrollingElement || document.documentElement;
-      if (lock) { el.dataset.prevOverflow = el.style.overflow || ''; el.style.overflow = 'hidden'; document.body.classList.add('overflow-hidden'); }
-      else { el.style.overflow = el.dataset.prevOverflow || ''; document.body.classList.remove('overflow-hidden'); delete el.dataset.prevOverflow; }
-    }
-    function open() { lastActive = document.activeElement; modal.classList.remove('hidden'); lockScroll(true); requestAnimationFrame(place); window.addEventListener('resize', place, { passive: true }); }
-    function close() { modal.classList.add('hidden'); lockScroll(false); if (lastActive) lastActive.focus?.(); window.removeEventListener('resize', place); }
+  let ALL_EVENTS = [];
 
-    btn.addEventListener('click', open);
-    overlay?.addEventListener('click', close);
-    closeBtn?.addEventListener('click', close);
-    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
-  })();
+  // ===== Pagination state & helpers =====
+  const PAGER = { page: 1, size: 8, view: [] }; // size จะเซ็ตตามหน้าจอข้างล่าง
 
-  // ===== Pagination state =====
-const PAGER = {
-  page: 1,
-  size: 1, // จำนวนการ์ดต่อหน้า (เช่น 2 แถว x 4 คอลัมน์ = 8)
-  view: [], // รายการหลังกรอง/ค้นหา ที่จะเอามาแบ่งหน้า
-};
+  function computePageSize() {
+    const cols = matchMedia('(min-width:1024px)').matches ? 4
+               : matchMedia('(min-width:768px)').matches ? 2
+               : 1;
+    const rows = 2; // ล็อก 2 แถว
+    PAGER.size = cols * rows; // lg:8, md:4, mobile:2
+  }
+  computePageSize();
+  window.addEventListener('resize', (() => {
+    let t; return () => { clearTimeout(t); t = setTimeout(() => {
+      const old = PAGER.size; computePageSize();
+      if (PAGER.size !== old) { PAGER.page = 1; renderEvents(PAGER.view); }
+    }, 150); };
+  })());
 
-function paginate(items, page, size) {
-  const total = items.length;
-  const pages = Math.max(1, Math.ceil(total / size));
-  const p = Math.min(Math.max(1, page), pages);
-  const start = (p - 1) * size;
-  return {
-    page: p,
-    pages,
-    total,
-    slice: items.slice(start, start + size),
-  };
-}
-
-// วาดปุ่มเลขหน้าแบบ 1 2 3 ... ถัดไป หน้าสุดท้าย
-function renderPager(meta) {
-  const wrap = document.getElementById('eventPager');
-  if (!wrap) return;
-
-  const { page, pages } = meta;
-  if (pages <= 1) { wrap.innerHTML = ''; return; }
-
-  const btn = (label, goto, isActive=false, disabled=false) => `
-    <button data-goto="${goto}" ${disabled?'disabled':''}
-      class="h-9 min-w-9 px-3 rounded-lg border ${isActive?'bg-slate-800 text-white border-slate-800':'border-slate-300 text-slate-700 hover:bg-slate-100'}
-             disabled:opacity-40 disabled:cursor-not-allowed">
-      ${label}
-    </button>`;
-
-  // สร้างลิสต์เลขหน้าแบบมี ellipsis
-  const nums = [];
-  const push = (n) => nums.push(btn(n, n, n === page));
-  const addEllipsis = () => nums.push(`<span class="px-2 text-slate-500">…</span>`);
-
-  nums.push(btn('«', 1, false, page===1));
-  nums.push(btn('‹', page-1, false, page===1));
-
-  const windowSize = 1; // แสดงข้างเคียง 1 หน้า
-  const left = Math.max(2, page - windowSize);
-  const right = Math.min(pages - 1, page + windowSize);
-
-  push(1);
-  if (left > 2) addEllipsis();
-  for (let n = left; n <= right; n++) push(n);
-  if (right < pages - 1) addEllipsis();
-  if (pages > 1) push(pages);
-
-  nums.push(btn('›', page+1, false, page===pages));
-  nums.push(btn('หน้าสุดท้าย', pages, false, page===pages));
-
-  wrap.innerHTML = nums.join('');
-
-  // wire click
-  wrap.querySelectorAll('button[data-goto]').forEach(b=>{
-    b.addEventListener('click', (e)=>{
-      const goto = Number(b.getAttribute('data-goto'));
-      if (!Number.isFinite(goto)) return;
-      PAGER.page = goto;
-      renderEvents(PAGER.view); // วาดหน้าใหม่ด้วยข้อมูลชุดเดิม
-    });
-  });
-}
-
-  (function () {
-    const API_BASE = window.API_BASE;
-    const token = localStorage.getItem("token");
-    if (!token) { location.href = "./index.html"; return; }
-
-    const $ = (s) => document.querySelector(s);
-    const eventList = $("#eventList");
-    const searchInput = $("#searchInput");
-    const searchBtn = $("#searchBtn");
-    const fab = $("#fabAdd"), addModal = $("#addModal"), addForm = $("#addForm");
-    const dateInput = document.getElementById('addDate');
-    if (dateInput) { const offset = new Date().getTimezoneOffset() * 60000; dateInput.value = new Date(Date.now() - offset).toISOString().slice(0, 10); }
-    const addCancel = $("#addCancel");
-
-    let ALL_EVENTS = [];
-
- function renderEvents(items, q = "") {
-  // อัปเดตชุดข้อมูลที่จะแสดงและหน้า
-  PAGER.view = Array.isArray(items) ? items : [];
-  const meta = paginate(PAGER.view, PAGER.page, PAGER.size);
-
-  const list = meta.slice; // เฉพาะรายการของหน้านี้
-  if (!Array.isArray(list) || list.length === 0) {
-    eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-5 text-center text-slate-200 ring-1 ring-white/10 col-span-full">
-      ${q ? `ไม่พบกิจกรรมที่ตรงกับ “${window.escapeHtml(q)}”` : 'ยังไม่มีกิจกรรม'}
-    </li>`;
-    renderPager({ page: 1, pages: 1 }); // ซ่อนเพจเจอร์
-    return;
+  function paginate(items, page, size) {
+    const total = items.length;
+    const pages = Math.max(1, Math.ceil(total / size));
+    const p = Math.min(Math.max(1, page), pages);
+    const start = (p - 1) * size;
+    return { page: p, pages, total, slice: items.slice(start, start + size) };
   }
 
-  eventList.innerHTML = list.map(ev => {
-    const dateTxt = ev.dateText ? window.formatDateLabel(ev.dateText) : "—";
-    const title = window.escapeHtml(ev.title || 'Untitled Event');
-    const eventUrl = `./event.html?id=${ev._id}`;
+  function renderPager(meta) {
+    if (!pagerWrap) return;
+    const { page, pages } = meta;
+    if (pages <= 1) { pagerWrap.innerHTML = ''; return; }
 
-    // normalize image path (คงของเดิม)
-    const raw = String(ev.imageUrl || '').trim();
-    const src =
-      /^https?:\/\//i.test(raw) ? raw :
-      raw.startsWith('/assets') ? raw :
-      raw.startsWith('assets') ? '/' + raw :
-      raw.startsWith('./assets') ? '/' + raw.replace(/^\.\//, '') :
-      raw.startsWith('/') ? raw :
-      (raw ? '/' + raw : '');
-    const hasImage = !!src;
+    const btn = (label, goto, active=false, disabled=false) => `
+      <button data-goto="${goto}" ${disabled?'disabled':''}
+        class="h-10 min-w-10 px-3 rounded-xl border
+               ${active?'bg-slate-800 text-white border-slate-800 shadow'
+                      :'bg-transparent text-slate-200/90 border-white/30 hover:bg-white/10'}
+               disabled:opacity-40 disabled:cursor-not-allowed transition">
+        ${label}
+      </button>`;
 
-    const fallbackIcon = `<div class="absolute inset-0 bg-slate-700 grid place-items-center">
-      <svg class="w-12 h-12 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-       <path stroke-linecap="round" stroke-linejoin="round"
-        d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-      </svg>
-    </div>`;
+    const bits = [];
+    const addEllipsis = () => bits.push(`<span class="px-2 text-slate-400">…</span>`);
+    const addNum = (n) => bits.push(btn(n, n, n===page));
 
-    const imageEl = hasImage
-      ? `<img src="${window.escapeHtml(src)}" alt="" loading="lazy"
-           class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-in-out">`
-      : fallbackIcon;
+    bits.push(btn('«', 1, false, page===1));
+    bits.push(btn('‹', page-1, false, page===1));
 
-    return `<li class="relative aspect-[16/11] rounded-xl overflow-hidden group shadow-lg bg-slate-800 ring-1 ring-white/10">
-      ${imageEl}
-      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none"></div>
-      <div class="absolute bottom-0 left-0 right-0 p-4 text-white z-10">
-        <h3 class="text-lg font-semibold leading-tight mb-1 line-clamp-2">${title}</h3>
-        <div class="flex items-center justify-between text-sm mt-2">
-          <span class="text-slate-300">${dateTxt}</span>
-          <a href="${eventUrl}"
-            class="px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors whitespace-nowrap">
-            ดูรายละเอียด
-          </a>
-        </div>
-      </div>
-      <a href="${eventUrl}" class="absolute inset-0 z-0" aria-label="${title}"></a>
-    </li>`;
-  }).join("");
+    const windowSize = 1;
+    const left = Math.max(2, page - windowSize);
+    const right = Math.min(pages - 1, page + windowSize);
 
-  renderPager(meta); // วาดเลขหน้า
-}
+    addNum(1);
+    if (left > 2) addEllipsis();
+    for (let n = left; n <= right; n++) addNum(n);
+    if (right < pages - 1) addEllipsis();
+    if (pages > 1) addNum(pages);
 
-   function applySearch() {
-  const q = (searchInput?.value || "").trim().toLowerCase();
-  PAGER.page = 1; // รีเซ็ตหน้า
-  if (!q) { renderEvents(ALL_EVENTS); return; }
-  const filtered = ALL_EVENTS.filter(ev => {
-    const f = (v) => String(v || "").toLowerCase();
-    return [ev.title, ev.location, ev.dateText].some(v => f(v).includes(q));
-  });
-  renderEvents(filtered, q);
-}
+    bits.push(btn('›', page+1, false, page===pages));
+    bits.push(btn('หน้าสุดท้าย', pages, false, page===pages));
 
-    const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
-    const applySearchDebounced = debounce(applySearch, 150);
+    pagerWrap.className = "mt-6 flex items-center justify-center gap-3";
+    pagerWrap.innerHTML = bits.join('');
 
-    searchBtn?.addEventListener('click', applySearch);
-    searchInput?.addEventListener('input', applySearchDebounced);
-    searchInput?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); applySearch(); }
-      if (e.key === 'Escape') { searchInput.value = ''; applySearch(); }
+    pagerWrap.querySelectorAll('button[data-goto]').forEach(b=>{
+      b.addEventListener('click', () => {
+        const goto = Number(b.getAttribute('data-goto'));
+        if (!Number.isFinite(goto)) return;
+        PAGER.page = goto;
+        renderEvents(PAGER.view); // อยู่ใน scope เดียวกัน — ไม่ error แล้ว
+        // เลื่อนให้เห็นกริดชัด ๆ
+        eventList?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
     });
+  }
 
-    async function loadMe() {
-      const res = await fetch(`${API_BASE}/auth/me?ts=${Date.now()}`, {
+  // ===== Grid renderer (internal) =====
+  function renderGrid(list, q="") {
+    if (!Array.isArray(list) || list.length === 0) {
+      eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-5 text-center text-slate-200 ring-1 ring-white/10 col-span-full">
+        ${q ? `ไม่พบกิจกรรมที่ตรงกับ “${window.escapeHtml(q)}”` : 'ยังไม่มีกิจกรรม'}
+      </li>`;
+      return;
+    }
+
+    eventList.innerHTML = list.map(ev => {
+      const dateTxt = ev.dateText ? window.formatDateLabel(ev.dateText) : "—";
+      const title = window.escapeHtml(ev.title || 'Untitled Event');
+      const eventUrl = `./event.html?id=${ev._id}`;
+
+      const raw = String(ev.imageUrl || '').trim();
+      const src =
+        /^https?:\/\//i.test(raw) ? raw :
+        raw.startsWith('/assets') ? raw :
+        raw.startsWith('assets') ? '/' + raw :
+        raw.startsWith('./assets') ? '/' + raw.replace(/^\.\//, '') :
+        raw.startsWith('/') ? raw :
+        (raw ? '/' + raw : '');
+      const hasImage = !!src;
+
+      const fallbackIcon = `<div class="absolute inset-0 bg-slate-700 grid place-items-center">
+        <svg class="w-12 h-12 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+        </svg>
+      </div>`;
+
+      const imageEl = hasImage
+        ? `<img src="${window.escapeHtml(src)}" alt="" loading="lazy"
+             class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-in-out">`
+        : fallbackIcon;
+
+      return `<li class="relative aspect-[16/11] rounded-xl overflow-hidden group shadow-lg bg-slate-800 ring-1 ring-white/10">
+        ${imageEl}
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-4 text-white z-10">
+          <h3 class="text-lg font-semibold leading-tight mb-1 line-clamp-2">${title}</h3>
+          <div class="flex items-center justify-between text-sm mt-2">
+            <span class="text-slate-300">${dateTxt}</span>
+            <a href="${eventUrl}"
+              class="px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors whitespace-nowrap">
+              ดูรายละเอียด
+            </a>
+          </div>
+        </div>
+        <a href="${eventUrl}" class="absolute inset-0 z-0" aria-label="${title}"></a>
+      </li>`;
+    }).join("");
+  }
+
+  // ===== Public renderer (handles pagination) =====
+  function renderEvents(items, q="") {
+    PAGER.view = Array.isArray(items) ? items : [];
+    const meta = paginate(PAGER.view, PAGER.page, PAGER.size);
+    renderGrid(meta.slice, q);
+    renderPager(meta);
+  }
+
+  // ===== Search =====
+  function applySearch() {
+    const q = (searchInput?.value || "").trim().toLowerCase();
+    PAGER.page = 1;
+    if (!q) { renderEvents(ALL_EVENTS); return; }
+    const filtered = ALL_EVENTS.filter(ev => {
+      const f = (v) => String(v || "").toLowerCase();
+      return [ev.title, ev.location, ev.dateText].some(v => f(v).includes(q));
+    });
+    renderEvents(filtered, q);
+  }
+  const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+  const applySearchDebounced = debounce(applySearch, 150);
+  searchBtn?.addEventListener('click', applySearch);
+  searchInput?.addEventListener('input', applySearchDebounced);
+  searchInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); applySearch(); }
+    if (e.key === 'Escape') { searchInput.value = ''; applySearch(); }
+  });
+
+  // ===== Me / UI (คงของเดิมย่อ ๆ) =====
+  async function loadMe() {
+    const res = await fetch(`${API_BASE}/auth/me?ts=${Date.now()}`, {
+      headers: { Authorization: "Bearer " + token }, credentials: "include", cache: "no-store",
+    });
+    if (!res.ok) throw new Error("unauthorized");
+    const json = await res.json().catch(() => ({}));
+    const me = json.user || json;
+    currentUser = me;
+
+    if (me.role === "admin") {
+      const historyModel = document.getElementById('historyModal'); historyModel?.remove?.();
+      const historyBtn = document.getElementById('historyBtn'); historyBtn?.remove?.();
+    }
+    const id = (x) => document.getElementById(x);
+    const fullName = [me.firstName, me.lastName].filter(Boolean).join(" ").trim();
+    id("ppName") && (id("ppName").textContent = fullName || "—");
+    id("ppId")   && (id("ppId").textContent   = me.studentId ?? "—");
+    id("ppEmail") && (id("ppEmail").textContent = me.email ?? "—");
+    id("ppMajor") && (id("ppMajor").textContent = me.major ?? "—");
+    id("ppPhone") && (id("ppPhone").textContent = me.phone ?? "—");
+
+    const calFab = document.getElementById('calendarFab');
+    if (me.role === "admin") { fab?.classList.remove("hidden"); calFab?.remove?.(); }
+    else { calFab?.classList.remove('hidden'); }
+  }
+
+  function wireLogout() {
+    const btn = document.getElementById("logoutBtn");
+    if (!btn) return;
+    btn.addEventListener("click", async () => {
+      try {
+        await fetch(`${API_BASE}/auth/logout?ts=${Date.now()}`, { method: "POST", credentials: "include", cache: "no-store" });
+      } catch {}
+      try {
+        localStorage.removeItem("token");
+        localStorage.removeItem("rltg:events:v1");
+        sessionStorage.clear();
+        if (window.caches) { const keys = await caches.keys(); await Promise.all(keys.map(k => caches.delete(k))); }
+        if ('serviceWorker' in navigator) { const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r => r.update())); }
+      } catch {}
+      location.replace("./index.html");
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    loadMe().catch(() => { localStorage.removeItem("token"); location.href = "./index.html"; });
+    wireLogout();
+  });
+
+  // ===== Load events & initial render =====
+  async function loadEvents() {
+    const key = 'rltg:events:v1';
+
+    const cached = localStorage.getItem(key);
+    if (cached) {
+      try {
+        const items = JSON.parse(cached);
+        if (Array.isArray(items)) { ALL_EVENTS = items; PAGER.page = 1; renderEvents(ALL_EVENTS); }
+      } catch {}
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/events?ts=${Date.now()}`, {
+        credentials: 'include', cache: 'no-store', keepalive: true
+      });
+      const items = await res.json().catch(() => []);
+      ALL_EVENTS = Array.isArray(items) ? items : [];
+      localStorage.setItem(key, JSON.stringify(ALL_EVENTS));
+      PAGER.page = 1;
+      renderEvents(ALL_EVENTS);
+    } catch (e) {
+      if (!eventList.innerHTML.trim()) {
+        eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10 col-span-full">โหลดข้อมูลไม่สำเร็จ</li>`;
+      }
+    }
+  }
+
+  // ===== Add event (คง logic เดิม) =====
+  function openAdd() { addModal?.classList.remove("hidden"); }
+  function closeAdd() { addModal?.classList.add("hidden"); addForm?.reset(); }
+
+  addForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const submitBtn = document.getElementById('addSubmitBtn');
+    const fd = new FormData(addForm);
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'กำลังบันทึก...'; }
+
+    try {
+      const res = await fetch(`${API_BASE}/events`, {
+        method: "POST",
         headers: { Authorization: "Bearer " + token },
         credentials: "include",
+        body: fd,
         cache: "no-store",
       });
-      if (!res.ok) throw new Error("unauthorized");
-      const json = await res.json().catch(() => ({}));
-      const me = json.user || json;
-      currentUser = me;
-
-      if (me.role === "admin") {
-        const historyModel = document.getElementById('historyModal');
-        historyModel?.remove?.();
-        const historyBtn = document.getElementById('historyBtn');
-        historyBtn?.remove?.();
-      }
-
-      const id = (x) => document.getElementById(x);
-      const fullName = [me.firstName, me.lastName].filter(Boolean).join(" ").trim();
-      id("ppName") && (id("ppName").textContent = fullName || "—");
-      id("ppId")   && (id("ppId").textContent   = me.studentId ?? "—");
-      id("ppEmail") && (id("ppEmail").textContent = me.email ?? "—");
-      id("ppMajor") && (id("ppMajor").textContent = me.major ?? "—");
-      id("ppPhone") && (id("ppPhone").textContent = me.phone ?? "—");
-
-      const calFab = document.getElementById('calendarFab');
-      if (me.role === "admin") {
-        fab?.classList.remove("hidden");
-        calFab?.remove?.();
-      } else {
-        calFab?.classList.remove('hidden');
-      }
-    }
-
-    function wireLogout() {
-      const btn = document.getElementById("logoutBtn");
-      if (!btn) return;
-      btn.addEventListener("click", async () => {
-        try {
-          await fetch(`${API_BASE}/auth/logout?ts=${Date.now()}`, {
-            method: "POST",
-            credentials: "include",
-            cache: "no-store",
-          });
-        } catch (e) { /* ignore */ }
-
-        try {
-          // clear client state
-          localStorage.removeItem("token");
-          localStorage.removeItem("rltg:events:v1");
-          sessionStorage.clear();
-
-          // clear Cache API (SW)
-          if (window.caches) {
-            const keys = await caches.keys();
-            await Promise.all(keys.map(k => caches.delete(k)));
-          }
-
-          // ask SW to update
-          if ('serviceWorker' in navigator) {
-            const regs = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(regs.map(r => r.update()));
-          }
-        } catch (e) { /* ignore */ }
-
-        location.replace("./index.html");
-      });
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      loadMe().catch(() => { localStorage.removeItem("token"); location.href = "./index.html"; });
-      wireLogout();
-    });
-
-    async function loadEvents() {
-      const key = 'rltg:events:v1';
-
-      const cached = localStorage.getItem(key);
-      if (cached) {
-        try {
-          const items = JSON.parse(cached);
-          if (Array.isArray(items)) { ALL_EVENTS = items; renderEvents(ALL_EVENTS); }
-        } catch { }
-      }
-
-      try {
-        const res = await fetch(`${API_BASE}/events?ts=${Date.now()}`, {
-          credentials: 'include',
-          cache: 'no-store',
-          keepalive: true
-        });
-        const items = await res.json().catch(() => []);
-        ALL_EVENTS = Array.isArray(items) ? items : [];
-        localStorage.setItem(key, JSON.stringify(ALL_EVENTS));
-        renderEvents(ALL_EVENTS);
-      } catch (e) {
-        if (!eventList.innerHTML.trim()) {
-          eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">โหลดข้อมูลไม่สำเร็จ</li>`;
-        }
-      }
-    }
-
-    function openAdd() { addModal?.classList.remove("hidden"); }
-    function closeAdd() { addModal?.classList.add("hidden"); addForm?.reset(); }
-
-    addForm?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-    const submitBtn = document.getElementById('addSubmitBtn'); // Get submit button
-  const fd = new FormData(addForm); // ✅ Create FormData directly from the form
-
-    // Optional: Add loading state to button
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'กำลังบันทึก...';
-    }
-
-  try { // Wrap in try...catch
-      const res = await fetch(`${API_BASE}/events`, {
-     method: "POST",
-     headers: {
-            // 🚫 **DO NOT** set 'Content-Type': 'application/json' or 'multipart/form-data'
-            // The browser will set it automatically with the correct boundary for FormData
-            Authorization: "Bearer " + token
-        },
-     credentials: "include",
-     body: fd, // ✅ Send the FormData object directly
-        cache: "no-store", // Ensure this request isn't cached
-    });
-
       if (!res.ok) {
-        // Try to get error message from backend response
         const data = await res.json().catch(() => ({ message: `HTTP Error ${res.status}` }));
         throw new Error(data.message || `เกิดข้อผิดพลาด: ${res.status}`);
       }
-
-      // const newEvent = await res.json(); // Get the newly created event data
-
-      closeAdd(); // Close modal on success
-      toastOK('เพิ่มกิจกรรมสำเร็จ!'); // Show success message
-
-      // Reload events to show the new one immediately
-      // Make sure loadEvents fetches fresh data (consider cache-busting if needed)
+      closeAdd();
+      toastOK('เพิ่มกิจกรรมสำเร็จ!');
       await loadEvents();
-
     } catch (err) {
       console.error("Add event error:", err);
       toastError('เพิ่มกิจกรรมไม่สำเร็จ', err.message || 'โปรดตรวจสอบข้อมูลแล้วลองอีกครั้ง');
     } finally {
-        // Always re-enable button and restore text
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'บันทึก';
-        }
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'บันทึก'; }
     }
- });
-    addCancel?.addEventListener("click", closeAdd);
-    fab?.addEventListener("click", openAdd);
-    addModal?.querySelector("[data-overlay]")?.addEventListener("click", closeAdd);
+  });
+  addCancel?.addEventListener("click", closeAdd);
+  fab?.addEventListener("click", openAdd);
+  addModal?.querySelector("[data-overlay]")?.addEventListener("click", closeAdd);
 
-    Promise.allSettled([loadEvents()]).catch(() => { });
-  })();
+  Promise.allSettled([loadEvents()]).catch(() => { });
+})();
 
   // -------------------- History modal (user) --------------------
   (function historyModal() {
