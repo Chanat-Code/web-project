@@ -11,12 +11,30 @@ router.get("/", async (_req, res) => {
   const items = await Event.find({}, "title dateText location imageUrl").sort({ createdAt: -1 }).lean();
   res.set("Cache-Control", "s-maxage=20, stale-while-revalidate=120");
   res.json(items);
+  try {
+     const items = await Event.find({}, "title dateText location imageUrl")
+       .sort({ createdAt: -1 })
+       .lean();
+     res.set("Cache-Control", "s-maxage=20, stale-while-revalidate=120");
+     res.json(items);
+   } catch (err) {
+     console.error(err);
+     res.status(500).json({ message: "server error" });
+   }
 });
 
 router.get("/:id", async (req, res) => {
   const ev = await Event.findById(req.params.id).lean();
   if (!ev) return res.status(404).json({ message: "not found" });
   res.json(ev);
+  try {
+     const ev = await Event.findById(req.params.id).lean();
+     if (!ev) return res.status(404).json({ message: "not found" });
+     res.json(ev);
+   } catch (err) {
+     console.error(err);
+     res.status(500).json({ message: "server error" });
+   }
 });
 
 /** ======================== User ======================== */
