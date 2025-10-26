@@ -283,45 +283,54 @@
 
     let ALL_EVENTS = [];
 
-// 📍 assets/js/home.js
-
-  function renderEvents(items, q = "") {
-    if (!Array.isArray(items) || items.length === 0) {
+function renderEvents(items, q = "") {
+  if (!Array.isArray(items) || items.length === 0) {
     eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-5 text-center text-slate-200 ring-1 ring-white/10">
-    ${q ? `ไม่พบกิจกรรมที่ตรงกับ “${window.escapeHtml(q)}”` : 'ยังไม่มีกิจกรรม'}
+      ${q ? `ไม่พบกิจกรรมที่ตรงกับ “${window.escapeHtml(q)}”` : 'ยังไม่มีกิจกรรม'}
     </li>`;
     return;
-}
- eventList.innerHTML = items.map(ev => {
+  }
+
+  eventList.innerHTML = items.map(ev => {
     const dateTxt = ev.dateText ? window.formatDateLabel(ev.dateText) : "—";
     const title = window.escapeHtml(ev.title || 'Untitled Event');
-    // ตรวจสอบว่ามี ev.imageUrl ที่ถูกต้องหรือไม่
-    const hasImage = ev.imageUrl && (ev.imageUrl.startsWith('http') || ev.imageUrl.startsWith('assets'));
 
-    // สร้าง HTML สำหรับรูปภาพ หรือใช้ Fallback Icon ถ้าไม่มี
+    // ── normalize รูป ─────────────────────────────────────────────
+    const raw = String(ev.imageUrl || '').trim();
+    const src =
+      /^https?:\/\//i.test(raw) ? raw :
+      raw.startsWith('/assets') ? raw :
+      raw.startsWith('assets') ? '/' + raw :
+      raw.startsWith('./assets') ? '/' + raw.replace(/^\.\//, '') :
+      raw.startsWith('/') ? raw :
+      (raw ? '/' + raw : '');
+    const hasImage = !!src;
+
     const imageEl = hasImage
-        ? `<img src="${window.escapeHtml(ev.imageUrl)}" alt="" loading="lazy" class="w-20 h-20 rounded-lg object-cover bg-slate-700 shrink-0">`
-        : `<div class="w-20 h-20 rounded-lg bg-slate-700 grid place-items-center shrink-0">
-        <svg class="w-8 h-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-        </svg>
-        </div>`;
+      ? `<img src="${window.escapeHtml(src)}" alt="" loading="lazy"
+           class="w-20 h-20 rounded-lg object-cover bg-slate-700 shrink-0">`
+      : `<div class="w-20 h-20 rounded-lg bg-slate-700 grid place-items-center shrink-0">
+           <svg class="w-8 h-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+             <path stroke-linecap="round" stroke-linejoin="round"
+               d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+           </svg>
+         </div>`;
 
- // เปลี่ยนจาก rounded-full เป็นการ์ดสี่เหลี่ยม
-      return `<li>
-        <a href="./event.html?id=${ev._id}" class="group flex items-center gap-4 rounded-xl bg-slate-800 p-4 text-slate-100 ring-1 ring-white/10 hover:bg-slate-700 transition">
+    return `<li>
+      <a href="./event.html?id=${ev._id}" class="group flex items-center gap-4 rounded-xl bg-slate-800 p-4 text-slate-100 ring-1 ring-white/10 hover:bg-slate-700 transition">
         ${imageEl}
         <div class="flex-1 min-w-0">
-        <div class="font-semibold tracking-wide truncate">${title}</div>
-        <div class="text-sm text-slate-300 mt-1">${dateTxt}</div>
+          <div class="font-semibold tracking-wide truncate">${title}</div>
+          <div class="text-sm text-slate-300 mt-1">${dateTxt}</div>
         </div>
         <svg class="w-5 h-5 text-slate-400 group-hover:text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
         </svg>
-        </a>
-        </li>`;
- }).join("");
+      </a>
+    </li>`;
+  }).join("");
 }
+
 
     function applySearch() {
       const q = (searchInput?.value || "").trim().toLowerCase();
@@ -637,25 +646,22 @@
         document.getElementById('calendarFab')?.remove?.();
       }
     }
-    async function loadEvents() {
+
+    async function loadEventsForAdminCacheOnly() {
       const res = await fetch(`${API_BASE}/events`, { credentials: 'include' });
       const items = await res.json().catch(() => []);
       EVENTS_CACHE = Array.isArray(items) ? items : [];
-      if (!EVENTS_CACHE.length) {
-        eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10">ยังไม่มีกิจกรรม</li>`;
-        return;
-      }
-      eventList.innerHTML = EVENTS_CACHE.map(ev => {
-        const d = ev.dateText ? `${fmt(ev.dateText)} ` : '';
-        return `<li>
-          <a href="./event.html?id=${ev._id}" class="group flex items-center gap-3 rounded-full bg-slate-800 px-6 py-4 text-slate-100 ring-1 ring-white/10 hover:bg-slate-700 transition">
-            <span class="inline-block h-2 w-10 rounded-full bg-slate-600 group-hover:bg-slate-500"></span>
-            <span class="font-semibold tracking-wide">${d}${esc(ev.title || '')}</span>
-          </a>
-        </li>`;
-      }).join('');
     }
+    (async function initAdmin() {
+      // ต้องรู้ role ก่อน
+      await loadMe();
+      if (CURRENT_USER?.role !== 'admin') return; // ไม่ใช่แอดมิน จบตรงนี้ → จะใช้ render ของฝั่ง user ตามเดิม
 
+      // เป็นแอดมิน: เติมแค่แคช (สำหรับปุ่มลบ/ดูรายชื่อ) ไม่เขียนทับ #eventList
+      await loadEventsForAdminCacheOnly();
+    })().catch(() => {});
+
+    
     function openDelModal() {
       if (!delUI.wrap) return;
       delUI.loading?.classList.remove('hidden');
