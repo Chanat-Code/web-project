@@ -1,3 +1,4 @@
+
 (() => {
   // -------------------- Globals / Utils --------------------
   window.API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
@@ -20,7 +21,7 @@
     else alert((title ? title + '\n' : '') + (text || ''));
   }
 
-  // -------------------- Notifications Logic (เพิ่มเข้ามาใหม่) --------------------
+  // -------------------- Notifications Logic --------------------
   (function () {
     const btn = document.getElementById('notifBtn');
     const modal = document.getElementById('notifModal');
@@ -41,7 +42,7 @@
       card.style.left = Math.max(8, Math.min(r.right - width + 48, maxLeft)) + 'px';
       card.style.top = (r.bottom + gap) + 'px';
     }
-    
+
     function open() {
       modal.classList.remove('hidden');
       requestAnimationFrame(place);
@@ -59,74 +60,74 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
 
     function render() {
-        const unreadCount = NOTIFICATIONS.filter(n => !n.read).length;
-        if (badge) {
-            if (unreadCount > 0) {
-                badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
+      const unreadCount = NOTIFICATIONS.filter(n => !n.read).length;
+      if (badge) {
+        if (unreadCount > 0) {
+          badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
         }
-        
-        if (NOTIFICATIONS.length === 0) {
-            listEl.innerHTML = '';
-            emptyEl.classList.remove('hidden');
-            return;
-        }
+      }
 
-        emptyEl.classList.add('hidden');
-        listEl.innerHTML = NOTIFICATIONS.map(n => {
-            const isUnread = !n.read ? 'bg-indigo-50' : 'bg-white';
-            const link = n.eventId ? `./event.html?id=${n.eventId}` : '#';
-            const date = new Date(n.createdAt).toLocaleString('th-TH', { day:'numeric', month:'short', hour:'2-digit', minute: '2-digit' });
-            
-            return `
-            <a href="${link}" class="block p-3 rounded-lg hover:bg-slate-100 ${isUnread}">
-                <div class="flex items-start gap-3">
-                    ${!n.read ? '<div class="mt-1.5 h-2 w-2 rounded-full bg-indigo-500 shrink-0"></div>' : '<div class="h-2 w-2 shrink-0"></div>'}
-                    <div class="flex-1">
-                        <p class="text-sm text-slate-800">${window.escapeHtml(n.message)}</p>
-                        <p class="text-xs text-slate-500 mt-1">${date}</p>
-                    </div>
-                </div>
-            </a>`;
-        }).join('');
+      if (NOTIFICATIONS.length === 0) {
+        listEl.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+
+      emptyEl.classList.add('hidden');
+      listEl.innerHTML = NOTIFICATIONS.map(n => {
+        const isUnread = !n.read ? 'bg-indigo-50' : 'bg-white';
+        const link = n.eventId ? `./event.html?id=${n.eventId}` : '#';
+        const date = new Date(n.createdAt).toLocaleString('th-TH', { day:'numeric', month:'short', hour:'2-digit', minute: '2-digit' });
+
+        return `
+          <a href="${link}" class="block p-3 rounded-lg hover:bg-slate-100 ${isUnread}">
+            <div class="flex items-start gap-3">
+              ${!n.read ? '<div class="mt-1.5 h-2 w-2 rounded-full bg-indigo-500 shrink-0"></div>' : '<div class="h-2 w-2 shrink-0"></div>'}
+              <div class="flex-1">
+                <p class="text-sm text-slate-800">${window.escapeHtml(n.message)}</p>
+                <p class="text-xs text-slate-500 mt-1">${date}</p>
+              </div>
+            </div>
+          </a>`;
+      }).join('');
     }
 
     async function loadNotifications() {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-        try {
-            const res = await fetch(`${window.API_BASE}/notifications/me`, {
-                headers: { Authorization: "Bearer " + token }, credentials: "include"
-            });
-            if (!res.ok) return;
-            NOTIFICATIONS = await res.json();
-            render();
-        } catch (e) {
-            console.error("Failed to load notifications:", e);
-        }
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      try {
+        const res = await fetch(`${window.API_BASE}/notifications/me`, {
+          headers: { Authorization: "Bearer " + token }, credentials: "include"
+        });
+        if (!res.ok) return;
+        NOTIFICATIONS = await res.json();
+        render();
+      } catch (e) {
+        console.error("Failed to load notifications:", e);
+      }
     }
 
     async function markAsRead() {
-        const hasUnread = NOTIFICATIONS.some(n => !n.read);
-        if (!hasUnread) return;
+      const hasUnread = NOTIFICATIONS.some(n => !n.read);
+      if (!hasUnread) return;
 
-        NOTIFICATIONS.forEach(n => n.read = true);
-        render();
+      NOTIFICATIONS.forEach(n => n.read = true);
+      render();
 
-        const token = localStorage.getItem("token");
-        try {
-            await fetch(`${window.API_BASE}/notifications/me/mark-as-read`, {
-                method: 'POST',
-                headers: { Authorization: "Bearer " + token }, credentials: "include"
-            });
-        } catch (e) {
-            console.error("Failed to mark notifications as read:", e);
-        }
+      const token = localStorage.getItem("token");
+      try {
+        await fetch(`${window.API_BASE}/notifications/me/mark-as-read`, {
+          method: 'POST',
+          headers: { Authorization: "Bearer " + token }, credentials: "include"
+        });
+      } catch (e) {
+        console.error("Failed to mark notifications as read:", e);
+      }
     }
-    
+
     loadNotifications();
   })();
 
@@ -143,13 +144,6 @@
       'assets/hero/5.v2.jpg',
       'assets/hero/6.v2.jpg'
     ];
-    const FALLBACKS = [
-      'https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1522199755839-a2bacb67c546?q=80&w=1600&auto=format&fit=crop'
-    ];
 
     const dotsWrap = document.getElementById('tvDots');
     const btnPrev = document.getElementById('tvPrev');
@@ -161,7 +155,6 @@
       const prio  = i === 0 ? 'high' : 'auto';
       const el = document.createElement('div');
       el.className = 'tv-slide';
-      // ระบุ width/height + srcset/sizes เพื่อลด data และกัน CLS
       el.innerHTML = `
         <img
           src="${src}"
@@ -175,11 +168,10 @@
       const img = el.querySelector('img');
       el.dataset.loading = '1';
       img.addEventListener('load', () => { delete el.dataset.loading; });
-      // ถ้ารูปเสียให้ fallback ไปภาพ placeholder เบา ๆ
       img.addEventListener('error', () => { img.src = 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1600&auto=format&fit=crop'; });
       stage.appendChild(el);
       return el;
-}
+    }
 
     const slides = IMAGES.map((src, i) => makeSlide(src, i));
     const dots = IMAGES.map((_, i) => {
@@ -283,54 +275,53 @@
 
     let ALL_EVENTS = [];
 
-function renderEvents(items, q = "") {
-  if (!Array.isArray(items) || items.length === 0) {
-    eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-5 text-center text-slate-200 ring-1 ring-white/10">
-      ${q ? `ไม่พบกิจกรรมที่ตรงกับ “${window.escapeHtml(q)}”` : 'ยังไม่มีกิจกรรม'}
-    </li>`;
-    return;
-  }
+    function renderEvents(items, q = "") {
+      if (!Array.isArray(items) || items.length === 0) {
+        eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-5 text-center text-slate-200 ring-1 ring-white/10">
+          ${q ? `ไม่พบกิจกรรมที่ตรงกับ “${window.escapeHtml(q)}”` : 'ยังไม่มีกิจกรรม'}
+        </li>`;
+        return;
+      }
 
-  eventList.innerHTML = items.map(ev => {
-    const dateTxt = ev.dateText ? window.formatDateLabel(ev.dateText) : "—";
-    const title = window.escapeHtml(ev.title || 'Untitled Event');
+      eventList.innerHTML = items.map(ev => {
+        const dateTxt = ev.dateText ? window.formatDateLabel(ev.dateText) : "—";
+        const title = window.escapeHtml(ev.title || 'Untitled Event');
 
-    // ── normalize รูป ─────────────────────────────────────────────
-    const raw = String(ev.imageUrl || '').trim();
-    const src =
-      /^https?:\/\//i.test(raw) ? raw :
-      raw.startsWith('/assets') ? raw :
-      raw.startsWith('assets') ? '/' + raw :
-      raw.startsWith('./assets') ? '/' + raw.replace(/^\.\//, '') :
-      raw.startsWith('/') ? raw :
-      (raw ? '/' + raw : '');
-    const hasImage = !!src;
+        // normalize image url
+        const raw = String(ev.imageUrl || '').trim();
+        const src =
+          /^https?:\/\//i.test(raw) ? raw :
+          raw.startsWith('/assets') ? raw :
+          raw.startsWith('assets') ? '/' + raw :
+          raw.startsWith('./assets') ? '/' + raw.replace(/^\.\//, '') :
+          raw.startsWith('/') ? raw :
+          (raw ? '/' + raw : '');
+        const hasImage = !!src;
 
-    const imageEl = hasImage
-      ? `<img src="${window.escapeHtml(src)}" alt="" loading="lazy"
-           class="w-20 h-20 rounded-lg object-cover bg-slate-700 shrink-0">`
-      : `<div class="w-20 h-20 rounded-lg bg-slate-700 grid place-items-center shrink-0">
-           <svg class="w-8 h-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-             <path stroke-linecap="round" stroke-linejoin="round"
-               d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-           </svg>
-         </div>`;
+        const imageEl = hasImage
+          ? `<img src="${window.escapeHtml(src)}" alt="" loading="lazy"
+               class="w-20 h-20 rounded-lg object-cover bg-slate-700 shrink-0">`
+          : `<div class="w-20 h-20 rounded-lg bg-slate-700 grid place-items-center shrink-0">
+               <svg class="w-8 h-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                 <path stroke-linecap="round" stroke-linejoin="round"
+                   d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+               </svg>
+             </div>`;
 
-    return `<li>
-      <a href="./event.html?id=${ev._id}" class="group flex items-center gap-4 rounded-xl bg-slate-800 p-4 text-slate-100 ring-1 ring-white/10 hover:bg-slate-700 transition">
-        ${imageEl}
-        <div class="flex-1 min-w-0">
-          <div class="font-semibold tracking-wide truncate">${title}</div>
-          <div class="text-sm text-slate-300 mt-1">${dateTxt}</div>
-        </div>
-        <svg class="w-5 h-5 text-slate-400 group-hover:text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-        </svg>
-      </a>
-    </li>`;
-  }).join("");
-}
-
+        return `<li>
+          <a href="./event.html?id=${ev._id}" class="group flex items-center gap-4 rounded-xl bg-slate-800 p-4 text-slate-100 ring-1 ring-white/10 hover:bg-slate-700 transition">
+            ${imageEl}
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold tracking-wide truncate">${title}</div>
+              <div class="text-sm text-slate-300 mt-1">${dateTxt}</div>
+            </div>
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+            </svg>
+          </a>
+        </li>`;
+      }).join("");
+    }
 
     function applySearch() {
       const q = (searchInput?.value || "").trim().toLowerCase();
@@ -652,16 +643,15 @@ function renderEvents(items, q = "") {
       const items = await res.json().catch(() => []);
       EVENTS_CACHE = Array.isArray(items) ? items : [];
     }
+
     (async function initAdmin() {
       // ต้องรู้ role ก่อน
       await loadMe();
-      if (CURRENT_USER?.role !== 'admin') return; // ไม่ใช่แอดมิน จบตรงนี้ → จะใช้ render ของฝั่ง user ตามเดิม
-
-      // เป็นแอดมิน: เติมแค่แคช (สำหรับปุ่มลบ/ดูรายชื่อ) ไม่เขียนทับ #eventList
+      if (CURRENT_USER?.role !== 'admin') return; // ไม่ใช่ admin ไม่ต้องยุ่ง DOM หลัก
+      // เป็น admin: เติมแค่แคชสำหรับ modal ต่าง ๆ
       await loadEventsForAdminCacheOnly();
     })().catch(() => {});
 
-    
     function openDelModal() {
       if (!delUI.wrap) return;
       delUI.loading?.classList.remove('hidden');
@@ -714,9 +704,27 @@ function renderEvents(items, q = "") {
               const j = await r.json().catch(() => ({}));
               throw new Error(j.message || r.status);
             }
+
+            // --- อัปเดตแคช + DOM โดยไม่เรียก render ของ user ---
             EVENTS_CACHE = EVENTS_CACHE.filter(e => e._id !== id);
-            await loadEvents();
+
+            // sync แคชฝั่ง user (localStorage) เพื่อให้หน้า list สอดคล้อง
+            try {
+              const key = 'rltg:events:v1';
+              const cached = JSON.parse(localStorage.getItem(key) || '[]');
+              const next = Array.isArray(cached) ? cached.filter(e => e._id !== id) : [];
+              localStorage.setItem(key, JSON.stringify(next));
+            } catch { /* ignore */ }
+
+            // ลบรายการใน modal
             btn.closest('li')?.remove();
+
+            // ลบรายการในลิสต์หลักถ้ามีแสดงอยู่
+            document
+              .querySelector(`#eventList a[href="./event.html?id=${id}"]`)
+              ?.closest('li')
+              ?.remove();
+
             if (!delUI.list.children.length) {
               delUI.scroll?.classList.add('hidden');
               delUI.empty?.classList.remove('hidden');
@@ -846,13 +854,13 @@ function renderEvents(items, q = "") {
 
     function toCSV(rows) {
       const header = ['ชื่อ', 'รหัสนักศึกษา', 'คณะ', 'E-mail', 'เบอร์โทรศัพท์', 'ที่อยู่ (ตอนลงทะเบียน)'];
-      const esc = (v) => {
+      const escCSV = (v) => {
         const t = String(v ?? '');
         return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
       };
-      const lines = [header.map(esc).join(',')];
+      const lines = [header.map(escCSV).join(',')];
       for (const r of rows) {
-        lines.push([r.name, r.idnum, r.faculty, r.email, r.phone, r.addr].map(esc).join(','));
+        lines.push([r.name, r.idnum, r.faculty, r.email, r.phone, r.addr].map(escCSV).join(','));
       }
       return lines.join('\n');
     }
@@ -976,7 +984,6 @@ function renderEvents(items, q = "") {
       document.getElementById('rdExport')?.removeAttribute('disabled');
     }
 
-
     fabReg?.addEventListener('click', openRegModal);
     regUI.overlay?.addEventListener('click', () => hideModal(regUI.wrap));
     regUI.close?.addEventListener('click', () => hideModal(regUI.wrap));
@@ -995,8 +1002,6 @@ function renderEvents(items, q = "") {
       const csv = toCSV(RD_CURRENT_ROWS);
       downloadCSVFile(filename, csv);
     });
-
-    Promise.allSettled([loadMe(), loadEvents()]).catch(() => { });
   })();
 
   // -------------------- Service worker --------------------
@@ -1005,12 +1010,14 @@ function renderEvents(items, q = "") {
       navigator.serviceWorker.register('/sw.js').catch(() => { /* ignore */ });
     });
   }
+
   requestIdleCallback?.(() => {
-  // warm image cache
-  ['2.v2.jpg','3.v2.jpg'].forEach(name => {
-    const i = new Image();
-    i.referrerPolicy = 'no-referrer';
-    i.src = `/assets/hero/${name}`;
+    // warm image cache
+    ['2.v2.jpg','3.v2.jpg'].forEach(name => {
+      const i = new Image();
+      i.referrerPolicy = 'no-referrer';
+      i.src = `/assets/hero/${name}`;
+    });
   });
-});
 })();
+
