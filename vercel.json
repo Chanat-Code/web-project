@@ -4,8 +4,8 @@
   "builds": [
     { "src": "api/index.js", "use": "@vercel/node" },
     { "src": "api/cron.js",  "use": "@vercel/node" },
-    { "src": "sw.js",  "use": "@vercel/node" },
-
+    
+    { "src": "sw.js",  "use": "@vercel/static" },
     { "src": "index.html", "use": "@vercel/static" },
     { "src": "reset.html", "use": "@vercel/static" },
     { "src": "forgot.html", "use": "@vercel/static" },
