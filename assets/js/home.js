@@ -1,4 +1,3 @@
-
 (() => {
   // -------------------- Globals / Utils --------------------
   window.API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
@@ -99,8 +98,10 @@
       const token = localStorage.getItem("token");
       if (!token) return;
       try {
-        const res = await fetch(`${window.API_BASE}/notifications/me`, {
-          headers: { Authorization: "Bearer " + token }, credentials: "include"
+        const res = await fetch(`${window.API_BASE}/notifications/me?ts=${Date.now()}`, {
+          headers: { Authorization: "Bearer " + token },
+          credentials: "include",
+          cache: "no-store",
         });
         if (!res.ok) return;
         NOTIFICATIONS = await res.json();
@@ -121,7 +122,9 @@
       try {
         await fetch(`${window.API_BASE}/notifications/me/mark-as-read`, {
           method: 'POST',
-          headers: { Authorization: "Bearer " + token }, credentials: "include"
+          headers: { Authorization: "Bearer " + token },
+          credentials: "include",
+          cache: "no-store",
         });
       } catch (e) {
         console.error("Failed to mark notifications as read:", e);
@@ -344,7 +347,11 @@
     });
 
     async function loadMe() {
-      const res = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: "Bearer " + token }, credentials: "include" });
+      const res = await fetch(`${API_BASE}/auth/me?ts=${Date.now()}`, {
+        headers: { Authorization: "Bearer " + token },
+        credentials: "include",
+        cache: "no-store",
+      });
       if (!res.ok) throw new Error("unauthorized");
       const json = await res.json().catch(() => ({}));
       const me = json.user || json;
@@ -379,13 +386,33 @@
       if (!btn) return;
       btn.addEventListener("click", async () => {
         try {
-          await fetch(`${API_BASE}/auth/logout`, {
+          await fetch(`${API_BASE}/auth/logout?ts=${Date.now()}`, {
             method: "POST",
             credentials: "include",
+            cache: "no-store",
           });
-        } catch (e) { }
-        localStorage.removeItem("token");
-        location.href = "./index.html";
+        } catch (e) { /* ignore */ }
+
+        try {
+          // clear client state
+          localStorage.removeItem("token");
+          localStorage.removeItem("rltg:events:v1");
+          sessionStorage.clear();
+
+          // clear Cache API (SW)
+          if (window.caches) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+          }
+
+          // ask SW to update
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(r => r.update()));
+          }
+        } catch (e) { /* ignore */ }
+
+        location.replace("./index.html");
       });
     }
 
@@ -406,7 +433,11 @@
       }
 
       try {
-        const res = await fetch(`${API_BASE}/events`, { credentials: 'include', headers: { 'Cache-Control': 'no-cache' }, keepalive: true });
+        const res = await fetch(`${API_BASE}/events?ts=${Date.now()}`, {
+          credentials: 'include',
+          cache: 'no-store',
+          keepalive: true
+        });
         const items = await res.json().catch(() => []);
         ALL_EVENTS = Array.isArray(items) ? items : [];
         localStorage.setItem(key, JSON.stringify(ALL_EVENTS));
@@ -425,8 +456,11 @@
       e.preventDefault();
       const fd = new FormData(addForm); const payload = Object.fromEntries(fd.entries());
       const res = await fetch(`${API_BASE}/events`, {
-        method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-        credentials: "include", body: JSON.stringify(payload)
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        credentials: "include",
+        body: JSON.stringify(payload),
+        cache: "no-store",
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -460,11 +494,11 @@
 
     async function fetchMyRegistrations() {
       const token = localStorage.getItem('token');
-      const opt = { headers: { Authorization: 'Bearer ' + token }, credentials: 'include' };
-      let res = await fetch(`${API_BASE}/registrations/me`, opt);
+      const opt = { headers: { Authorization: 'Bearer ' + token }, credentials: 'include', cache: 'no-store' };
+      let res = await fetch(`${API_BASE}/registrations/me?ts=${Date.now()}`, opt);
       if (res.ok) { const j = await res.json().catch(() => ({})); return j.items || []; }
       if (res.status === 404) {
-        res = await fetch(`${API_BASE}/auth/my-registrations`, opt);
+        res = await fetch(`${API_BASE}/auth/my-registrations?ts=${Date.now()}`, opt);
         if (res.ok) { const j = await res.json().catch(() => ({})); return j.items || []; }
       }
       const t = await res.text().catch(() => ''); throw new Error(`GET failed ${res.status}: ${t || 'unknown error'}`);
@@ -505,7 +539,7 @@
             const id = btn.getAttribute('data-remove');
             try {
               await fetch(`${API_BASE}/registrations/${id}`, {
-                method: 'DELETE', headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+                method: 'DELETE', headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }, cache: 'no-store'
               });
               loadHistory();
             } catch { }
@@ -598,7 +632,7 @@
     }
     async function tryJson(url) {
       try {
-        const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token }, credentials: 'include' });
+        const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token }, credentials: 'include', cache: 'no-store' });
         if (!res.ok) return null;
         return await res.json().catch(() => null);
       } catch { return null; }
@@ -606,8 +640,8 @@
 
     async function fetchEventCounts() {
       try {
-        const r = await fetch(`${API_BASE}/events/admin/summary`, {
-          headers: { Authorization: 'Bearer ' + token }, credentials: 'include'
+        const r = await fetch(`${API_BASE}/events/admin/summary?ts=${Date.now()}`, {
+          headers: { Authorization: 'Bearer ' + token }, credentials: 'include', cache: 'no-store'
         });
         if (!r.ok) return {};
         const list = await r.json().catch(() => []);
@@ -627,7 +661,9 @@
     let EVENTS_CACHE = [];
 
     async function loadMe() {
-      const res = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: 'Bearer ' + token }, credentials: 'include' });
+      const res = await fetch(`${API_BASE}/auth/me?ts=${Date.now()}`, {
+        headers: { Authorization: 'Bearer ' + token }, credentials: 'include', cache: 'no-store'
+      });
       const j = await res.json().catch(() => ({}));
       CURRENT_USER = j.user || j;
       if (CURRENT_USER?.role === 'admin') {
@@ -639,16 +675,14 @@
     }
 
     async function loadEventsForAdminCacheOnly() {
-      const res = await fetch(`${API_BASE}/events`, { credentials: 'include' });
+      const res = await fetch(`${API_BASE}/events?ts=${Date.now()}`, { credentials: 'include', cache: 'no-store' });
       const items = await res.json().catch(() => []);
       EVENTS_CACHE = Array.isArray(items) ? items : [];
     }
 
     (async function initAdmin() {
-      // ต้องรู้ role ก่อน
       await loadMe();
-      if (CURRENT_USER?.role !== 'admin') return; // ไม่ใช่ admin ไม่ต้องยุ่ง DOM หลัก
-      // เป็น admin: เติมแค่แคชสำหรับ modal ต่าง ๆ
+      if (CURRENT_USER?.role !== 'admin') return;
       await loadEventsForAdminCacheOnly();
     })().catch(() => {});
 
@@ -698,32 +732,25 @@
             const r = await fetch(`${API_BASE}/events/${id}`, {
               method: 'DELETE',
               headers: { Authorization: 'Bearer ' + token },
-              credentials: 'include'
+              credentials: 'include',
+              cache: 'no-store',
             });
             if (!r.ok) {
               const j = await r.json().catch(() => ({}));
               throw new Error(j.message || r.status);
             }
 
-            // --- อัปเดตแคช + DOM โดยไม่เรียก render ของ user ---
+            // update caches & DOM
             EVENTS_CACHE = EVENTS_CACHE.filter(e => e._id !== id);
-
-            // sync แคชฝั่ง user (localStorage) เพื่อให้หน้า list สอดคล้อง
             try {
               const key = 'rltg:events:v1';
               const cached = JSON.parse(localStorage.getItem(key) || '[]');
               const next = Array.isArray(cached) ? cached.filter(e => e._id !== id) : [];
               localStorage.setItem(key, JSON.stringify(next));
-            } catch { /* ignore */ }
+            } catch {}
 
-            // ลบรายการใน modal
             btn.closest('li')?.remove();
-
-            // ลบรายการในลิสต์หลักถ้ามีแสดงอยู่
-            document
-              .querySelector(`#eventList a[href="./event.html?id=${id}"]`)
-              ?.closest('li')
-              ?.remove();
+            document.querySelector(`#eventList a[href="./event.html?id=${id}"]`)?.closest('li')?.remove();
 
             if (!delUI.list.children.length) {
               delUI.scroll?.classList.add('hidden');
@@ -798,7 +825,7 @@
 
       let events = EVENTS_CACHE;
       if (!events.length) {
-        const r = await fetch(`${API_BASE}/events`, { credentials: 'include' });
+        const r = await fetch(`${API_BASE}/events?ts=${Date.now()}`, { credentials: 'include', cache: 'no-store' });
         events = await r.json().catch(() => []);
         events = Array.isArray(events) ? events : [];
       }
@@ -1020,4 +1047,3 @@
     });
   });
 })();
-

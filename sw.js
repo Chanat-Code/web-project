@@ -1,10 +1,10 @@
-// sw.js (ปรับปรุง)
-const VER = 'v191';
+// sw.js
+const VER = 'v192';
 const STATIC_CACHE  = `static-${VER}`;
 const RUNTIME_CACHE = `runtime-${VER}`;
 const API_EVENTS = /\/api\/events(?:\?|$)/;
 
-// ปรับ: ใส่ไฟล์พื้นฐานสำหรับ fallback ออฟไลน์
+// ไฟล์พื้นฐานสำหรับ fallback ออฟไลน์
 const STATIC_ASSETS = ['/', '/home.html'];
 
 // ——— Utils ———
@@ -17,18 +17,19 @@ async function limitCacheEntries(cacheName, max = 120) {
   }
 }
 
+// API ที่ “ผูกกับผู้ใช้” (ไม่อนุญาตให้แคช) — ยกเว้น /api/events
+const isUserScopedAPI = (url) =>
+  url.pathname.startsWith('/api/') && !API_EVENTS.test(url.pathname + url.search);
+
 // ——— Install ———
 self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(STATIC_CACHE).then((c) => c.addAll(STATIC_ASSETS))
-  );
+  e.waitUntil(caches.open(STATIC_CACHE).then((c) => c.addAll(STATIC_ASSETS)));
   self.skipWaiting();
 });
 
 // ——— Activate + Navigation Preload ———
 self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
-    // เปิด navigation preload ถ้ามี
     if ('navigationPreload' in self.registration) {
       try { await self.registration.navigationPreload.enable(); } catch {}
     }
@@ -48,20 +49,15 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
-
-  // ข้าม cross-origin ทั้งหมด (ลดบั๊กและ opaque)
   if (!sameOrigin(url)) return;
 
   // 0) HTML navigations → network-first + offline fallback
   if (req.mode === 'navigate') {
     e.respondWith((async () => {
       try {
-        // ใช้ navigation preload ถ้ามี
         const prel = await e.preloadResponse;
         if (prel) return prel;
-
-        const fresh = await fetch(req, { cache: 'no-store' });
-        return fresh;
+        return await fetch(req, { cache: 'no-store' });
       } catch {
         const cache = await caches.open(STATIC_CACHE);
         return (await cache.match('/home.html')) || Response.error();
@@ -70,7 +66,13 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // 1) API → network-first (มีสำรอง)
+  // **สำคัญ**: ทุก API ที่ไม่ใช่ /api/events หรือมี Authorization → network-only (no-store)
+  if (isUserScopedAPI(url) || req.headers.has('Authorization')) {
+    e.respondWith(fetch(req, { cache: 'no-store' }).catch(() => new Response('', { status: 503 })));
+    return;
+  }
+
+  // 1) /api/events → network-first (มีสำรอง)
   if (API_EVENTS.test(url.pathname + url.search)) {
     e.respondWith((async () => {
       const cache = await caches.open(RUNTIME_CACHE);
@@ -91,18 +93,15 @@ self.addEventListener('fetch', (e) => {
     e.respondWith((async () => {
       const cache = await caches.open(RUNTIME_CACHE);
       const cached = await cache.match(req);
-
       const freshPromise = fetch(req, { cache: 'reload' }).then(async (res) => {
         if (res.ok) {
           await cache.put(req, res.clone());
-          // บีบจำนวน entries กันบวม
           limitCacheEntries(RUNTIME_CACHE, 120);
         } else if (res.status === 404 && cached) {
           await cache.delete(req);
         }
         return res;
-      }).catch(() => cached); // ถ้าเน็ตล่ม ให้ใช้ cached
-
+      }).catch(() => cached);
       return cached || freshPromise;
     })());
     return;
@@ -117,25 +116,24 @@ self.addEventListener('fetch', (e) => {
         if (fresh.ok) await cache.put(req, fresh.clone());
         return fresh;
       } catch {
-        const runtimeCached = await cache.match(req);
-        if (runtimeCached) return runtimeCached;
-
+        const hit = await cache.match(req);
+        if (hit) return hit;
         const staticCache = await caches.open(STATIC_CACHE);
-        const staticCached = await staticCache.match(req);
-        return staticCached || new Response('', { status: 504 });
+        const staticHit = await staticCache.match(req);
+        return staticHit || new Response('', { status: 504 });
       }
     })());
     return;
   }
 
-  // อื่นๆ → ลอง runtime cache ก่อน ค่อยไปเน็ต (cache-first with network fallback)
+  // อื่นๆ (ไฟล์สาธารณะ) → cache-first
   e.respondWith((async () => {
     const cache = await caches.open(RUNTIME_CACHE);
     const hit = await cache.match(req);
     if (hit) return hit;
     try {
       const res = await fetch(req);
-      if (res.ok && req.method === 'GET') await cache.put(req, res.clone());
+      if (res.ok) await cache.put(req, res.clone());
       return res;
     } catch {
       return hit || Response.error();
