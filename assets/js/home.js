@@ -262,6 +262,75 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
   })();
 
+  // ===== Pagination state =====
+const PAGER = {
+  page: 1,
+  size: 8, // จำนวนการ์ดต่อหน้า (เช่น 2 แถว x 4 คอลัมน์ = 8)
+  view: [], // รายการหลังกรอง/ค้นหา ที่จะเอามาแบ่งหน้า
+};
+
+function paginate(items, page, size) {
+  const total = items.length;
+  const pages = Math.max(1, Math.ceil(total / size));
+  const p = Math.min(Math.max(1, page), pages);
+  const start = (p - 1) * size;
+  return {
+    page: p,
+    pages,
+    total,
+    slice: items.slice(start, start + size),
+  };
+}
+
+// วาดปุ่มเลขหน้าแบบ 1 2 3 ... ถัดไป หน้าสุดท้าย
+function renderPager(meta) {
+  const wrap = document.getElementById('eventPager');
+  if (!wrap) return;
+
+  const { page, pages } = meta;
+  if (pages <= 1) { wrap.innerHTML = ''; return; }
+
+  const btn = (label, goto, isActive=false, disabled=false) => `
+    <button data-goto="${goto}" ${disabled?'disabled':''}
+      class="h-9 min-w-9 px-3 rounded-lg border ${isActive?'bg-slate-800 text-white border-slate-800':'border-slate-300 text-slate-700 hover:bg-slate-100'}
+             disabled:opacity-40 disabled:cursor-not-allowed">
+      ${label}
+    </button>`;
+
+  // สร้างลิสต์เลขหน้าแบบมี ellipsis
+  const nums = [];
+  const push = (n) => nums.push(btn(n, n, n === page));
+  const addEllipsis = () => nums.push(`<span class="px-2 text-slate-500">…</span>`);
+
+  nums.push(btn('«', 1, false, page===1));
+  nums.push(btn('‹', page-1, false, page===1));
+
+  const windowSize = 1; // แสดงข้างเคียง 1 หน้า
+  const left = Math.max(2, page - windowSize);
+  const right = Math.min(pages - 1, page + windowSize);
+
+  push(1);
+  if (left > 2) addEllipsis();
+  for (let n = left; n <= right; n++) push(n);
+  if (right < pages - 1) addEllipsis();
+  if (pages > 1) push(pages);
+
+  nums.push(btn('›', page+1, false, page===pages));
+  nums.push(btn('หน้าสุดท้าย', pages, false, page===pages));
+
+  wrap.innerHTML = nums.join('');
+
+  // wire click
+  wrap.querySelectorAll('button[data-goto]').forEach(b=>{
+    b.addEventListener('click', (e)=>{
+      const goto = Number(b.getAttribute('data-goto'));
+      if (!Number.isFinite(goto)) return;
+      PAGER.page = goto;
+      renderEvents(PAGER.view); // วาดหน้าใหม่ด้วยข้อมูลชุดเดิม
+    });
+  });
+}
+
   (function () {
     const API_BASE = window.API_BASE;
     const token = localStorage.getItem("token");
@@ -279,72 +348,77 @@
     let ALL_EVENTS = [];
 
  function renderEvents(items, q = "") {
- if (!Array.isArray(items) || items.length === 0) {
-  // ใช้ col-span-full เพื่อให้ข้อความ "ไม่มีกิจกรรม" แสดงเต็มความกว้างของ grid
-  eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-5 text-center text-slate-200 ring-1 ring-white/10 col-span-full">
-   ${q ? `ไม่พบกิจกรรมที่ตรงกับ “${window.escapeHtml(q)}”` : 'ยังไม่มีกิจกรรม'}
-  </li>`;
-  return;
- }
+  // อัปเดตชุดข้อมูลที่จะแสดงและหน้า
+  PAGER.view = Array.isArray(items) ? items : [];
+  const meta = paginate(PAGER.view, PAGER.page, PAGER.size);
 
- eventList.innerHTML = items.map(ev => {
-  const dateTxt = ev.dateText ? window.formatDateLabel(ev.dateText) : "—";
-  const title = window.escapeHtml(ev.title || 'Untitled Event');
-  const eventUrl = `./event.html?id=${ev._id}`;
+  const list = meta.slice; // เฉพาะรายการของหน้านี้
+  if (!Array.isArray(list) || list.length === 0) {
+    eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-5 text-center text-slate-200 ring-1 ring-white/10 col-span-full">
+      ${q ? `ไม่พบกิจกรรมที่ตรงกับ “${window.escapeHtml(q)}”` : 'ยังไม่มีกิจกรรม'}
+    </li>`;
+    renderPager({ page: 1, pages: 1 }); // ซ่อนเพจเจอร์
+    return;
+  }
 
-  // ── normalize รูป ─────────────────────────────────────────────
-  const raw = String(ev.imageUrl || '').trim();
-  const src =
-   /^https?:\/\//i.test(raw) ? raw :
-   raw.startsWith('/assets') ? raw :
-   raw.startsWith('assets') ? '/' + raw :
-   raw.startsWith('./assets') ? '/' + raw.replace(/^\.\//, '') :
-   raw.startsWith('/') ? raw :
-   (raw ? '/' + raw : ''); // ถ้ามี path แต่ไม่เข้าเงื่อนไข ให้เติม / ข้างหน้า
-  const hasImage = !!src;
+  eventList.innerHTML = list.map(ev => {
+    const dateTxt = ev.dateText ? window.formatDateLabel(ev.dateText) : "—";
+    const title = window.escapeHtml(ev.title || 'Untitled Event');
+    const eventUrl = `./event.html?id=${ev._id}`;
 
-  // Fallback Icon SVG (เหมือนเดิม)
-  const fallbackIcon = `<div class="absolute inset-0 bg-slate-700 grid place-items-center">
+    // normalize image path (คงของเดิม)
+    const raw = String(ev.imageUrl || '').trim();
+    const src =
+      /^https?:\/\//i.test(raw) ? raw :
+      raw.startsWith('/assets') ? raw :
+      raw.startsWith('assets') ? '/' + raw :
+      raw.startsWith('./assets') ? '/' + raw.replace(/^\.\//, '') :
+      raw.startsWith('/') ? raw :
+      (raw ? '/' + raw : '');
+    const hasImage = !!src;
+
+    const fallbackIcon = `<div class="absolute inset-0 bg-slate-700 grid place-items-center">
       <svg class="w-12 h-12 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
        <path stroke-linecap="round" stroke-linejoin="round"
         d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
       </svg>
-     </div>`;
+    </div>`;
 
-  // Image Element (ถ้ามี src)
-  const imageEl = hasImage
-   ? `<img src="${window.escapeHtml(src)}" alt="" loading="lazy"
-     class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-in-out">`
-   : fallbackIcon; // ใช้ fallback ถ้าไม่มีรูป
+    const imageEl = hasImage
+      ? `<img src="${window.escapeHtml(src)}" alt="" loading="lazy"
+           class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-in-out">`
+      : fallbackIcon;
 
-   // ── สร้างการ์ด HTML ─────────────────────────────────────────────
     return `<li class="relative aspect-[16/11] rounded-xl overflow-hidden group shadow-lg bg-slate-800 ring-1 ring-white/10">
       ${imageEl}
-          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none"></div>
       <div class="absolute bottom-0 left-0 right-0 p-4 text-white z-10">
-    <h3 class="text-lg font-semibold leading-tight mb-1 line-clamp-2">${title}</h3>
-    <div class="flex items-center justify-between text-sm mt-2">
-     <span class="text-slate-300">${dateTxt}</span>
-     <a href="${eventUrl}"
-      class="px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors whitespace-nowrap">
-      ดูรายละเอียด
-     </a>
-    </div>
-   </div>
+        <h3 class="text-lg font-semibold leading-tight mb-1 line-clamp-2">${title}</h3>
+        <div class="flex items-center justify-between text-sm mt-2">
+          <span class="text-slate-300">${dateTxt}</span>
+          <a href="${eventUrl}"
+            class="px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors whitespace-nowrap">
+            ดูรายละเอียด
+          </a>
+        </div>
+      </div>
       <a href="${eventUrl}" class="absolute inset-0 z-0" aria-label="${title}"></a>
-  </li>`;
- }).join("");
+    </li>`;
+  }).join("");
+
+  renderPager(meta); // วาดเลขหน้า
 }
 
-    function applySearch() {
-      const q = (searchInput?.value || "").trim().toLowerCase();
-      if (!q) { renderEvents(ALL_EVENTS); return; }
-      const filtered = ALL_EVENTS.filter(ev => {
-        const f = (v) => String(v || "").toLowerCase();
-        return [ev.title, ev.location, ev.dateText].some(v => f(v).includes(q));
-      });
-      renderEvents(filtered, q);
-    }
+   function applySearch() {
+  const q = (searchInput?.value || "").trim().toLowerCase();
+  PAGER.page = 1; // รีเซ็ตหน้า
+  if (!q) { renderEvents(ALL_EVENTS); return; }
+  const filtered = ALL_EVENTS.filter(ev => {
+    const f = (v) => String(v || "").toLowerCase();
+    return [ev.title, ev.location, ev.dateText].some(v => f(v).includes(q));
+  });
+  renderEvents(filtered, q);
+}
 
     const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
     const applySearchDebounced = debounce(applySearch, 150);
