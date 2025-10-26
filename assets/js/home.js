@@ -463,22 +463,55 @@
     function closeAdd() { addModal?.classList.add("hidden"); addForm?.reset(); }
 
     addForm?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const fd = new FormData(addForm); const payload = Object.fromEntries(fd.entries());
+    e.preventDefault();
+    const submitBtn = document.getElementById('addSubmitBtn'); // Get submit button
+   const fd = new FormData(addForm); // ✅ Create FormData directly from the form
+
+    // Optional: Add loading state to button
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'กำลังบันทึก...';
+    }
+
+  try { // Wrap in try...catch
       const res = await fetch(`${API_BASE}/events`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-        credentials: "include",
-        body: JSON.stringify(payload),
-        cache: "no-store",
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        toastError('เพิ่มกิจกรรมไม่สำเร็จ', data.message || String(res.status));
-        return;
-      }
-      closeAdd(); loadEvents();
+     method: "POST",
+     headers: {
+            // 🚫 **DO NOT** set 'Content-Type': 'application/json' or 'multipart/form-data'
+            // The browser will set it automatically with the correct boundary for FormData
+            Authorization: "Bearer " + token
+        },
+     credentials: "include",
+     body: fd, // ✅ Send the FormData object directly
+        cache: "no-store", // Ensure this request isn't cached
     });
+
+      if (!res.ok) {
+        // Try to get error message from backend response
+        const data = await res.json().catch(() => ({ message: `HTTP Error ${res.status}` }));
+        throw new Error(data.message || `เกิดข้อผิดพลาด: ${res.status}`);
+      }
+
+      // const newEvent = await res.json(); // Get the newly created event data
+
+      closeAdd(); // Close modal on success
+      toastOK('เพิ่มกิจกรรมสำเร็จ!'); // Show success message
+
+      // Reload events to show the new one immediately
+      // Make sure loadEvents fetches fresh data (consider cache-busting if needed)
+      await loadEvents();
+
+    } catch (err) {
+      console.error("Add event error:", err);
+      toastError('เพิ่มกิจกรรมไม่สำเร็จ', err.message || 'โปรดตรวจสอบข้อมูลแล้วลองอีกครั้ง');
+    } finally {
+        // Always re-enable button and restore text
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'บันทึก';
+        }
+    }
+ });
     addCancel?.addEventListener("click", closeAdd);
     fab?.addEventListener("click", openAdd);
     addModal?.querySelector("[data-overlay]")?.addEventListener("click", closeAdd);
