@@ -235,97 +235,89 @@ router.get("/:id/registrations", requireAuth, requireAdmin, async (req, res) => 
 router.patch("/:id",
   requireAuth,
   requireAdmin,
-  upload.single('imageFile'),
+  upload.single('imageFile'), // Also add multer here
   async (req, res) => {
     try {
       const { id } = req.params;
-      const updateData = { ...req.body }; // clone ไว้ก่อนใช้
+      const updateData = req.body; // Contains text fields like title, dateText etc.
+      let oldImageUrl = '';
 
-      // --- เก็บค่าเก่าก่อนอัปเดต (ถ้าจะทำ diff/แจ้งเตือน) ---
-      const oldEv = await Event.findById(id).lean();
-      if (!oldEv) {
-        if (req.file?.filename) {
-          try { await cloudinary.uploader.destroy(req.file.filename); } catch {}
-        }
-        return res.status(404).json({ message: "event not found" });
-      }
-
-      // --- จัดการรูป ---
-      let oldImageUrl = oldEv.imageUrl || "";
+      // Check if a new file was uploaded
       if (req.file) {
-        updateData.imageUrl = req.file.path; // URL ใหม่จาก Cloudinary
-      } else if (updateData.imageUrl === "") {
-        // ผู้ใช้ล้างรูปออก
-        updateData.imageUrl = "";
+        // Find the old image URL *before* updating
+        const oldEvent = await Event.findById(id, 'imageUrl').lean();
+        oldImageUrl = oldEvent?.imageUrl;
+
+        updateData.imageUrl = req.file.path; // Set new image URL from Cloudinary
+      } else if (updateData.imageUrl === '') {
+         // If user explicitly clears the URL field (and doesn't upload a new file)
+         // Find the old image URL *before* updating to delete it later
+        const oldEvent = await Event.findById(id, 'imageUrl').lean();
+        oldImageUrl = oldEvent?.imageUrl;
+         updateData.imageUrl = ''; // Ensure it's set to empty
       } else {
-        // ไม่แตะ field รูป
+        // If no new file and imageUrl not explicitly cleared, remove imageUrl from updateData
+        // so it doesn't accidentally overwrite the existing one with undefined or null
         delete updateData.imageUrl;
       }
 
-      // --- อัปเดต ---
+
       const ev = await Event.findByIdAndUpdate(
         id,
         { $set: updateData },
         { new: true, runValidators: true }
       );
 
-      // --- ลบรูปเก่าถ้ามีการอัปเดตรูปหรือล้างรูป ---
-      if (oldImageUrl && oldImageUrl.includes("cloudinary") &&
-          (req.file || updateData.imageUrl === "")) {
-        try {
-          const publicId = oldImageUrl.split("/").pop().split(".")[0];
-          await cloudinary.uploader.destroy(publicId);
-        } catch (delErr) {
-          console.error("Cloudinary delete failed during event update:", delErr);
-        }
+      if (!ev) {
+        // Clean up newly uploaded file if event not found
+        if (req.file) await cloudinary.uploader.destroy(req.file.filename);
+        return res.status(404).json({ message: "event not found" });
       }
 
-      // --- เตรียมข้อความแจ้งเตือน ---
-      const changed = [];
-      if ("title"       in updateData) changed.push("ชื่อกิจกรรม");
-      if ("dateText"    in updateData) changed.push("วันที่จัด");
-      if ("location"    in updateData) changed.push("สถานที่");
-      if ("description" in updateData) changed.push("รายละเอียด");
-      if ("imageUrl"    in updateData) changed.push("รูปภาพ");
-
-      const changedText = changed.length
-        ? `อัปเดต${changed.join(' / ')}`
-        : "มีการอัปเดตกิจกรรม";
-
-      // --- ดึงผู้ลงทะเบียนทั้งหมด ---
-      const userIds = await Registration.find({ event: id }).distinct("user");
-
-      // --- สร้าง Notification ---
-      if (userIds.length) {
-        const message = `กิจกรรม "${ev.title}" ${changedText}`;
-        await Notification.insertMany(
-          userIds.map(u => ({
-            user: u,
-            type: "event_update",
-            message,
-            eventId: ev._id,
-            title: ev.title,
-          }))
-        );
+      // Delete the OLD image from Cloudinary if a new one was uploaded OR if it was cleared
+      if (oldImageUrl && oldImageUrl.includes('cloudinary') && (req.file || updateData.imageUrl === '')) {
+          try {
+              const publicId = oldImageUrl.split('/').pop().split('.')[0];
+              await cloudinary.uploader.destroy(publicId);
+          } catch (delErr) {
+              console.error("Cloudinary delete failed during event update:", delErr);
+              // Log error but don't fail the request
+          }
       }
 
-      return res.json(ev);
+
+      // Notification logic remains the same...
+      const registrations = await Registration.find({ event: id }).lean();
+      const userIds = registrations.map(reg => reg.user);
+      if (userIds.length > 0) {
+      const message = `ข้อมูลกิจกรรม "${ev.title}" มีการเปลี่ยนแปลง กรุณาตรวจสอบ`;
+      const notifications = userIds.map(userId => ({
+        user: userId,
+        type: 'edit',
+        message: message,
+        eventId: ev._id,
+        title: ev.title,
+      }));
+      await Notification.insertMany(notifications);
+    }
+
+      res.json(ev); // Return updated event
 
     } catch (e) {
       console.error("Event Update Error:", e);
-      if (req.file?.filename) {
-        try { await cloudinary.uploader.destroy(req.file.filename); } catch {}
-      }
+      // Clean up newly uploaded file if DB update fails
+      if (req.file && req.file.filename) {
+         try { await cloudinary.uploader.destroy(req.file.filename); } catch (delErr) { console.error("Cloudinary cleanup failed:", delErr);}
+       }
       if (e instanceof multer.MulterError) {
         return res.status(400).json({ message: `File upload error: ${e.message}` });
-      } else if (e.message?.includes('รองรับเฉพาะไฟล์รูปภาพเท่านั้น')) {
-        return res.status(400).json({ message: e.message });
+      } else if (e.message.includes('รองรับเฉพาะไฟล์รูปภาพเท่านั้น')) {
+         return res.status(400).json({ message: e.message });
       }
-      return res.status(500).json({ message: "Server error during event update" });
+      res.status(500).json({ message: "Server error during event update" });
     }
   }
 );
-
 
 
 export default router;
