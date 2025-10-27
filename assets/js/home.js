@@ -134,6 +134,46 @@
     loadNotifications();
   })();
 
+  // -------------------- Profile dropdown --------------------
+(function () {
+  const btn = document.getElementById('profileBtn');
+  const modal = document.getElementById('profileModal');
+  if (!btn || !modal) return;
+
+  const card = document.getElementById('profileCard');
+  const overlay = modal.querySelector('[data-overlay]');
+  const closeBtn = modal.querySelector('[data-close]') || modal.querySelector('[aria-label="ปิด"]');
+
+  function place() {
+    // วางการ์ดให้อยู่ใต้ปุ่มโปรไฟล์
+    const r = btn.getBoundingClientRect();
+    const gap = 10;
+    const w = card.offsetWidth;
+    const maxLeft = window.innerWidth - w - 8;
+    card.style.left = Math.max(8, Math.min(r.right - w + 48, maxLeft)) + 'px';
+    card.style.top = (r.bottom + gap) + 'px';
+  }
+
+  function open() {
+    modal.classList.remove('hidden');
+    requestAnimationFrame(place);
+    window.addEventListener('resize', place, { passive: true });
+  }
+
+  function close() {
+    modal.classList.add('hidden');
+    window.removeEventListener('resize', place);
+  }
+
+  btn.addEventListener('click', open);
+  overlay?.addEventListener('click', close);
+  closeBtn?.addEventListener('click', close);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) close();
+  });
+})();
+
+
   // -------------------- Apple TV-like Hero --------------------
   (function () {
     const stage = document.getElementById('tvStage');
