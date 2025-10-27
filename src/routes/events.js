@@ -215,19 +215,20 @@ router.get("/admin/summary", requireAuth, requireAdmin, async (_req, res) => {
 
 // GET /:id/registrations remains the same...
 router.get("/:id/registrations", requireAuth, requireAdmin, async (req, res) => {
-  // ... code ...
   try {
-      const regs = await Registration.find({ event: req.params.id })
+    const regs = await Registration.find({ event: req.params.id })
       .sort({ createdAt: 1 })
       .populate({ path: "user", select: "firstName lastName studentId major email phone" })
       .lean();
-      res.set("Cache-Control", "no-cache"); // Set to no-cache for admin data
-      res.json(regs.map(r => ({ /* ... user data mapping ... */ })));
-  } catch(e) {
+
+    res.set("Cache-Control", "no-cache");
+    res.json(regs);                            // << ส่งทั้งก้อนที่มี r.user ให้เลย
+  } catch (e) {
     console.error("Get Registrations Error:", e);
     res.status(500).json({ message: "server error" });
   }
 });
+
 
 
 // PATCH "/:id" - Needs update to handle optional image file upload
