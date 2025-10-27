@@ -348,7 +348,7 @@ if (dateInput && window.flatpickr) {
     const cols = matchMedia('(min-width:1024px)').matches ? 4
                : matchMedia('(min-width:768px)').matches ? 2
                : 1;
-    const rows = 4; // ล็อก 2 แถว
+    const rows = 3; // ล็อก 2 แถว
     PAGER.size = cols * rows; // lg:8, md:4, mobile:2
   }
   computePageSize();
