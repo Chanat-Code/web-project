@@ -1019,7 +1019,7 @@ if (dateInput && window.flatpickr) {
     }
 
     function toCSV(rows) {
-      const header = ['ชื่อ', 'รหัสนักศึกษา', 'คณะ', 'E-mail', 'เบอร์โทรศัพท์', 'ที่อยู่ (ตอนลงทะเบียน)'];
+      const header = ['ชื่อ-นามสกุล', 'รหัสนักศึกษา', 'คณะ', 'E-mail', 'เบอร์โทรศัพท์', 'เพิ่มเติม'];
       const escCSV = (v) => {
         const t = String(v ?? '');
         return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
