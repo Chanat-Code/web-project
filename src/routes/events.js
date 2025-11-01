@@ -56,7 +56,7 @@ const items = events.map(ev => ({
  currentAttendees: countMap[String(ev._id)] || 0
  }));
  // Remove or adjust Cache-Control if using vercel.json's no-cache headers
-res.set("Cache-Control", "public, s-maxage=10, stale-while-revalidate=59");
+res.set("Cache-Control", "public, s-maxage=1, stale-while-revalidate=59");
 res.json(items);
 });
 
@@ -68,7 +68,7 @@ if (!ev) return res.status(404).json({ message: "not found" });
 // การตรวจสอบควรเกิดขึ้นตอน POST (ลงทะเบียน) เท่านั้น
 
 // Add cache header for individual events
- res.set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+ res.set("Cache-Control", "public, s-maxage=1, stale-while-revalidate=300");
  res.json(ev);
 });
 
