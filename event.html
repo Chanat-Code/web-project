@@ -253,7 +253,7 @@
             return;
           }
 
-          if (!res.ok) {
+          if (res.status !== 200 && res.status !== 201) {
             const data = await res.json().catch(() => ({}));
             throw new Error(data.message || `HTTP ${res.status}`);
           }
