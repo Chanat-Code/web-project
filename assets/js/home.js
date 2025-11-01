@@ -524,6 +524,7 @@ if (dateInput && window.flatpickr) {
     if (me.role === "admin") { fab?.classList.remove("hidden"); calFab?.remove?.(); }
     else { calFab?.classList.remove('hidden'); }
   }
+  window.loadMe = loadMe;
 
   function wireLogout() {
     const btn = document.getElementById("logoutBtn");
@@ -1168,6 +1169,106 @@ if (dateInput && window.flatpickr) {
       const csv = toCSV(RD_CURRENT_ROWS);
       downloadCSVFile(filename, csv);
     });
+  })();
+
+  // -------------------- Edit Profile Modal --------------------
+  (function () {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    
+    const $ = (s) => document.querySelector(s);
+    
+    const modal = $('#editProfileModal');
+    const form = $('#editProfileForm');
+    const btnOpen = $('#editProfileBtn'); // Button in profile dropdown
+    const btnCancel = $('#editProfileCancel');
+    const btnSubmit = $('#editProfileSubmitBtn');
+    const overlay = modal?.querySelector('[data-overlay]');
+    
+    if (!modal || !form || !btnOpen) return;
+    
+    const fields = {
+      firstName: $('#editFirstName'),
+      lastName: $('#editLastName'),
+      studentId: $('#editStudentId'),
+      major: $('#editMajor'),
+      phone: $('#editPhone'),
+    };
+
+    function openEditProfile() {
+      if (!currentUser) {
+        toastError('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้');
+        return;
+      }
+      // Pre-fill form
+      fields.firstName.value = currentUser.firstName || '';
+      fields.lastName.value = currentUser.lastName || '';
+      fields.studentId.value = currentUser.studentId || '';
+      fields.major.value = currentUser.major || '';
+      fields.phone.value = currentUser.phone || '';
+      
+      modal.classList.remove('hidden');
+    }
+    
+    function closeEditProfile() {
+      modal.classList.add('hidden');
+      form.reset();
+    }
+    
+    btnOpen.addEventListener('click', () => {
+      // Close the profile dropdown first
+      document.getElementById('profileModal')?.classList.add('hidden');
+      openEditProfile();
+    });
+    
+    btnCancel.addEventListener('click', closeEditProfile);
+    overlay.addEventListener('click', closeEditProfile);
+    
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const data = {
+        firstName: fields.firstName.value,
+        lastName: fields.lastName.value,
+        studentId: fields.studentId.value,
+        major: fields.major.value,
+        phone: fields.phone.value,
+      };
+      
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = 'กำลังบันทึก...';
+      
+      try {
+        const res = await fetch(`${window.API_BASE}/auth/me`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
+          },
+          body: JSON.stringify(data),
+          cache: 'no-store',
+        });
+        
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ message: `HTTP Error ${res.status}` }));
+          throw new Error(err.message || 'เกิดข้อผิดพลาด');
+        }
+        
+        closeEditProfile();
+        toastOK('บันทึกโปรไฟล์สำเร็จ!');
+        
+        // Reload user data and update UI
+        if (window.loadMe) await window.loadMe();
+        
+      } catch (err) {
+        console.error('Edit profile error:', err);
+        toastError('บันทึกไม่สำเร็จ', err.message);
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'บันทึก';
+      }
+    });
+
   })();
 
   // -------------------- Service worker --------------------

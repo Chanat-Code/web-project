@@ -256,6 +256,45 @@ router.get("/me", async (req, res) => {
   }
 });
 
+router.patch("/me", async (req, res) => {
+  try {
+    const token = getTokenFromReq(req);
+    if (!token) return res.status(401).json({ message: "no token" });
+    
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(payload.sub);
+    
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const { firstName, lastName, studentId, major, phone } = req.body;
+
+    // Optional: Validate Student ID uniqueness if it's being changed
+    if (studentId && studentId !== user.studentId) {
+      const sidDup = await User.findOne({ studentId, _id: { $ne: user._id } });
+      if (sidDup) {
+        return res.status(409).json({ message: "Student ID already exists." });
+      }
+      user.studentId = studentId;
+    }
+
+    // Update fields
+    user.firstName = firstName ?? user.firstName;
+    user.lastName = lastName ?? user.lastName;
+    user.major = major ?? user.major;
+    user.phone = phone ?? user.phone;
+
+    await user.save();
+
+    res.json({ user: safe(user) });
+  } catch (err) {
+    if (err instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+    console.error("[PATCH /me] error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // POST /api/auth/logout
 router.post("/logout", (_req, res) => {
   clearAuthCookie(res);
