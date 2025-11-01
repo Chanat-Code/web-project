@@ -46,17 +46,30 @@ const router = Router();
 
 /** ======================== Public ======================== */
 // GET "/" and GET "/:id" remain the same...
-router.get("/", async (_req, res) => {
-  const items = await Event.find({}, "title dateText location imageUrl").sort({ createdAt: -1 }).lean();
+router.get("/", async (req, res) => {
+ const counts = await Registration.aggregate([ { $group: { _id: "$event", count: { $sum: 1 } } } ]);
+ const countMap = Object.fromEntries(counts.map(r => [String(r._id), r.count]));
+ const events = await Event.find({}, "title dateText location imageUrl maxAttendees").sort({ createdAt: -1 }).lean();
+
+ const items = events.map(ev => ({
+  ...ev,
+  currentAttendees: countMap[String(ev._id)] || 0
+  }));
   // Remove or adjust Cache-Control if using vercel.json's no-cache headers
-  res.set("Cache-Control", "public, s-maxage=10, stale-while-revalidate=59");
-  res.json(items);
+ res.set("Cache-Control", "public, s-maxage=10, stale-while-revalidate=59");
+ res.json(items);
 });
 
 router.get("/:id", async (req, res) => {
-  const ev = await Event.findById(req.params.id).lean();
-  if (!ev) return res.status(404).json({ message: "not found" });
-  // Add cache header for individual events
+ const ev = await Event.findById(req.params.id).lean();
+ if (!ev) return res.status(404).json({ message: "not found" });
+ if (ev.maxAttendees) { // ถ้ามีการตั้งค่า maxAttendees
+  const currentCount = await Registration.countDocuments({ event: req.params.id });
+  if (currentCount >= ev.maxAttendees) {
+    return res.status(409).json({ message: "Event is full" });
+    }
+  }
+ // Add cache header for individual events
   res.set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
   res.json(ev);
 });
@@ -65,39 +78,41 @@ router.get("/:id", async (req, res) => {
 /** ======================== User ======================== */
 // POST "/:id/register" and GET "/:id/registered" remain the same...
 router.post("/:id/register", requireAuth, async (req, res) => {
-  try {
-    const { address = "" } = req.body || {};
-    const ev = await Event.findById(req.params.id).lean();
-    if (!ev) return res.status(404).json({ message: "event not found" });
+ try {
+  const { address = "" } = req.body || {};
+  const ev = await Event.findById(req.params.id).lean();
+  if (!ev) return res.status(404).json({ message: "event not found" });
 
-    const snap = {
-      title: ev.title || "",
-      dateText: ev.dateText || "",
-      location: ev.location || "",
-      imageUrl: ev.imageUrl || ""
-    };
+  const snap = {
+   title: ev.title || "",
+   dateText: ev.dateText || "",
+   location: ev.location || "",
+   imageUrl: ev.imageUrl || ""
+  };
 
-    const reg = await Registration.findOneAndUpdate(
-      { user: req.user.sub, event: req.params.id },
-      {
-        $set: { address },
-        $setOnInsert: { eventSnapshot: snap }
-      },
-      { new: true, upsert: true, setDefaultsOnInsert: true }
-    );
+  const reg = await Registration.findOneAndUpdate(
+   { user: req.user.sub, event: req.params.id },
+   {
+    $set: { address },
+    $setOnInsert: { eventSnapshot: snap }
+   },
+   { new: true, upsert: true, setDefaultsOnInsert: true }
+  );
 
-    return res.status(201).json({ message: "registered", registrationId: reg._id });
-  } catch (e) {
-    if (e?.code === 11000) return res.status(409).json({ message: "already registered" });
-    console.error("Registration Error:", e);
-    return res.status(500).json({ message: "server error" });
-  }
+  return res.status(201).json({ message: "registered", registrationId: reg._id });
+ } catch (e) {
+  if (e?.code === 11000) {
+    return res.status(409).json({ message: "already registered" });
+    }
+  console.error("Registration Error:", e);
+  return res.status(500).json({ message: "server error" });
+ }
 });
 
 router.get("/:id/registered", requireAuth, async (req, res) => {
-  try { // Add try-catch
+ try { // Add try-catch
     const has = await Registration.exists({ user: req.user.sub, event: req.params.id });
-    res.json({ registered: !!has });
+   res.json({ registered: !!has });
   } catch(e) {
     console.error("Check Registration Error:", e);
     res.status(500).json({ message: "server error" });
@@ -114,7 +129,7 @@ router.post("/",
   upload.single('imageFile'), // Use multer middleware here, 'imageFile' must match frontend name
   async (req, res) => {
     try {
-      const { title, dateText, description, location } = req.body;
+      const { title, dateText, description, location, maxAttendees } = req.body;
 
       if (!title) {
         // Clean up uploaded file if validation fails early
@@ -142,6 +157,7 @@ router.post("/",
         description,
         imageUrl, // Use the URL from Cloudinary or the fallback
         location,
+        maxAttendees: maxAttendees ? Number(maxAttendees) : null,
         createdBy: req.user.sub
       });
 
@@ -165,10 +181,10 @@ router.post("/",
 
 // DELETE remains mostly the same, no file handling needed here
 router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
-  const { id } = req.params;
+ const { id } = req.params;
   try { // Add try-catch
     const ev = await Event.findById(id).lean();
-    if (!ev) return res.status(404).json({ message: "not found" });
+   if (!ev) return res.status(404).json({ message: "not found" });
 
     // Optional: Delete image from Cloudinary if it exists
     if (ev.imageUrl && ev.imageUrl.includes('cloudinary')) {
@@ -181,12 +197,12 @@ router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
         }
     }
 
-    const snap = { /* ... snapshot logic ... */ };
+   const snap = { /* ... snapshot logic ... */ };
     // ... updateMany Registrations ...
     await Registration.updateMany(
-      { event: id, $or: [ { eventSnapshot: { $exists: false } }, { "eventSnapshot.title": { $exists: false } } ] },
-      { $set: { eventSnapshot: snap } }
-    );
+     { event: id, $or: [ { eventSnapshot: { $exists: false } }, { "eventSnapshot.title": { $exists: false } } ] },
+     { $set: { eventSnapshot: snap } }
+   );
 
     await Event.deleteOne({ _id: id });
     res.json({ message: "deleted", id });
@@ -199,7 +215,7 @@ router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
 
 // GET /admin/summary remains the same...
 router.get("/admin/summary", requireAuth, requireAdmin, async (_req, res) => {
-  // ... code ...
+ // ... code ...
   try {
      const counts = await Registration.aggregate([ { $group: { _id: "$event", count: { $sum: 1 } } } ]);
      const countMap = Object.fromEntries(counts.map(r => [String(r._id), r.count]));
@@ -241,6 +257,12 @@ router.patch("/:id",
       const { id } = req.params;
       const updateData = req.body; // Contains text fields like title, dateText etc.
       let oldImageUrl = '';
+
+      if (updateData.maxAttendees === '' || updateData.maxAttendees === null || updateData.maxAttendees === undefined) {
+        updateData.maxAttendees = null;
+        } else {
+          updateData.maxAttendees = Number(updateData.maxAttendees);
+        }
 
       // Check if a new file was uploaded
       if (req.file) {
@@ -288,7 +310,7 @@ router.patch("/:id",
 
       // Notification logic remains the same...
       const registrations = await Registration.find({ event: id }).lean();
-      const userIds = registrations.map(reg => reg.user);
+     const userIds = registrations.map(reg => reg.user);
       if (userIds.length > 0) {
       const message = `ข้อมูลกิจกรรม "${ev.title}" มีการเปลี่ยนแปลง กรุณาตรวจสอบ`;
       const notifications = userIds.map(userId => ({

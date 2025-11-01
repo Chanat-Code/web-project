@@ -452,17 +452,31 @@ if (dateInput && window.flatpickr) {
              class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-in-out">`
         : fallbackIcon;
 
+      const max = ev.maxAttendees;
+      const current = ev.currentAttendees || 0;
+      let capacityHtml = '';
+      if (max) { // ถ้ามีการกำหนด max
+        if (current >= max) {
+          capacityHtml = `<span class="text-xs px-2 py-0.5 rounded-full bg-rose-600 text-white">เต็มแล้ว</span>`;
+        } else {
+          capacityHtml = `<span class="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-200">${current} / ${max}</span>`;
+          }
+        }
+
       return `<li class="relative aspect-[16/11] rounded-xl overflow-hidden group shadow-lg bg-slate-800 ring-1 ring-white/10">
         ${imageEl}
         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none"></div>
         <div class="absolute bottom-0 left-0 right-0 p-4 text-white z-10">
           <h3 class="text-lg font-semibold leading-tight mb-1 line-clamp-2">${title}</h3>
-          <div class="flex items-center justify-between text-sm mt-2">
+          <div class="flex items-center justify-between gap-2 text-sm mt-2">
             <span class="text-slate-300">${dateTxt}</span>
-            <a href="${eventUrl}"
-              class="px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors whitespace-nowrap">
-              ดูรายละเอียด
-            </a>
+            <div class="flex items-center gap-2 shrink-0">
+              ${capacityHtml}
+              <a href="${eventUrl}"
+                class="px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors whitespace-nowrap">
+                ดูรายละเอียด
+              </a>
+            </div>
           </div>
         </div>
         <a href="${eventUrl}" class="absolute inset-0 z-0" aria-label="${title}"></a>

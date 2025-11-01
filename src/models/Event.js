@@ -8,7 +8,8 @@ const eventSchema = new mongoose.Schema(
     description:{ type: String, default: "" },
     imageUrl:   { type: String, default: "" },
     location:   { type: String, default: "" },
-    createdBy:  { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+    createdBy:  { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    maxAttendees: { type: Number, min: 1, default: null } // null = ไม่จำกัด
   },
   { timestamps: true }
 );
