@@ -492,25 +492,86 @@ if (dateInput && window.flatpickr) {
     renderPager(meta);
   }
 
-  // ===== Search =====
-  function applySearch() {
-    const q = (searchInput?.value || "").trim().toLowerCase();
-    PAGER.page = 1;
-    if (!q) { renderEvents(ALL_EVENTS); return; }
-    const filtered = ALL_EVENTS.filter(ev => {
-      const f = (v) => String(v || "").toLowerCase();
-      return [ev.title, ev.location, ev.dateText].some(v => f(v).includes(q));
-    });
-    renderEvents(filtered, q);
+// ===== Sort & Search Logic =====
+let currentSortOrder = 'newest'; // Default: 'newest' หรือ 'oldest'
+
+const btnSortNewest = document.getElementById('sortNewest');
+const btnSortOldest = document.getElementById('sortOldest');
+
+// --- Sort helpers ---
+const parseEventDate = (s) => {
+  // สร้าง Date object
+  const d = new Date(s);
+  // ถ้าวันที่ไม่ถูกต้อง (เช่น dateText เป็น null หรือ invalid) ให้คืนค่าเป็นวันที่เก่าที่สุด
+  return isNaN(d) ? new Date(0) : d; // 0 = 1 Jan 1970
+};
+// Sort b - a for descending (newest first)
+const sortNewestFirst = (a, b) => parseEventDate(b.dateText) - parseEventDate(a.dateText);
+// Sort a - b for ascending (oldest first)
+const sortOldestFirst = (a, b) => parseEventDate(a.dateText) - parseEventDate(b.dateText);
+
+// --- Main render pipeline ---
+function applySortAndFilter() {
+  // 1. ดึงค่าค้นหา
+  const q = (searchInput?.value || "").trim().toLowerCase();
+  PAGER.page = 1; // รีเซ็ตหน้าเป็น 1 เสมอเมื่อกรอง/เรียงใหม่
+
+  // 2. กรอง (Filter)
+  const filtered = !q
+    ? [...ALL_EVENTS] // สร้าง copy ของ ALL_EVENTS ถ้าไม่มีการค้นหา
+    : ALL_EVENTS.filter(ev => {
+        const f = (v) => String(v || "").toLowerCase();
+        return [ev.title, ev.location, ev.dateText].some(v => f(v).includes(q));
+      });
+
+  // 3. เรียงลำดับ (Sort) copy ที่กรองแล้ว
+  const sortFn = (currentSortOrder === 'newest') ? sortNewestFirst : sortOldestFirst;
+  filtered.sort(sortFn);
+
+  // 4. อัปเดตสไตล์ปุ่มให้
+  if (btnSortNewest && btnSortOldest) {
+    const activeClass = 'bg-indigo-500 text-white shadow';
+    const inactiveClass = 'bg-slate-700/60 text-slate-200 hover:bg-slate-700';
+
+    if (currentSortOrder === 'newest') {
+      // ถ้า 'newest' ทำงาน: ปุ่ม Newest เป็น active, Oldest เป็น inactive
+      btnSortNewest.className = `px-3 py-1 rounded-full text-sm font-medium ${activeClass}`;
+      btnSortOldest.className = `px-3 py-1 rounded-full text-sm font-medium ${inactiveClass}`;
+    } else {
+      // ถ้า 'oldest' ทำงาน: ปุ่ม Newest เป็น inactive, Oldest เป็น active
+      btnSortNewest.className = `px-3 py-1 rounded-full text-sm font-medium ${inactiveClass}`;
+      btnSortOldest.className = `px-3 py-1 rounded-full text-sm font-medium ${activeClass}`;
+    }
   }
-  const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
-  const applySearchDebounced = debounce(applySearch, 150);
-  searchBtn?.addEventListener('click', applySearch);
-  searchInput?.addEventListener('input', applySearchDebounced);
-  searchInput?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); applySearch(); }
-    if (e.key === 'Escape') { searchInput.value = ''; applySearch(); }
-  });
+
+  // 5. แสดงผล (Render)
+  renderEvents(filtered, q);
+}
+
+// --- Event Listeners ---
+const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+const applySearchDebounced = debounce(applySortAndFilter, 150);
+
+// เชื่อมต่อช่องค้นหาเข้ากับฟังก์ชันใหม่
+searchBtn?.addEventListener('click', applySortAndFilter);
+searchInput?.addEventListener('input', applySearchDebounced);
+searchInput?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); applySortAndFilter(); }
+  if (e.key === 'Escape') { searchInput.value = ''; applySortAndFilter(); }
+});
+
+// เชื่อมต่อปุ่มเรียงลำดับ
+btnSortNewest?.addEventListener('click', () => {
+  if (currentSortOrder === 'newest') return; // ไม่ทำอะไรถ้าเลือกอันเดิม
+  currentSortOrder = 'newest';
+  applySortAndFilter();
+});
+
+btnSortOldest?.addEventListener('click', () => {
+  if (currentSortOrder === 'oldest') return; // ไม่ทำอะไรถ้าเลือกอันเดิม
+  currentSortOrder = 'oldest';
+  applySortAndFilter();
+});
 
   // ===== Me / UI (คงของเดิมย่อ ๆ) =====
   async function loadMe() {
@@ -571,7 +632,7 @@ if (dateInput && window.flatpickr) {
     if (cached) {
       try {
         const items = JSON.parse(cached);
-        if (Array.isArray(items)) { ALL_EVENTS = items; PAGER.page = 1; renderEvents(ALL_EVENTS); }
+        if (Array.isArray(items)) { ALL_EVENTS = items; PAGER.page = 1; applySortAndFilter(); }
       } catch {}
     }
 
@@ -583,7 +644,7 @@ if (dateInput && window.flatpickr) {
       ALL_EVENTS = Array.isArray(items) ? items : [];
       localStorage.setItem(key, JSON.stringify(ALL_EVENTS));
       PAGER.page = 1;
-      renderEvents(ALL_EVENTS);
+      applySortAndFilter();
     } catch (e) {
       if (!eventList.innerHTML.trim()) {
         eventList.innerHTML = `<li class="rounded-xl bg-slate-800/80 px-6 py-4 text-slate-200 ring-1 ring-white/10 col-span-full">โหลดข้อมูลไม่สำเร็จ</li>`;

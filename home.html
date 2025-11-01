@@ -251,6 +251,15 @@
 
     <section class="relative z-10 w-full max-w-7xl px-4 mx-auto mt-14 md:mt-20">
       <div class="rounded-2xl bg-white/30 backdrop-blur shadow-2xl ring-1 ring-white/40 p-6 sm:p-8">
+        <div class="flex justify-end items-center gap-2 mb-4">
+          <span class="text-sm text-slate-200">เรียงตาม:</span>
+          <button id="sortNewest" class="px-3 py-1 rounded-full text-sm font-medium">
+            ล่าสุด
+          </button>
+          <button id="sortOldest" class="px-3 py-1 rounded-full text-sm font-medium">
+            เก่าสุด
+          </button>
+        </div>
         <ul id="eventList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"></ul>
         
       </div>
