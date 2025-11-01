@@ -1190,8 +1190,6 @@ if (dateInput && window.flatpickr) {
     const fields = {
       firstName: $('#editFirstName'),
       lastName: $('#editLastName'),
-      studentId: $('#editStudentId'),
-      major: $('#editMajor'),
       phone: $('#editPhone'),
     };
 
@@ -1203,8 +1201,6 @@ if (dateInput && window.flatpickr) {
       // Pre-fill form
       fields.firstName.value = currentUser.firstName || '';
       fields.lastName.value = currentUser.lastName || '';
-      fields.studentId.value = currentUser.studentId || '';
-      fields.major.value = currentUser.major || '';
       fields.phone.value = currentUser.phone || '';
       
       modal.classList.remove('hidden');
@@ -1230,8 +1226,6 @@ if (dateInput && window.flatpickr) {
       const data = {
         firstName: fields.firstName.value,
         lastName: fields.lastName.value,
-        studentId: fields.studentId.value,
-        major: fields.major.value,
         phone: fields.phone.value,
       };
       
