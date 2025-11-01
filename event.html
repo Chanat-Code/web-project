@@ -125,7 +125,7 @@
       const id = params.get("id");
       const token = localStorage.getItem("token") || "";
 
-      const fromHistory = document.referrer.includes('HOMEนศทตกลทบ.html') &&
+      const fromHistory = document.referrer.includes('home.html') &&
         sessionStorage.getItem('fromHistory') === 'true';
 
       // ✅ helper สั้นๆ
@@ -134,7 +134,7 @@
 
       if (!id) {
         swalOK("ไม่พบบัตรกิจกรรม (id)", "", "error").then(() => {
-          location.href = "./HOMEนศทตกลทบ.html";
+          location.href = "./home.html";
         });
       }
 
@@ -217,7 +217,7 @@
 
         } catch (e) {
           swalOK("กิจกรรมไม่พบ", "", "error").then(() => {
-            location.href = "./HOMEนศทตกลทบ.html";
+            location.href = "./home.html";
           });
         }
       }
