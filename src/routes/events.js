@@ -287,10 +287,16 @@ router.patch("/:id",
    const updateData = req.body; // Contains text fields like title, dateText etc.
    let oldImageUrl = '';
 
-   if (updateData.maxAttendees === '' || updateData.maxAttendees === null || updateData.maxAttendees === undefined) {
-    updateData.maxAttendees = null;
+   if (updateData.maxAttendees === undefined) {
+      // ถ้าไม่ได้ส่งมา (เช่น จากหน้า event.html) ให้ลบทิ้งไปเลย
+      // เพื่อที่ $set จะได้ไม่ update field นี้
+      delete updateData.maxAttendees;
+    } else if (updateData.maxAttendees === '' || updateData.maxAttendees === null) {
+      // ถ้าส่งค่าว่างมา ให้ตั้งเป็น null
+      updateData.maxAttendees = null;
     } else {
-     updateData.maxAttendees = Number(updateData.maxAttendees);
+      // ถ้าส่งค่ามา ให้แปลงเป็นตัวเลข
+      updateData.maxAttendees = Number(updateData.maxAttendees);
     }
 
    // Check if a new file was uploaded
