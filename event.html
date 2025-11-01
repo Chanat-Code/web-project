@@ -242,9 +242,14 @@
           closeModal();
 
           if (res.status === 409) {
-            await swalOK("คุณลงทะเบียนกิจกรรมนี้แล้ว", "", "info");
-            registrationSection.classList.add("hidden");
-            alreadyRegistered.classList.remove("hidden");
+            const data = await res.json().catch(() => ({}));
+            if (data.message === "Event is full") {
+              await swalOK("❌ กิจกรรมเต็มแล้ว", "ไม่สามารถลงทะเบียนได้เนื่องจากมีผู้ลงทะเบียนเต็มจำนวนแล้ว", "error");
+            } else {
+              await swalOK("คุณลงทะเบียนกิจกรรมนี้แล้ว", "", "info");
+              registrationSection.classList.add("hidden");
+              alreadyRegistered.classList.remove("hidden");
+              }
             return;
           }
 
